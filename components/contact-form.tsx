@@ -52,7 +52,7 @@ export default function ContactForm() {
 
       setForm({ name: "", email: "", phone: "", message: "" });
       setFormErrors({});
-      setStatus({ type: "ok", text: "Message sent — thank you!" });
+      setStatus({ type: "ok", text: "Message sent, thank you!" });
     } catch (err) {
       console.error("EmailJS error:", err);
       setStatus({ type: "error", text: "Failed to send. Please try again later." });
