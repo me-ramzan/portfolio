@@ -65,7 +65,7 @@ export default function Home() {
                 <a href="#projects">View projects</a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://drive.google.com/file/d/1g2F3bo5wj3FBvUo1TQ6ppK7EK5aZke9H/view?usp=sharing" target="_blank">My Resume</a>
+                <a href="https://drive.google.com/file/d/1nVSjdQVcGIQAtv2TtZajffxZmibRz8gm/view?usp=sharing" target="_blank">My Resume</a>
               </Button>
             </div>
             
@@ -912,10 +912,9 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="outline" size="sm" asChild>
-              <a href="https://drive.google.com/file/d/1g2F3bo5wj3FBvUo1TQ6ppK7EK5aZke9H/view?usp=sharing" className="flex items-center gap-1">
+              <a href="https://drive.google.com/uc?export=download&id=1nVSjdQVcGIQAtv2TtZajffxZmibRz8gm" download>
                 <Download className="h-4 w-4" />
-                <span>Download Resume</span>
-              </a>
+                <span>Download Resume</span></a>
             </Button>
             <Button variant="outline" size="icon" asChild>
               <a href="#hero" className="scroll-smooth" aria-label="Back to top">
