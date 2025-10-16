@@ -55,7 +55,7 @@ export default function Home() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">Ateeb Shahid</h1>
             <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">Automation Engineer | RPA / IPA Engineer</h2>
             <p className="text-muted-foreground max-w-md">
-              Passionate about creating intuitive and impactful digital experiences. Interest and focused on Automation, Data Science, machine learning and AI.
+              Passionate about creating intuitive and impactful digital experiences. Interest and focused on Automation, Data Science, machine learning and AI. <strong>Open to Work</strong> & collaborate with forward thinking organizations in UAE.
             </p>
             <div className="flex gap-4 pt-4">
               <Button asChild>
@@ -89,7 +89,7 @@ export default function Home() {
 
           </div>
           <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-background shadow-xl">
-            <Image src={process.env.NODE_ENV === 'production' ? '/portfolio/pfp.png' : '/pfp.png'} alt="Jane Doe" fill className="object-cover" priority />
+            <Image src={process.env.NODE_ENV === 'production' ? '/portfolio/new-pfp.png' : '/new-pfp.png'} alt="Jane Doe" fill className="object-cover" priority />
           </div>
         </section>
 

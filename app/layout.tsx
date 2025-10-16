@@ -8,7 +8,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "Ateeb Shahid | Personal Portfolio",
   description: "Personal portfolio of Ateeb Shahid",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/pfp-icon.png',
+  },
 }
 
 export default function RootLayout({
