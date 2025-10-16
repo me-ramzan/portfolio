@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import emailjs from "emailjs-com";
 
 export default function ContactForm() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({ 
     name: "", 
     email: "", 
@@ -19,7 +20,6 @@ export default function ContactForm() {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
     
-    // Clear email error when user starts typing
     if (name === "email" && formErrors.email) {
       setFormErrors({});
     }
@@ -33,7 +33,7 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate email
+    //validate email
     if (!validateEmail(form.email)) {
       setFormErrors({ email: "Please enter a valid email address" });
       return;
@@ -42,17 +42,12 @@ export default function ContactForm() {
     setStatus({ type: "sending", text: "Sending..." });
 
     try {
-      // 🚀 Use your actual EmailJS IDs here
-      await emailjs.send(
-        "service_9n4aoyg",   // replace with your EmailJS service ID
-        "OxMGSntEbVODybgCyPxSu",  // replace with your EmailJS template ID
-        {
-          from_name: form.name,
-          from_email: form.email,
-          from_phone: form.phone, // Make sure your EmailJS template has this variable
-          message: form.message,
-        },
-        "ehdE9q289VbqNO4oU"    // replace with your EmailJS public key
+      
+      await emailjs.sendForm(
+        'default_service',  
+        'template_ixuq35o', 
+        formRef.current!,   
+        'ehdE9q289VbqNO4oU' //public key
       );
 
       setForm({ name: "", email: "", phone: "", message: "" });
@@ -65,7 +60,7 @@ export default function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
       {/* Name Field */}
       <input
         name="name"
@@ -73,10 +68,10 @@ export default function ContactForm() {
         onChange={handleChange}
         required
         placeholder="Full Name"
-        className="w-full border rounded p-2"
+        className="w-full border rounded p-2 placeholder:text-sm"
       />
       
-      {/* Email and Phone Row */}
+      {/* Email and Phone */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <input
@@ -86,7 +81,7 @@ export default function ContactForm() {
             onChange={handleChange}
             required
             placeholder="Email"
-            className={`w-full border rounded p-2 ${
+            className={`w-full border rounded p-2 placeholder:text-sm ${
               formErrors.email ? "border-red-500" : ""
             }`}
           />
@@ -100,12 +95,12 @@ export default function ContactForm() {
           type="tel"
           value={form.phone}
           onChange={handleChange}
-          className="w-full border rounded p-2"
           placeholder="Phone number (Optional)"
+          className="w-full border rounded p-2 placeholder:text-sm"
         />
       </div>
 
-      {/* Message Field */}
+      {/* Message */}
       <textarea
         name="message"
         value={form.message}
@@ -113,10 +108,10 @@ export default function ContactForm() {
         required
         rows={5}
         placeholder="Message"
-        className="w-full border rounded p-2"
+        className="w-full border rounded p-2 placeholder:text-sm"
       />
       
-      {/* Submit Button and Status */}
+      {/* Submit/status button */}
       <div className="flex items-center gap-3">
         <button
           type="submit"
