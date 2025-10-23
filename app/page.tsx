@@ -497,6 +497,51 @@ export default function Home() {
             <Card className="overflow-hidden">
               <div className="aspect-video relative">
                 <Image
+                  src={process.env.NODE_ENV === 'production' ? '/portfolio/wedding-planner-n8n-new-new.png' : '/wedding-planner-n8n-new-new.png'}
+                  alt="video-transcribe-RPA"
+                  fill
+                  className="object-contain transition-all duration-300 group-hover:scale-110" />
+              </div>
+              <CardHeader>
+                <CardTitle>Wedding Planner PDF Generator</CardTitle>
+                <CardDescription>Wedding-planner PDF generation from Webhook using n8n, Google APIs and AI
+              </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  n8n workflow integrating APIs of Google Sheets, Slides, and Gmail to generate and deliver wedding planner PDFs. Uses GPT-5 Model for data structuring JSON and JavaScript nodes for formatting the JSON within n8n before automated export and email delivery.
+                </p>
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Technologies:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">n8n</Badge>
+                    <Badge variant="outline">Google Sheets API</Badge>
+                    <Badge variant="outline">Google Slides API</Badge>
+                    <Badge variant="outline">Google Drive API</Badge>
+                    <Badge variant="outline">Gmail API</Badge>
+                    <Badge variant="outline">Wix Automations</Badge>
+                    <Badge variant="outline">OpenAI API (GPT-5)</Badge>
+                    <Badge variant="outline">JavaScript</Badge>
+                    <Badge variant="outline">Node.js</Badge>
+                    <Badge variant="outline">Webhooks</Badge>
+                    <Badge variant="outline">JSON</Badge>
+                    <Badge variant="outline">Google Workspace (GCC)</Badge>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" asChild>
+                    <a href="https://github.com/teebs339/n8n-Wedding-Planner-PDF-generator" target="_blank" className="flex items-center gap-1">
+                      <Github className="h-4 w-4" />
+                      <span>Code</span>
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card> 
+
+            <Card className="overflow-hidden">
+              <div className="aspect-video relative">
+                <Image
                   src={process.env.NODE_ENV === 'production' ? '/portfolio/video-transcribe-rpa.png' : '/video-transcribe-rpa.png'}
                   alt="video-transcribe-RPA"
                   fill

@@ -10,7 +10,7 @@ export const metadata = {
   description: "Personal portfolio of Ateeb Shahid",
   generator: 'v0.dev',
   icons: {
-    icon: '/pfp-icon.png',
+    icon: '/pfp-icon.ico',
   },
 }
 
