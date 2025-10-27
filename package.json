@@ -78,14 +78,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/teebs339/portfolio.git"
+    "url": "git+https://github.com/me-ramzan/portfolio.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/teebs339/portfolio/issues"
+    "url": "https://github.com/me-ramzan/portfolio/issues"
   },
-  "homepage": "https://github.com/teebs339/portfolio#readme",
+  "homepage": "https://github.com/me-ramzan/portfolio#readme",
   "description": ""
 }
