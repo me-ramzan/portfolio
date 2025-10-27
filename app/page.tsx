@@ -718,7 +718,6 @@ export default function Home() {
                       <Badge>OpenAI</Badge>
                       <Badge>Selenium</Badge>
                       <Badge>BeautifulSoup</Badge>
-                      <Badge>OpenAI</Badge>
                       <Badge>DeepSeek</Badge>
                     </div>
                   </CardContent>
