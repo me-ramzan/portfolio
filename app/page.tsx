@@ -65,7 +65,7 @@ export default function Home() {
                 <a href="#projects">View projects</a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://drive.google.com/file/d/1nVSjdQVcGIQAtv2TtZajffxZmibRz8gm/view?usp=sharing" target="_blank">My Resume</a>
+                <a href="https://drive.google.com/file/d/1Jz_dBK_Oed_87kBUaFcH7d5A3AQv4c9W/view?usp=sharing" target="_blank">My Resume</a>
               </Button>
             </div>
 
@@ -476,34 +476,28 @@ export default function Home() {
                   className="object-contain transition-all duration-300 group-hover:scale-110" />
               </div>
               <CardHeader>
-                <CardTitle>Wedding Planner PDF Generator</CardTitle>
-                <CardDescription>Wedding-planner PDF generation from Webhook using n8n, Google APIs and AI
+                <CardTitle>Automated Response System</CardTitle>
+                <CardDescription>AI-powered workflow that monitors, extracts, and manages public grant listings.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  n8n workflow integrating APIs of Google Sheets, Slides, and Gmail to generate and deliver wedding planner PDFs. Uses GPT-5 Model for data structuring JSON and JavaScript nodes for formatting the JSON within n8n before automated export and email delivery.
+                  This n8n workflow automates the discovery and processing of beautification grant opportunities by scraping multiple government and foundation websites. It utilizes AI agents to extract structured grant data, stores results in Google Sheets, and triggers automated email notifications for newly available grants. The solution implements intelligent deduplication to prevent redundant communications and operates on a scheduled weekly basis for continuous monitoring..
                 </p>
                 <div>
                   <h4 className="text-sm font-medium mb-2">Technologies:</h4>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline">n8n</Badge>
+                    <Badge variant="outline">DeepSeek AI</Badge>
+                    <Badge variant="outline">Lang Chain</Badge>
+                    <Badge variant="outline">Firecrawl API</Badge>
                     <Badge variant="outline">Google Sheets API</Badge>
-                    <Badge variant="outline">Google Slides API</Badge>
-                    <Badge variant="outline">Google Drive API</Badge>
                     <Badge variant="outline">Gmail API</Badge>
-                    <Badge variant="outline">Wix Automations</Badge>
-                    <Badge variant="outline">OpenAI API (GPT-5)</Badge>
-                    <Badge variant="outline">JavaScript</Badge>
-                    <Badge variant="outline">Node.js</Badge>
-                    <Badge variant="outline">Webhooks</Badge>
-                    <Badge variant="outline">JSON</Badge>
-                    <Badge variant="outline">Google Workspace (GCC)</Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <a href="https://github.com/teebs339/n8n-Wedding-Planner-PDF-generator" target="_blank" className="flex items-center gap-1">
+                    <a href="https://github.com/me-ramzan/Automated_Response_System" target="_blank" className="flex items-center gap-1">
                       <Github className="h-4 w-4" />
                       <span>Code</span>
                     </a>
@@ -521,31 +515,27 @@ export default function Home() {
                   className="object-contain transition-all duration-300 group-hover:scale-110" />
               </div>
               <CardHeader>
-                <CardTitle>Video Transcribe RPA</CardTitle>
-                <CardDescription>End-to-End Media Automation Pipeline
+                <CardTitle>AI Phone Booking Assistant</CardTitle>
+                <CardDescription>AI voice assistant for automated phone-based appointment scheduling.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Built an automated RPA pipeline using Python and UiPath/VB.NET to fetch videos from Google Sheets and MagicBrief, extract frames and audio, generate transcripts via Whisper API, and upload outputs to Miro, optimized for scalable, low-intervention VM deployment.
+                  An AI-powered voice booking assistant that handles customer calls to check calendar availability and schedule appointments. The system integrates with Google Calendar for real-time scheduling and automatically sends email confirmations. Built with n8n workflow automation, it processes natural language requests through AI agents to provide seamless booking experiences.
                 </p>
                 <div>
                   <h4 className="text-sm font-medium mb-2">Technologies:</h4>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">UiPath</Badge>
-                    <Badge variant="outline">RPA</Badge>
-                    <Badge variant="outline">Python</Badge>
-                    <Badge variant="outline">VB.NET</Badge>
-                    <Badge variant="outline">OpenAI Whisper</Badge>
-                    <Badge variant="outline">Miro</Badge>
-                    <Badge variant="outline">pandas</Badge>
-                    <Badge variant="outline">moviepy</Badge>
-                    <Badge variant="outline">Virtual Machine (VM)</Badge>
+                    <Badge variant="outline">n8n</Badge>
+                    <Badge variant="outline">Vapi API</Badge>
+                    <Badge variant="outline">Eleven Labs</Badge>
+                    <Badge variant="outline">Gmail API</Badge>
+                    <Badge variant="outline">Google Calendar</Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <a href="https://github.com/teebs339/Video-Transcribe-RPA" target="_blank" className="flex items-center gap-1">
+                    <a href="https://github.com/me-ramzan/AI-Powered_Phone_Booking_Assistant" target="_blank" className="flex items-center gap-1">
                       <Github className="h-4 w-4" />
                       <span>Code</span>
                     </a>
@@ -564,25 +554,25 @@ export default function Home() {
                 />
               </div>
               <CardHeader>
-                <CardTitle>FMCSA Backend Data Extractor RPA</CardTitle>
-                <CardDescription>Extract data from HTML request, classifying using RegEx</CardDescription>
+                <CardTitle>CRM Automation</CardTitle>
+                <CardDescription>Automated LinkedIn-to-HubSpot CRM integration.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Developed an RPA bot to automatically scrape and process FMCSA backend data, parse it into structured Excel reports using RegEx, and format outputs with VBA. Built a dynamic workflow driven by MX/US DOT numbers while ensuring compliance with public FMCSA datasets.
+                  An automated CRM integration that processes LinkedIn outreach responses and syncs them with HubSpot. The workflow creates or updates contacts, generates deals for new leads, and logs conversation notes automatically. Built with n8n, it streamlines sales pipeline management by eliminating manual data entry from outreach campaigns.
                 </p>
                 <div>
                   <h4 className="text-sm font-medium mb-2">Technologies:</h4>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">RPA</Badge>
-                    <Badge variant="outline">UiPath</Badge>
-                    <Badge variant="outline">Excel VBA</Badge>
-                    <Badge variant="outline">RegEx</Badge>
+                    <Badge variant="outline">n8n</Badge>
+                    <Badge variant="outline">HubSpot API</Badge>
+                    <Badge variant="outline">HubSpot CRM</Badge>
+                    <Badge variant="outline">Linkedin</Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <a href="https://github.com/teebs339/FMCSA-Backend-Data-Extractor" target="_blank" className="flex items-center gap-1">
+                    <a href="https://github.com/me-ramzan/CRM_Automation" target="_blank" className="flex items-center gap-1">
                       <Github className="h-4 w-4" />
                       <span>Code</span>
                     </a>
@@ -594,7 +584,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Achievements & Awards Section */}
+        {/* Achievements & Awards Section
         <section id="achievements" className="py-16 scroll-mt-16">
           <div className="flex items-center gap-2 mb-8">
             <Award className="h-6 w-6 text-primary" />
@@ -615,7 +605,7 @@ export default function Home() {
 
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <a href="https://www.linkedin.com/in/ateeb-shahid/" target="_blank" className="flex items-right gap-1">
+                    <a href="https://www.linkedin.com/in/muhammad-ramzan-111576246/" target="_blank" className="flex items-right gap-1">
                       <ExternalLink className="h-4 w-4" />
                       <span>LinkedIn Profile</span>
                     </a>
@@ -656,7 +646,7 @@ export default function Home() {
                 </p>
 
                 <div className="flex gap-2">
-                  {/* First button */}
+                  {/* First button
                   <Button size="sm" variant="outline" asChild>
                     <a
                       href="https://www.facebook.com/SSTUMTofficial/posts/pfbid0BqiUZLoGXsBh3EtbrmE4YTKzH5f7M5DoBKeYtMBCmkqMva9qpiNZzTWVAPyFPsdBl?rdid=zdE5DEPz1xLNUwBv#"
@@ -668,7 +658,7 @@ export default function Home() {
                     </a>
                   </Button>
 
-                  {/* Second button */}
+                  {/* Second button
                   <Button size="sm" variant="outline" asChild>
                     <a
                       href="https://www.facebook.com/SSTUMTofficial/posts/pfbid02P9CE7mTX1qCsrVoS8SPE6m2jm5B3teDnxhniXdepmyBv3scfnrKQMDfC5BbY8gpJl"
@@ -687,7 +677,7 @@ export default function Home() {
 
           </div>
         </section>
-
+*/}
         {/* Skills Section */}
         <section id="skills" className="py-16 scroll-mt-16">
           <div className="flex items-center gap-2 mb-8">
@@ -709,7 +699,6 @@ export default function Home() {
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       <Badge>Python</Badge>
-                      <Badge>VB.NET</Badge>
                       <Badge>C#</Badge>
                       <Badge>C/C++</Badge>
                       <Badge>HTML/CSS</Badge>
@@ -726,17 +715,11 @@ export default function Home() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      <Badge>HuggingFace</Badge>
                       <Badge>OpenAI</Badge>
-                      <Badge>Numpy</Badge>
-                      <Badge>moviepy</Badge>
-                      <Badge>Pandas</Badge>
-                      <Badge>Flask</Badge>
                       <Badge>Selenium</Badge>
                       <Badge>BeautifulSoup</Badge>
-                      <Badge>OpenCV</Badge>
                       <Badge>OpenAI</Badge>
-                      <Badge>Ollama</Badge>
+                      <Badge>DeepSeek</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -749,20 +732,14 @@ export default function Home() {
                     <div className="flex flex-wrap gap-2">
                       <Badge>UiPath</Badge>
                       <Badge>Power Automate</Badge>
-                      <Badge>Automation Anywhere</Badge>
                       <Badge>n8n</Badge>
                       <Badge>Make.com</Badge>
                       <Badge>Zapier</Badge>
-                      <Badge>Retool</Badge>
                       <Badge>HighLevel (GHL)</Badge>
-                      <Badge>SalesForce</Badge>
                       <Badge>HubSpot</Badge>
-                      <Badge>ClickUp</Badge>
                       <Badge>PhotoShop</Badge>
-                      <Badge>Cursor</Badge>
                       <Badge>Git & GitHub</Badge>
-                      <Badge>AWS</Badge>
-                      <Badge>CI/CD</Badge>
+                      <Badge>PowerBI</Badge>
                       <Badge>Google Cloud</Badge>
                       <Badge>Postman</Badge>
                     </div>
@@ -833,7 +810,7 @@ export default function Home() {
           </Tabs>
         </section>
 
-        {/* Certifications Section */}
+        {/* Certifications Section
         <section id="certifications" className="py-16 scroll-mt-16">
           <div className="flex items-center gap-2 mb-8">
             <FileText className="h-6 w-6 text-primary" />
@@ -862,7 +839,7 @@ export default function Home() {
 
           </div>
         </section>
-
+*/}
         {/* Contact Section */}
         <section id="contact" className="py-16 scroll-mt-16">
           <div className="flex items-center gap-2 mb-8">
@@ -887,8 +864,8 @@ export default function Home() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-primary" />
-                  <a href="teeb.shahid@gmail.com" className="hover:underline">
-                    teeb.shahid@gmail.com
+                  <a href="me.ramzan.zulfiqar@gmail.com" className="hover:underline">
+                    me.ramzan.zulfiqar@gmail.com
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
@@ -899,22 +876,22 @@ export default function Home() {
                   <h3 className="font-medium mb-3">Connect with me</h3>
                   <div className="flex gap-4">
                     <Button variant="outline" size="icon" asChild>
-                      <a href="https://www.linkedin.com/in/ateeb-shahid/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                      <a href="https://www.linkedin.com/in/muhammad-ramzan-111576246/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                         <Linkedin className="h-5 w-5" />
                       </a>
                     </Button>
                     <Button variant="outline" size="icon" asChild>
-                      <a href="https://github.com/teebs339" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                      <a href="https://github.com/me-ramzan" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                         <Github className="h-5 w-5" />
                       </a>
                     </Button>
 
-                    <Button variant="outline" size="icon" asChild>
+                    {/* <Button variant="outline" size="icon" asChild>
                       <a href="tel:+971506771450" aria-label="Phone">
                         <Phone className="h-5 w-5" />
                       </a>
                     </Button>
-
+                  */}
 
                   </div>
                 </div>
@@ -930,7 +907,7 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="outline" size="sm" asChild>
-              <a href="https://drive.google.com/uc?export=download&id=1nVSjdQVcGIQAtv2TtZajffxZmibRz8gm" download>
+              <a href="https://drive.google.com/file/d/1Jz_dBK_Oed_87kBUaFcH7d5A3AQv4c9W/view?usp=sharing" download>
                 <Download className="h-4 w-4" />
                 <span>Download Resume</span></a>
             </Button>

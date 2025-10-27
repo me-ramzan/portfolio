@@ -6,8 +6,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Ateeb Shahid | Personal Portfolio",
-  description: "Personal portfolio of Ateeb Shahid",
+  title: "Muhammad Ramzan | Personal Portfolio",
+  description: "Personal portfolio of Muhammad Ramzan",
   generator: 'v0.dev',
   icons: {
     icon: '/pfp-icon.ico',
