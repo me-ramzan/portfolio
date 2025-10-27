@@ -28,7 +28,7 @@ import {
 
 import ContactForm from "@/components/contact-form"
 import Navigation from "@/components/navigation"
-import {SiDatacamp} from "react-icons/si";
+import { SiDatacamp } from "react-icons/si";
 import { Phone } from 'lucide-react';
 import { Separator } from "@radix-ui/react-dropdown-menu"
 
@@ -39,7 +39,7 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="font-bold">
-            Ateeb Shahid
+            Muhammad Ramzan
           </Link>
           <div className="flex items-center gap-4">
             <Navigation />
@@ -52,10 +52,10 @@ export default function Home() {
         {/* Hero Section */}
         <section id="hero" className="py-20 md:py-28 flex flex-col md:flex-row items-center gap-8 md:gap-16">
           <div className="flex-1 space-y-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">Ateeb Shahid</h1>
-            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">Automation Engineer | RPA / IPA Engineer</h2>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">Muhammad Ramzan</h1>
+            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">AI & Automation Engineer | RPA Developer</h2>
             <p className="text-muted-foreground max-w-md">
-              Passionate about creating intuitive and impactful digital experiences. Interest and focused on Automation, Data Science, machine learning and AI. <strong>Open to Work</strong> & collaborate with forward thinking organizations in UAE.
+              Passionate about creating intuitive and impactful digital experiences. Interest and focused on Automation, RPA and AI. <strong>Open to Work</strong> & collaborate with forward thinking organizations in UAE.
             </p>
             <div className="flex gap-4 pt-4">
               <Button asChild>
@@ -68,28 +68,28 @@ export default function Home() {
                 <a href="https://drive.google.com/file/d/1nVSjdQVcGIQAtv2TtZajffxZmibRz8gm/view?usp=sharing" target="_blank">My Resume</a>
               </Button>
             </div>
-            
+
             {/*Follow Linkedin button*/}
             <div className="flex gap-4 pt-2">
               <Button variant="outline" asChild>
-              <a href="https://www.linkedin.com/in/ateeb-shahid/" target="_blank" className="flex items-center gap-1">
-                <Linkedin className="h-4 w-4" />
-                <span>Follow LinkedIn</span>
-              </a>
+                <a href="https://www.linkedin.com/in/muhammad-ramzan-111576246/" target="_blank" className="flex items-center gap-1">
+                  <Linkedin className="h-4 w-4" />
+                  <span>Follow LinkedIn</span>
+                </a>
               </Button>
-            
-            {/*Follow Github button*/}
+
+              {/*Follow Github button*/}
               <Button variant="outline" asChild>
-              <a href="https://github.com/teebs339" target="_blank" className="flex items-center gap-1">
-                <Github className="h-4 w-4" />
-                <span>Follow GitHub</span>
-              </a>
+                <a href="https://github.com/me-ramzan" target="_blank" className="flex items-center gap-1">
+                  <Github className="h-4 w-4" />
+                  <span>Follow GitHub</span>
+                </a>
               </Button>
             </div>
 
           </div>
           <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-background shadow-xl">
-            <Image src={process.env.NODE_ENV === 'production' ? '/portfolio/new-pfp.png' : '/new-pfp.png'} alt="Jane Doe" fill className="object-cover" priority />
+            <Image src={process.env.NODE_ENV === 'production' ? '/portfolio/myphoto.png' : '/myphoto.png'} alt="Jane Doe" fill className="object-cover" priority />
           </div>
         </section>
 
@@ -102,7 +102,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-4">
               <p>
-                I'm an Automation and Machine Learning Engineer with a passion for building intelligent systems that simplify complex workflows. My journey in technology started with a curiosity for how automation and AI can enhance human productivity. Over time, I've developed expertise in RPA, process optimization, and intelligent automation using tools like UiPath, Power Automate, and n8n, combined with Python and Node.js to deliver innovative, data-driven solutions.
+                I'm an RPA Developer and an Automation Engineer with a passion for building intelligent systems that simplify complex workflows. My journey in technology started with a curiosity for how automation and AI can enhance human productivity. Over time, I've developed expertise in RPA, process optimization, and intelligent automation using tools like UiPath, and n8n combined with Python and Node.js to deliver innovative, data-driven solutions.
               </p>
               <p>
                 I aim to leverage my technical skills to create impactful solutions that address real-world challenges.
@@ -110,8 +110,7 @@ export default function Home() {
                 software can make a significant difference.
               </p>
               <p>
-                When I'm not coding, you can find me hiking in the mountains, in gym, swimming pool, pulling 
-                strings on a guitar or performing backflips on a trampoline. 
+                When I'm not coding, you can find me playing football, in gym, snooker or hanging out with my friends.
               </p>
             </div>
             <Card>
@@ -133,11 +132,11 @@ export default function Home() {
                 <div>
                   <span className="font-medium">Interests:</span>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    <Badge variant="secondary">Intelligent Automation</Badge>
+                    <Badge variant="secondary">Automation Engineering</Badge>
                     <Badge variant="secondary">Data Science</Badge>
-                    <Badge variant="secondary">Machine Learning</Badge>
+                    <Badge variant="secondary">Robotic Automation</Badge>
                     <Badge variant="secondary">AI</Badge>
-                    <Badge variant="secondary">LLMs</Badge>
+                    <Badge variant="secondary">Cloud Engineering</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -160,8 +159,8 @@ export default function Home() {
                   <CardDescription>Upwork (Hybrid)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
-                  <Badge>Jan 2025 - Aug 2025</Badge>
-                  <span className="text-xs text-muted-foreground mt-1 mr-1">8 months</span>
+                  <Badge>June 2025 - Current</Badge>
+                  <span className="text-xs text-muted-foreground mt-1 mr-1">5 months</span>
                 </div>
               </div>
             </CardHeader>
@@ -169,15 +168,13 @@ export default function Home() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-muted-foreground">
-                  Delivered AI-driven RPA/IPA solutions as a freelancer for global clients across SAP MM, SD, and FI/CO processes. Built end-to-end automations using UiPath, Power Automate, Blue Prism, Automation Anywhere, n8n, Zapier, Make.com, Python, Node.js, REST APIs, and CRMs (Zoho, GHL, Salesforce, HubSpot). Earned Upwork <strong>Top Rated badge</strong> with <strong>100% Job Success</strong>, completing 20+ projects with consistent 5-star reviews.
+                  RPA Developer specializing in end-to-end automation solutions with expertise in UiPath, integrating CRM systems (HubSpot), Google Workspace, and Microsoft 365 to streamline business processes and achieve 90%+ efficiency improvements in data processing and workflow automation. Built end-to-end automations using UiPath, Power Automate, n8n, Zapier, Make.com, Python, Node.js, REST APIs, and CRMs (GHL, Salesforce, HubSpot).
                 </p>
                 <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
                 <ul className="list-disc list-inside text-muted-foreground space-y-0">
-                  <li>Delivered tailored AI automation solutions for international clients across multiple industries, including SAP MM, SD and FI/CO processes.</li>
-                  <li>Used RPA tools such as UiPath, Power Automate, Blue Prism, Automation Anywhere and web tools such as N8N, Zapier, Make.com, Retools to develop custom automated solutions.</li>
-                  <li>Achieved Upwork Top Rated status with 100% Job Success and 5-star client reviews.</li>
-                  <li>Completed 20+ projects for clients all over the world including US, UK, EU and Middle East.</li>
-                  <li>Built bots and integrations using UiPath, Power Automate, Python (Selenium), Node.js (Puppeteer) and ML Model Qwen, Docker/Ollama, REST APIs and CRM platforms like Zoho, GoHighLevel (GHL), SalesForce and HubSpot.</li>
+                  <li>Designed and built an end-to-end n8n workflow integrated with OpenAI and Pinecone to intelligently process and analyze documents.</li>
+                  <li>Used RPA tools such as UiPath, Power Automate and web tools such as N8N, Zapier, Make.com to make AI driven intelligent automations.</li>
+                  <li>Completed 10+ projects for clients all over the world including US, UK, EU and Middle East.</li>
                 </ul>
               </div>
 
@@ -185,35 +182,31 @@ export default function Home() {
                 <h4 className="font-medium text-sm uppercase tracking-wide text-primary">Tools & Technologies</h4>
                 <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> UiPath</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
-                   <span> Automation Anywhere</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
-                   <span> Power Automate</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
-                      <span> Selenium</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
-                    <span> Puppeteer</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> n8n</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Selenium</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Apify</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> GHL</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> Make.com</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> Zapier</span>
                   </li>
                 </ul>
@@ -232,10 +225,6 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Code className="h-4 w-4 text-primary" />
-                    <span>VB.NET</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Code className="h-4 w-4 text-primary" />
                     <span>SQL</span>
                   </li>
                 </ul>
@@ -244,18 +233,18 @@ export default function Home() {
             </CardContent>
           </Card>
 
-        <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
+          <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
 
           <Card className="border-none shadow-none">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>Lead RPA/IPA Developer</CardTitle>
+                  <CardTitle>RPA Developer</CardTitle>
                   <CardDescription>Lahore, Pakistan (On-site)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
-                  <Badge>Oct 2023 - Jan 2025</Badge>
-                  <span className="text-xs text-muted-foreground mt-1 mr-1">15 months</span>
+                  <Badge>Mar 2024 - Mar 2025</Badge>
+                  <span className="text-xs text-muted-foreground mt-1 mr-1">12 months</span>
                 </div>
               </div>
             </CardHeader>
@@ -263,19 +252,14 @@ export default function Home() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-muted-foreground">
-                  At Sybros Tech, a technology consulting firm specializing in <strong>Robotic Process Automation (RPA)</strong> and <strong>Intelligent Process Automation (IPA)</strong>, I led the RPA team in designing and deploying automation solutions across SAP Fiori and HANA, streamlining finance, procurement, and sales operations. Oversaw developer training, guided project execution, and represented Sybros Tech as a speaker in university workshops. Delivered scalable automations using UiPath, Power Automate, Python, and API integrations, showcasing the company's leadership in enterprise automation.
+                  At Sybros Tech, a technology consulting firm specializing in <strong>Robotic Process Automation (RPA)</strong> and <strong>Intelligent Process Automation (IPA)</strong>, I was a prominent member of the RPA team in designing and deploying automation solutions across SAP Fiori and HANA, streamlining finance, procurement, and sales operations. Delivered scalable automations using UiPath, Power Automate, Python, and API integrations.
                 </p>
                 <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
                 <ul className="list-disc list-inside text-muted-foreground space-y-0">
-                  <li>Experienced in SAP Fiori and SAP HANA environments, including data extraction, reporting, and process automation.</li>
-                  <li>Led a team of 5 developers to deliver high-quality automation projects across all modules.</li>
-                  <li>Received a LinkedIn recommendation from the CEO of SybrosTech, recognizing professionalism, problem-solving, teamwork, and reliability.</li>
+                  <li>Experienced in data extraction, reporting, and process automation.</li>
                   <li>Designed and implemented end-to-end RPA solutions using UiPath, Power Automate, Python, and API integrations for SAP and non-SAP systems.</li>
-                  <li>Conducted process analysis, data mining, and workflow optimization leveraging SAP HANA's real-time processing capabilities.</li>
-                  <li>Automated SAP HANA data queries and reporting for finance, procurement, and sales operations, reducing manual effort and errors.</li>
                   <li>Managed full project lifecycle, ensuring timely delivery and adherence to quality standards.</li>
-                  <li>Experienced with tools and platforms: Postman, Node.js (Puppeteer), Python (Selenium), Google Apps Script, Salesforce, HubSpot, Zapier, Make.com, n8n, MongoDB.</li>
-                  <li>Trained and mentored junior developers and conducted university workshops on RPA, automation, and SAP process integration.</li>
+                  <li>Experienced with tools and platforms: Postman, PowerBI, Python (Selenium), Google Apps Script, Salesforce, HubSpot, Zapier, Make.com, n8n, MongoDB.</li>
                 </ul>
               </div>
 
@@ -283,43 +267,39 @@ export default function Home() {
                 <h4 className="font-medium text-sm uppercase tracking-wide text-primary">Tools & Technologies</h4>
                 <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> UiPath/Orchestrator</span>
-                   </li>
-                  <li className="flex items-center gap-2">
-                   <Braces className="h-4 w-4 text-primary"/>
-                   <span> Power Automate/Power Apps</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Power Automate/Power Apps</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> Selenium</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> Twilio</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
-                    <span> ML Models</span>
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> PowerBI</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
-                    <span> LLMs</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> Postman</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> BeautifulSoup</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> MongoDB</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary"/>
+                    <Braces className="h-4 w-4 text-primary" />
                     <span> n8n</span>
                   </li>
                 </ul>
@@ -343,10 +323,6 @@ export default function Home() {
                   <li className="flex items-center gap-2">
                     <Code className="h-4 w-4 text-primary" />
                     <span>SQL</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Code className="h-4 w-4 text-primary" />
-                    <span>PHP</span>
                   </li>
                 </ul>
               </div>
@@ -370,15 +346,14 @@ export default function Home() {
                   <CardDescription>Lahore, Pakistan</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
-                <Badge>Jun 2019 - Jul 2023</Badge>
-                <span className="text-xs text-muted-foreground mt-1 mr-1">4 years</span>
+                  <Badge>June 2021 - June 2025</Badge>
+                  <span className="text-xs text-muted-foreground mt-1 mr-1">4 years</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-medium">Bachelor of Science in Computer Science</h3>
-                <p className="text-muted-foreground">GPA: 2.91/4.0</p>
               </div>
               <div>
                 <h4 className="font-medium">Relevant Coursework</h4>
@@ -393,7 +368,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" />
-                    <span>Generative AI</span>
+                    <span>Cloud Computing</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" />
@@ -403,7 +378,7 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
-            <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
+          <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
           <Card>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -412,11 +387,11 @@ export default function Home() {
                   <CardDescription>Lahore, Pakistan</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
-                <Badge>May 2017 - Mar 2019</Badge>
-                <span className="text-xs text-muted-foreground mt-1 mr-1">2 years</span>
+                  <Badge>May 2019 - Mar 2021</Badge>
+                  <span className="text-xs text-muted-foreground mt-1 mr-1">2 years</span>
                 </div>
               </div>
-              
+
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -452,40 +427,38 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight">Projects</h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            
+
 
             <Card className="overflow-hidden">
               <div className="aspect-video relative">
                 <Image
-                  src={process.env.NODE_ENV === 'production' ? '/portfolio/unity-logo.png' : '/unity-logo.png'}
+                  src={process.env.NODE_ENV === 'production' ? '/portfolio/UiPath.png' : '/UiPath.png'}
                   alt="cognify"
                   fill
                   className="object-contain transition-all duration-300 group-hover:scale-110" />
               </div>
               <CardHeader>
-                <CardTitle>Final Year Project - Free Flow Learning</CardTitle>
-                <CardDescription>An Oculus Meta Quest 2 App based on C#/Unity3D
-              </CardDescription>
+                <CardTitle>Active Listing</CardTitle>
+                <CardDescription>UiPath Bot to scrape and check product availability.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Built an immersive Oculus Meta Quest VR app using Unity 3D based on C# programming language. Leveraged XR Libraries to simulate accurate in app interaction and collision physics. Connected MySQL database for score keeping properties.
+                  This UiPath automation solution systematically monitors Philips smart door lock product listings on the Bunnings Australia e-commerce platform. The workflow extracts product data from Google Sheets, performs web scraping to verify real-time availability against model numbers, and generates automated email reports with comprehensive availability status for inventory management.
                 </p>
                 <div>
                   <h4 className="text-sm font-medium mb-2">Technologies:</h4>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">Meta Quest 2</Badge>
-                    <Badge variant="outline">C#</Badge>
-                    <Badge variant="outline">MySQL</Badge>
-                    <Badge variant="outline">XR</Badge>
-                    <Badge variant="outline">Unity3D</Badge>
-                    <Badge variant="outline">Oculus</Badge>
-                    <Badge variant="outline">Rendering/Vizualization</Badge>
+                    <Badge variant="outline">UiPath Studio</Badge>
+                    <Badge variant="outline">GSuite</Badge>
+                    <Badge variant="outline">Google Sheets</Badge>
+                    <Badge variant="outline">Automation</Badge>
+                    <Badge variant="outline">Robotic Automation</Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" asChild>
-                    <a href="https://github.com/teebs339/FYP-Free-Flow-Learning" target="_blank" className="flex items-center gap-1">
+                    <a href="https://github.com/me-ramzan/Active_Listing" target="_blank" className="flex items-center gap-1">
                       <Github className="h-4 w-4" />
                       <span>Code</span>
                     </a>
@@ -505,7 +478,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Wedding Planner PDF Generator</CardTitle>
                 <CardDescription>Wedding-planner PDF generation from Webhook using n8n, Google APIs and AI
-              </CardDescription>
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -537,7 +510,7 @@ export default function Home() {
                   </Button>
                 </div>
               </CardContent>
-            </Card> 
+            </Card>
 
             <Card className="overflow-hidden">
               <div className="aspect-video relative">
@@ -550,7 +523,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Video Transcribe RPA</CardTitle>
                 <CardDescription>End-to-End Media Automation Pipeline
-              </CardDescription>
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -579,7 +552,7 @@ export default function Home() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>          
+            </Card>
 
             <Card className="overflow-hidden">
               <div className="aspect-video relative">
@@ -671,7 +644,7 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Conducted RPA Workshop at University of Management & Technology (UMT)</CardTitle>
@@ -708,7 +681,7 @@ export default function Home() {
                   </Button>
                 </div>
 
-                
+
               </CardContent>
             </Card>
 
@@ -755,7 +728,7 @@ export default function Home() {
                     <div className="flex flex-wrap gap-2">
                       <Badge>HuggingFace</Badge>
                       <Badge>OpenAI</Badge>
-                      <Badge>Numpy</Badge>  
+                      <Badge>Numpy</Badge>
                       <Badge>moviepy</Badge>
                       <Badge>Pandas</Badge>
                       <Badge>Flask</Badge>
@@ -886,7 +859,7 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
-            
+
           </div>
         </section>
 
@@ -942,7 +915,7 @@ export default function Home() {
                       </a>
                     </Button>
 
-                    
+
                   </div>
                 </div>
               </CardContent>
