@@ -89,7 +89,14 @@ export default function Home() {
 
           </div>
           <div className="relative w-96 h-96 md:w-[450px] md:h-[450px] rounded-full overflow-hidden border-4 border-background shadow-xl">
-            <Image src={process.env.NODE_ENV === 'production' ? '/portfolio/myphotoo.png' : '/myphotoo.png'} alt="Jane Doe" fill className="object-cover" priority />
+            <Image
+              src={process.env.NODE_ENV === 'production' ? '/portfolio/myphotoo.png' : '/myphotoo.png'}
+              alt="Muhammad Ramzan"
+              fill
+              className="object-cover"
+              style={{ objectPosition: 'center 20%' }}
+              priority
+            />
           </div>
         </section>
 
