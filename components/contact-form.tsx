@@ -45,7 +45,7 @@ export default function ContactForm() {
 
       await emailjs.sendForm(
         'default_service',
-        'template_ixuq35o',
+        'template_pta6w9h',
         formRef.current!,
         '_Y1OJswaMuBHliGao' //public key
       );
