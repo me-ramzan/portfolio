@@ -5,13 +5,13 @@ import emailjs from "emailjs-com";
 
 export default function ContactForm() {
   const formRef = useRef<HTMLFormElement>(null);
-  const [form, setForm] = useState({ 
-    name: "", 
-    email: "", 
-    phone: "", 
-    message: "" 
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: ""
   });
-  const [formErrors, setFormErrors] = useState<{email?: string}>({});
+  const [formErrors, setFormErrors] = useState<{ email?: string }>({});
   const [status, setStatus] = useState<{ type: "idle" | "sending" | "ok" | "error"; text?: string }>({
     type: "idle",
   });
@@ -19,7 +19,7 @@ export default function ContactForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    
+
     if (name === "email" && formErrors.email) {
       setFormErrors({});
     }
@@ -32,7 +32,7 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     //validate email
     if (!validateEmail(form.email)) {
       setFormErrors({ email: "Please enter a valid email address" });
@@ -42,12 +42,12 @@ export default function ContactForm() {
     setStatus({ type: "sending", text: "Sending..." });
 
     try {
-      
+
       await emailjs.sendForm(
-        'default_service',  
-        'template_ixuq35o', 
-        formRef.current!,   
-        'ehdE9q289VbqNO4oU' //public key
+        'default_service',
+        'template_ixuq35o',
+        formRef.current!,
+        '_Y1OJswaMuBHliGao' //public key
       );
 
       setForm({ name: "", email: "", phone: "", message: "" });
@@ -70,7 +70,7 @@ export default function ContactForm() {
         placeholder="Full Name"
         className="w-full border rounded p-2 placeholder:text-sm"
       />
-      
+
       {/* Email and Phone */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -81,15 +81,14 @@ export default function ContactForm() {
             onChange={handleChange}
             required
             placeholder="Email"
-            className={`w-full border rounded p-2 placeholder:text-sm ${
-              formErrors.email ? "border-red-500" : ""
-            }`}
+            className={`w-full border rounded p-2 placeholder:text-sm ${formErrors.email ? "border-red-500" : ""
+              }`}
           />
           {formErrors.email && (
             <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
           )}
         </div>
-        
+
         <input
           name="phone"
           type="tel"
@@ -110,7 +109,7 @@ export default function ContactForm() {
         placeholder="Message"
         className="w-full border rounded p-2 placeholder:text-sm"
       />
-      
+
       {/* Submit/status button */}
       <div className="flex items-center gap-3">
         <button
@@ -122,9 +121,8 @@ export default function ContactForm() {
         </button>
         {status.type !== "idle" && (
           <p
-            className={`text-sm ${
-              status.type === "error" ? "text-red-500" : "text-green-600"
-            }`}
+            className={`text-sm ${status.type === "error" ? "text-red-500" : "text-green-600"
+              }`}
           >
             {status.text}
           </p>
