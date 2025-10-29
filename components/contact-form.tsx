@@ -9,13 +9,18 @@ export default function ContactForm() {
     name: "",
     email: "",
     phone: "",
-    message: ""
+    message: "",
   });
+
   const [formErrors, setFormErrors] = useState<{ email?: string }>({});
-  const [status, setStatus] = useState<{ type: "idle" | "sending" | "ok" | "error"; text?: string }>({
+  const [status, setStatus] = useState<{
+    type: "idle" | "sending" | "ok" | "error";
+    text?: string;
+  }>({
     type: "idle",
   });
 
+  // ✅ Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
@@ -25,15 +30,16 @@ export default function ContactForm() {
     }
   };
 
+  // ✅ Validate email
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
+  // ✅ Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    //validate email
     if (!validateEmail(form.email)) {
       setFormErrors({ email: "Please enter a valid email address" });
       return;
@@ -42,20 +48,18 @@ export default function ContactForm() {
     setStatus({ type: "sending", text: "Sending..." });
 
     try {
-
       await emailjs.sendForm(
-        'service_n0dgjvl',
-        'template_pta6w9h',
+        "default_service", // ✅ your Gmail service ID
+        "template_pta6w9h", // ✅ your template ID
         formRef.current!,
-        '_Y1OJswaMuBHliGao' //public key
+        "_Y1OJswaMuBHliGao" // ✅ your public key
       );
 
       setForm({ name: "", email: "", phone: "", message: "" });
-      setFormErrors({});
-      setStatus({ type: "ok", text: "Message sent, thank you!" });
+      setStatus({ type: "ok", text: "✅ Message sent successfully!" });
     } catch (err) {
       console.error("EmailJS error:", err);
-      setStatus({ type: "error", text: "Failed to send. Please try again later." });
+      setStatus({ type: "error", text: "❌ Failed to send. Please try again later." });
     }
   };
 
@@ -71,7 +75,7 @@ export default function ContactForm() {
         className="w-full border rounded p-2 placeholder:text-sm"
       />
 
-      {/* Email and Phone */}
+      {/* Email and Phone Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <input
@@ -99,7 +103,7 @@ export default function ContactForm() {
         />
       </div>
 
-      {/* Message */}
+      {/* Message Field */}
       <textarea
         name="message"
         value={form.message}
@@ -110,18 +114,23 @@ export default function ContactForm() {
         className="w-full border rounded p-2 placeholder:text-sm"
       />
 
-      {/* Submit/status button */}
+      {/* Submit Button */}
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          className="bg-primary text-white px-4 py-2 rounded disabled:opacity-60"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-60"
           disabled={status.type === "sending"}
         >
           {status.type === "sending" ? "Sending…" : "Send"}
         </button>
+
         {status.type !== "idle" && (
           <p
-            className={`text-sm ${status.type === "error" ? "text-red-500" : "text-green-600"
+            className={`text-sm ${status.type === "error"
+              ? "text-red-500"
+              : status.type === "ok"
+                ? "text-green-600"
+                : ""
               }`}
           >
             {status.text}
