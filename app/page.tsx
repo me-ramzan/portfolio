@@ -863,7 +863,7 @@ export default function Home() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-primary" />
-                  <a href="me.ramzan.zulfiqar@gmail.com" className="hover:underline">
+                  <a href="mailto:me.ramzan.zulfiqar@gmail.com" className="hover:underline">
                     me.ramzan.zulfiqar@gmail.com
                   </a>
                 </div>
