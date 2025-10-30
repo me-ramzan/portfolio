@@ -906,7 +906,7 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="outline" size="sm" asChild>
-              <a href="https://drive.google.com/file/d/1Jz_dBK_Oed_87kBUaFcH7d5A3AQv4c9W/view?usp=sharing" download>
+              <a href="https://drive.google.com/file/d/1f7lyRzBrWRFayxG0_240VKvWNribFlMZ/view?usp=sharing" download>
                 <Download className="h-4 w-4" />
                 <span>Download Resume</span></a>
             </Button>
