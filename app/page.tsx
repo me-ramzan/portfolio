@@ -65,7 +65,7 @@ export default function Home() {
                 <a href="#projects">View projects</a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://drive.google.com/file/d/1Jz_dBK_Oed_87kBUaFcH7d5A3AQv4c9W/view?usp=sharing" target="_blank">My Resume</a>
+                <a href="https://drive.google.com/file/d/1f7lyRzBrWRFayxG0_240VKvWNribFlMZ/view?usp=sharing" target="_blank">My Resume</a>
               </Button>
             </div>
 
