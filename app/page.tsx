@@ -150,17 +150,17 @@ export default function Home() {
             <Briefcase className="h-6 w-6 text-primary" />
             <h2 className="text-3xl font-bold tracking-tight">Experience</h2>
           </div>
-
+          ``
           <Card className="border-none shadow-none">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>AI Automation Engineer</CardTitle>
-                  <CardDescription>Upwork (Hybrid)</CardDescription>
+                  <CardTitle>AI & Automation Engineer</CardTitle>
+                  <CardDescription>Lahore, Pakistan (On-site)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
-                  <Badge>June 2025 - Current</Badge>
-                  <span className="text-xs text-muted-foreground mt-1 mr-1">5 months</span>
+                  <Badge>April 2025 - Current</Badge>
+                  <span className="text-xs text-muted-foreground mt-1 mr-1">8 months</span>
                 </div>
               </div>
             </CardHeader>
