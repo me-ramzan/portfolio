@@ -65,7 +65,7 @@ export default function Home() {
                 <a href="#projects">View projects</a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://drive.google.com/file/d/1vle1HaatiWji6PwL2qzrd6osScjU1un5/view?usp=sharing" target="_blank">My Resume</a>
+                <a href="https://drive.google.com/file/d/13hF2Mqg4NIvu_LcA3XhanVEaiYuhmUL1/view?usp=sharing" target="_blank">My Resume</a>
               </Button>
             </div>
 
@@ -906,7 +906,7 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="outline" size="sm" asChild>
-              <a href="https://drive.google.com/file/d/1vle1HaatiWji6PwL2qzrd6osScjU1un5/view?usp=sharing" download>
+              <a href="https://drive.google.com/file/d/13hF2Mqg4NIvu_LcA3XhanVEaiYuhmUL1/view?usp=sharing" download>
                 <Download className="h-4 w-4" />
                 <span>Download Resume</span></a>
             </Button>
