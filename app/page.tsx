@@ -53,7 +53,7 @@ export default function Home() {
         <section id="hero" className="py-20 md:py-28 flex flex-col md:flex-row items-center gap-8 md:gap-16">
           <div className="flex-1 space-y-4">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">Muhammad Ramzan</h1>
-            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">AI & Automation Engineer | RPA Developer</h2>
+            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">Automation & Software Engineer | RPA Developer</h2>
             <p className="text-muted-foreground max-w-md">
               Passionate about creating intuitive and impactful digital experiences. Interest and focused on Automation, RPA and AI. <strong>Open to Work</strong> & collaborate with forward thinking organizations in UAE.
             </p>
@@ -65,7 +65,7 @@ export default function Home() {
                 <a href="#projects">View projects</a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://drive.google.com/file/d/1wFanm_DAlnOQa3SSGlLh5ck8ygUh4q1A/view?usp=sharing" target="_blank">My Resume</a>
+                <a href="https://drive.google.com/file/d/1vle1HaatiWji6PwL2qzrd6osScjU1un5/view?usp=sharing" target="_blank">My Resume</a>
               </Button>
             </div>
 
@@ -155,7 +155,7 @@ export default function Home() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>AI & Automation Engineer</CardTitle>
+                  <CardTitle>Software Engineer</CardTitle>
                   <CardDescription>Lahore, Pakistan (On-site)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
@@ -168,13 +168,13 @@ export default function Home() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-muted-foreground">
-                  RPA Developer specializing in end-to-end automation solutions with expertise in UiPath, integrating CRM systems (HubSpot), Google Workspace, and Microsoft 365 to streamline business processes and achieve 90%+ efficiency improvements in data processing and workflow automation. Built end-to-end automations using UiPath, Power Automate, n8n, Zapier, Make.com, Python, Node.js, REST APIs, and CRMs (GHL, Salesforce, HubSpot).
+                  At DuoFankaar, I worked as a software engineer building React front ends and automation driven back ends using n8n, JavaScript, and ML. I delivered UI features, integrated complex APIs, and built AI backed workflows connecting CRMs like GoHighLevel, HubSpot, Zoho, Salesforce, and Pipedrive.
                 </p>
                 <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
                 <ul className="list-disc list-inside text-muted-foreground space-y-0">
-                  <li>Designed and built an end-to-end n8n workflow integrated with OpenAI and Pinecone to intelligently process and analyze documents.</li>
-                  <li>Used RPA tools such as UiPath, Power Automate and web tools such as N8N, Zapier, Make.com to make AI driven intelligent automations.</li>
-                  <li>Completed 10+ projects for clients all over the world including US, UK, EU and Middle East.</li>
+                  <li>Built React interfaces, reusable components, and API integrated front end features using JavaScript and npm tooling.</li>
+                  <li>Engineered backend automation pipelines with n8n, Node.js, Python, and ML models for data processing and workflow logic.</li>
+                  <li>Developed AI powered features and workflow layers to eliminate manual work and improve system reliability.</li>
                 </ul>
               </div>
 
@@ -183,7 +183,7 @@ export default function Home() {
                 <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
-                    <span> UiPath</span>
+                    <span> JavaScript</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
@@ -191,23 +191,23 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
-                    <span> Selenium</span>
+                    <span> React.js</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
-                    <span> Apify</span>
+                    <span> TypeScript</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
-                    <span> GHL</span>
+                    <span> Software Deployment</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
-                    <span> Make.com</span>
+                    <span> cPanel</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Braces className="h-4 w-4 text-primary" />
-                    <span> Zapier</span>
+                    <span> Machine Learning</span>
                   </li>
                 </ul>
               </div>
@@ -225,7 +225,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Code className="h-4 w-4 text-primary" />
-                    <span>SQL</span>
+                    <span>React.js</span>
                   </li>
                 </ul>
               </div>
@@ -906,7 +906,7 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="outline" size="sm" asChild>
-              <a href="https://drive.google.com/file/d/1wFanm_DAlnOQa3SSGlLh5ck8ygUh4q1A/view?usp=sharing" download>
+              <a href="https://drive.google.com/file/d/1vle1HaatiWji6PwL2qzrd6osScjU1un5/view?usp=sharing" download>
                 <Download className="h-4 w-4" />
                 <span>Download Resume</span></a>
             </Button>
