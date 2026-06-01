@@ -151,15 +151,114 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight">Experience</h2>
           </div>
           ``
+
+    
+
           <Card className="border-none shadow-none">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>Software Engineer</CardTitle>
+                  <CardTitle>Software Developer - <strong>IMPACT BBDO</strong></CardTitle>
+                  <CardDescription>Dubai, United Arab Emirates (On-site)</CardDescription>
+                </div>
+                <div className="flex flex-col items-end">
+                  <Badge>Apr 2026 - Present</Badge>
+                  <span className="text-xs text-muted-foreground mt-1 mr-1">12 months</span>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-muted-foreground">
+                  At Sybros Tech, a technology consulting firm specializing in <strong>Robotic Process Automation (RPA)</strong> and <strong>Intelligent Process Automation (IPA)</strong>, I was a prominent member of the RPA team in designing and deploying automation solutions across SAP Fiori and HANA, streamlining finance, procurement, and sales operations. Delivered scalable automations using UiPath, Power Automate, Python, and API integrations.
+                </p>
+                <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
+                <ul className="list-disc list-inside text-muted-foreground space-y-0">
+                  <li>Experienced in data extraction, reporting, and process automation.</li>
+                  <li>Designed and implemented end-to-end RPA solutions using UiPath, Power Automate, Python, and API integrations for SAP and non-SAP systems.</li>
+                  <li>Managed full project lifecycle, ensuring timely delivery and adherence to quality standards.</li>
+                  <li>Experienced with tools and platforms: Postman, PowerBI, Python (Selenium), Google Apps Script, Salesforce, HubSpot, Zapier, Make.com, n8n, MongoDB.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-sm uppercase tracking-wide text-primary">Tools & Technologies</h4>
+                <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> UiPath/Orchestrator</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Power Automate/Power Apps</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Selenium</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Twilio</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> PowerBI</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> Postman</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> BeautifulSoup</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> MongoDB</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Braces className="h-4 w-4 text-primary" />
+                    <span> n8n</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-sm uppercase tracking-wide text-primary">Programming Languages</h4>
+                <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                  <li className="flex items-center gap-2">
+                    <Code className="h-4 w-4 text-primary" />
+                    <span>Python</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Code className="h-4 w-4 text-primary" />
+                    <span>JavaScript</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Code className="h-4 w-4 text-primary" />
+                    <span>VB.NET</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Code className="h-4 w-4 text-primary" />
+                    <span>SQL</span>
+                  </li>
+                </ul>
+              </div>
+
+            </CardContent>
+          </Card>
+                <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
+          
+          <Card className="border-none shadow-none">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Software Engineer - <strong>DuoFankaar</strong></CardTitle>
                   <CardDescription>Dubai, United Arab Emirates (Hybrid)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
-                  <Badge>April 2025 - Current</Badge>
+                  <Badge>April 2025 - Mar 2026</Badge>
                   <span className="text-xs text-muted-foreground mt-1 mr-1">8 months</span>
                 </div>
               </div>
@@ -239,7 +338,7 @@ export default function Home() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>RPA Developer</CardTitle>
+                  <CardTitle>RPA Developer - <strong>SYBROS TECH</strong></CardTitle>
                   <CardDescription>Lahore, Pakistan (On-site)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
@@ -330,102 +429,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-<hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
 
-          <Card className="border-none shadow-none">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>RPA Developer</CardTitle>
-                  <CardDescription>Lahore, Pakistan (On-site)</CardDescription>
-                </div>
-                <div className="flex flex-col items-end">
-                  <Badge>Mar 2024 - Mar 2025</Badge>
-                  <span className="text-xs text-muted-foreground mt-1 mr-1">12 months</span>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-muted-foreground">
-                  At Sybros Tech, a technology consulting firm specializing in <strong>Robotic Process Automation (RPA)</strong> and <strong>Intelligent Process Automation (IPA)</strong>, I was a prominent member of the RPA team in designing and deploying automation solutions across SAP Fiori and HANA, streamlining finance, procurement, and sales operations. Delivered scalable automations using UiPath, Power Automate, Python, and API integrations.
-                </p>
-                <hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
-                <ul className="list-disc list-inside text-muted-foreground space-y-0">
-                  <li>Experienced in data extraction, reporting, and process automation.</li>
-                  <li>Designed and implemented end-to-end RPA solutions using UiPath, Power Automate, Python, and API integrations for SAP and non-SAP systems.</li>
-                  <li>Managed full project lifecycle, ensuring timely delivery and adherence to quality standards.</li>
-                  <li>Experienced with tools and platforms: Postman, PowerBI, Python (Selenium), Google Apps Script, Salesforce, HubSpot, Zapier, Make.com, n8n, MongoDB.</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-sm uppercase tracking-wide text-primary">Tools & Technologies</h4>
-                <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> UiPath/Orchestrator</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> Power Automate/Power Apps</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> Selenium</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> Twilio</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> PowerBI</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> Postman</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> BeautifulSoup</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> MongoDB</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Braces className="h-4 w-4 text-primary" />
-                    <span> n8n</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-sm uppercase tracking-wide text-primary">Programming Languages</h4>
-                <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                  <li className="flex items-center gap-2">
-                    <Code className="h-4 w-4 text-primary" />
-                    <span>Python</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Code className="h-4 w-4 text-primary" />
-                    <span>JavaScript</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Code className="h-4 w-4 text-primary" />
-                    <span>VB.NET</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Code className="h-4 w-4 text-primary" />
-                    <span>SQL</span>
-                  </li>
-                </ul>
-              </div>
-
-            </CardContent>
-          </Card>
 
         </section>
 
