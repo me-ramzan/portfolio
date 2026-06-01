@@ -156,7 +156,7 @@ export default function Home() {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle>Software Engineer</CardTitle>
-                  <CardDescription>Lahore, Pakistan (On-site)</CardDescription>
+                  <CardDescription>Dubai, United Arab Emirates (Hybrid)</CardDescription>
                 </div>
                 <div className="flex flex-col items-end">
                   <Badge>April 2025 - Current</Badge>
