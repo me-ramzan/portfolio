@@ -330,6 +330,8 @@ export default function Home() {
             </CardContent>
           </Card>
 
+<hr className="h-px bg-gray-200 dark:bg-gray-500 border-0 my-3" />
+
           <Card className="border-none shadow-none">
             <CardHeader>
               <div className="flex justify-between items-start">
