@@ -53,7 +53,7 @@ export default function Home() {
         <section id="hero" className="py-20 md:py-28 flex flex-col md:flex-row items-center gap-8 md:gap-16">
           <div className="flex-1 space-y-4">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">Muhammad Ramzan</h1>
-            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">Automation & Software Engineer | RPA Developer</h2>
+            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">AI Automation & Software Engineer</h2>
             <p className="text-muted-foreground max-w-md">
               Passionate about creating intuitive and impactful digital experiences. Interest and focused on Automation, RPA and AI. <strong>Open to Work</strong> & collaborate with forward thinking organizations in UAE.
             </p>
