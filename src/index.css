@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "tailwindcss";
+
+.mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+html {
+  scroll-behavior: smooth;
+}
+/* Hide native scrollbar but keep scrolling functional */
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge (Chromium) */
+}
+
+body {
+  overflow-x: hidden; /* prevent horizontal scrollbar from custom lines/absolute elements */
+}
