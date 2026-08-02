@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 
 const projects = [
@@ -34,26 +34,9 @@ const projects = [
 ];
 
 function TypewriterTags({ tags, active }) {
-  const [displayed, setDisplayed] = useState([]);
-  const timeoutRef = useRef(null);
-
-  useEffect(() => {
-    if (active) {
-      setDisplayed([]);
-      tags.forEach((tag, i) => {
-        timeoutRef.current = setTimeout(() => {
-          setDisplayed(prev => [...prev, tag]);
-        }, i * 120);
-      });
-    } else {
-      setDisplayed([]);
-    }
-    return () => clearTimeout(timeoutRef.current);
-  }, [active, tags]);
-
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-      {displayed.map((tag, i) => (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px', minHeight: '28px' }}>
+      {active && tags.map((tag, i) => (
         <span key={i} className="mono" style={{
           fontSize: '0.65rem',
           padding: '4px 10px',
@@ -61,7 +44,8 @@ function TypewriterTags({ tags, active }) {
           color: '#F4F1EA',
           borderRadius: '3px',
           letterSpacing: '0.05em',
-          animation: 'tagPop 0.2s ease-out',
+          animation: 'tagPop 0.2s ease-out both',
+          animationDelay: `${i * 0.08}s`,
         }}>
           {tag}
         </span>
@@ -156,7 +140,7 @@ export default function Projects() {
               width: '3px',
               height: '100%',
               backgroundColor: '#ffffff',
-              opacity: hovered === i ? 1 : 0,
+              opacity: hovered === i ? 1 : 0.6,
               transition: 'opacity 0.3s ease',
             }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -185,17 +169,45 @@ export default function Projects() {
                 </h3>
                 <TypewriterTags tags={project.stack} active={hovered === i} />
               </div>
-              <div style={{ maxWidth: '380px' }}>
-                <p style={{
-                  color: '#ffffff',
-                  fontSize: '0.9rem',
-                  lineHeight: 1.7,
-                  opacity: hovered === i ? 1 : 0.6,
-                  transition: 'opacity 0.3s',
-                }}>
-                  {project.description}
-                </p>
-              </div>
+<div style={{ maxWidth: '380px', minHeight: '5.4rem' }}>
+  <AnimatePresence mode="wait">
+    {hovered === i && (
+      <motion.p
+        key={i}
+        variants={{
+          animate: { transition: { staggerChildren: 0.02 } },
+          exit: { transition: { staggerChildren: 0.02, staggerDirection: -1 } },
+        }}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        style={{
+          color: '#ffffff',
+          fontSize: '0.9rem',
+          lineHeight: 1.7,
+          margin: 0,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.3em',
+        }}
+      >
+        {project.description.split(' ').map((word, wi) => (
+          <motion.span
+            key={wi}
+            variants={{
+              initial: { opacity: 0, y: -12 },
+              animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
+              exit: { opacity: 0, y: 12, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
+            }}
+            style={{ display: 'inline-block' }}
+          >
+            {word}
+          </motion.span>
+        ))}
+      </motion.p>
+    )}
+  </AnimatePresence>
+</div>
             </div>
           </motion.div>
         ))}

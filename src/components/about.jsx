@@ -1,11 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import sybrosLogo from '../assets/images/sybros.png';
+import bbdoLogo from '../assets/images/bbdo.png';
+import duofankaarLogo from '../assets/images/duofankaar.png';
+import samsungLogo from '../assets/images/samsung.png';
 
-const stats = [
-  { value: '3+', label: 'Years Experience' },
-  { value: '4', label: 'Companies' },
-  { value: '30+', label: 'Key Projects' },
-  { value: 'UAE', label: 'Based In' },
+
+const companies = [
+  { name: 'Sybros', logo: sybrosLogo },
+  { name: 'BBDO', logo: bbdoLogo },
+  { name: 'Duofankaar', logo: duofankaarLogo },
+  { name: 'Samsung', logo: samsungLogo },
 ];
 
 export default function About() {
@@ -26,7 +31,7 @@ export default function About() {
       id="about"
       ref={ref}
       style={{
-        padding: '10vw 6vw',
+        padding: '10vw 6vw 4vw',
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #000000',
       }}
@@ -43,7 +48,7 @@ export default function About() {
         </motion.div>
 
         {/* Right content */}
-        <div>
+        <div style={{ minWidth: 0 }}>
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={visible ? { opacity: 1, y: 0 } : {}}
@@ -74,40 +79,66 @@ export default function About() {
           >
             Automation and Software Engineer with <strong>~3 years</strong> of experience building React-based frontends and n8n-driven backends using JavaScript, React.js, Node.js, and Python. Strong RPA background with UiPath and Power Automate, plus deep CRM and enterprise integrations. Skilled in AI and ML workflows for automating complex, unstructured processes. <strong>Based in the UAE with relocation flexibility.</strong>
           </motion.p>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={visible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '1rem',
-              borderTop: '1px solid #000000',
-              paddingTop: '2.5rem',
-            }}
-          >
-            {stats.map((stat, i) => (
-              <div key={i}>
-                <div style={{
-                  fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
-                  fontWeight: 700,
-                  color: '#343148',
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  lineHeight: 1,
-                  marginBottom: '6px',
-                }}>
-                  {stat.value}
-                </div>
-                <div className="mono" style={{ fontSize: '0.7rem', color: '#000000', letterSpacing: '0.1em' }}>
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </motion.div>
         </div>
       </div>
+
+      {/* Companies Marquee */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={visible ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, delay: 0.3 }}
+        style={{
+          borderTop: '1px solid #000000',
+          marginTop: '2.5rem',
+          padding: '2.5rem 0 0.5rem',
+          overflow: 'hidden',
+          position: 'relative',
+          backgroundColor: '#D7C49E',
+          marginLeft: '-6vw',
+          marginRight: '-6vw',
+          width: 'calc(100% + 12vw)',
+        }}
+      >
+        <style>{`
+          @keyframes companyMarquee {
+            0% { transform: translateX(-25%); }
+            100% { transform: translateX(0); }
+          }
+              .marquee-track {
+                display: flex;
+                width: max-content;
+                animation: companyMarquee 20s linear infinite;
+              }
+              .marquee-track:hover {
+                animation-play-state: paused;
+              }
+        `}</style>
+        <div className="marquee-track">
+          {[...companies, ...companies, ...companies, ...companies].map((company, i) => (
+            <div
+              key={i}
+              style={{
+                flexShrink: 0,
+                width: '250px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 1rem',
+              }}
+            >
+              <img
+                src={company.logo}
+                alt={company.name}
+                style={{
+                  maxHeight: '100px',
+                  maxWidth: '180px',
+                  objectFit: 'contain',
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </section>
   );
 }

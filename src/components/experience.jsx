@@ -128,16 +128,17 @@ export default function Experience() {
 
           <div style={{ paddingLeft: '2.5rem' }}>
             {experiences.map((exp, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 30 }}
-                animate={visible ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.6, delay: i * 0.15 }}
-                style={{
-                  marginBottom: i < experiences.length - 1 ? '3.5rem' : 0,
-                  position: 'relative',
-                }}
-              >
+             <motion.div
+  key={i}
+  initial={{ opacity: 0, x: 30 }}
+  whileInView={{ opacity: 1, x: 0 }}
+  viewport={{ once: true, amount: 0.3 }}
+  transition={{ duration: 0.6 }}
+  style={{
+    marginBottom: i < experiences.length - 1 ? '3.5rem' : 0,
+    position: 'relative',
+  }}
+>
                 {/* Timeline dot */}
                 <div style={{
                   position: 'absolute',

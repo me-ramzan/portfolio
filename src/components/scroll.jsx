@@ -30,7 +30,7 @@ export default function Scroll() {
     <>
       {/* Top progress bar */}
       <motion.div
-        className="fixed top-0 left-0 w-full h-1 bg-emerald-500 origin-left z-50"
+        className="fixed top-0 left-0 w-full h-1 bg-[#121018] origin-left z-50"
         style={{ scaleX: scrollYProgress }}
       />
 
@@ -40,7 +40,7 @@ export default function Scroll() {
         className="hidden md:block fixed top-0 right-0 w-1 h-full z-50 bg-white/10 rounded-full"
       >
         <motion.div
-          className="w-1 bg-emerald-500 rounded-full"
+          className="w-1 bg-[#121018] rounded-full"
           style={{
             height: `${THUMB_HEIGHT}px`,
             y,

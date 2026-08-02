@@ -204,7 +204,7 @@ const handleMouseMove = (e) => {
                 fontWeight: 800,
                 lineHeight: 0.9,
                 letterSpacing: '-0.03em',
-                color: '#16141d',
+                color: '#121018',
                 fontFamily: "'Space Grotesk', sans-serif",
                 userSelect: 'none',
                 margin: 0,

@@ -121,8 +121,8 @@ export default function Contact() {
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '2.5rem' }}>
             {[
-  { icon: <FaLinkedin size={16} />, href: 'https://linkedin.com' },
-  { icon: <FaGithub size={16} />, href: 'https://github.com' },
+  { icon: <FaLinkedin size={16} />, href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/' },
+  { icon: <FaGithub size={16} />, href: 'https://github.com/me-ramzan' },
   ].map((s, i) => (
     <a
       key={i}
