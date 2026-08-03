@@ -94,12 +94,13 @@ export default function Skills() {
                 border: '1px solid #000000',
                 borderRadius: '6px',
                 padding: '1.5rem',
-                backgroundColor: '#0000005D: ',
+                // backgroundColor: '#0000005D',
                 transition: 'border-color 0.3s, transform 0.3s',
               }}
-              whileHover={{
+             whileHover={{
                 borderColor: '#343148',
                 y: -4,
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
                 transition: { duration: 0.2 },
               }}
             >

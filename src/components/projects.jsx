@@ -31,6 +31,20 @@ const projects = [
     description: 'Built and maintained a responsive front-end website including reusable UI components. Diagnosed and resolved cross-device UI/UX inconsistencies based on visual QA review and feedback.',
     tag: 'FRONTEND / WEB',
   },
+  {
+    number: '05',
+    title: 'Sadia Chicken',
+    stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
+    description: 'Developed and maintained a responsive front-end, ensuring a consistent user experience across desktop, tablet, and mobile devices.',
+    tag: 'FRONTEND / WEB',
+  },
+    {
+    number: '06',
+    title: 'CBOJ',
+    stack: ['React.js', 'HTML', 'C#', 'JavaScript'],
+    description: 'Implemented responsive user interfaces using C#, ensuring consistent functionality and an optimized experience across desktop and mobile devices.',
+    tag: 'FRONTEND / WEB',
+  },
 ];
 
 function TypewriterTags({ tags, active }) {

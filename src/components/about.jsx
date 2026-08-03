@@ -16,6 +16,11 @@ const companies = [
 export default function About() {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
+  const trackRef = useRef(null);
+  const positionRef = useRef(0);
+  const speedRef = useRef(0.5);
+  const targetSpeedRef = useRef(0.5);
+  const isHoveredRef = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -25,6 +30,38 @@ export default function About() {
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    let animationFrame;
+
+    const animate = () => {
+      speedRef.current += (targetSpeedRef.current - speedRef.current) * 0.05;
+      positionRef.current -= speedRef.current;
+
+      if (trackRef.current) {
+        const trackWidth = trackRef.current.scrollWidth / 4;
+        if (Math.abs(positionRef.current) >= trackWidth) {
+          positionRef.current = 0;
+        }
+        trackRef.current.style.transform = `translateX(${positionRef.current}px)`;
+      }
+
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, []);
+
+  const handleMouseEnter = () => {
+    isHoveredRef.current = true;
+    targetSpeedRef.current = 0;
+  };
+
+  const handleMouseLeave = () => {
+    isHoveredRef.current = false;
+    targetSpeedRef.current = 0.5;
+  };
 
   return (
     <section
@@ -83,10 +120,13 @@ export default function About() {
       </div>
 
       {/* Companies Marquee */}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={visible ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7, delay: 0.3 }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
           borderTop: '1px solid #000000',
           marginTop: '2.5rem',
@@ -99,21 +139,25 @@ export default function About() {
           width: 'calc(100% + 12vw)',
         }}
       >
-        <style>{`
-          @keyframes companyMarquee {
-            0% { transform: translateX(-25%); }
-            100% { transform: translateX(0); }
+          <style>{`
+          .company-logo {
+            filter: grayscale(100%);
+            // opacity: 0.6;
+            transition: filter 0.3s ease, opacity 0.3s ease;
           }
-              .marquee-track {
-                display: flex;
-                width: max-content;
-                animation: companyMarquee 20s linear infinite;
-              }
-              .marquee-track:hover {
-                animation-play-state: paused;
-              }
+          .company-logo:hover {
+            filter: grayscale(0%);
+            // opacity: 1;
+          }
         `}</style>
-        <div className="marquee-track">
+        <div
+          ref={trackRef}
+          style={{
+            display: 'flex',
+            width: 'max-content',
+            willChange: 'transform',
+          }}
+        >
           {[...companies, ...companies, ...companies, ...companies].map((company, i) => (
             <div
               key={i}
@@ -126,9 +170,10 @@ export default function About() {
                 padding: '0 1rem',
               }}
             >
-              <img
+               <img
                 src={company.logo}
                 alt={company.name}
+                className="company-logo"
                 style={{
                   maxHeight: '100px',
                   maxWidth: '180px',

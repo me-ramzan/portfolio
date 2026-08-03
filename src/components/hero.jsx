@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Mail, Phone } from 'lucide-react';
 import spotlightImg from '../assets/images/spotlight.jpg';
 import profileImg from '../assets/images/profile1.png';
+import bgVideo from '../assets/videos/bg-video.mp4';
 
 
 
@@ -12,7 +13,14 @@ export default function Hero() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [time, setTime] = useState('');
   const heroRef = useRef(null);
+  const videoRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -33,6 +41,11 @@ const handleMouseMove = (e) => {
   });
 };
 
+useEffect(() => {
+  if (videoRef.current) {
+    videoRef.current.playbackRate = 1.5; 
+  }
+}, []);
 
 
 
@@ -66,8 +79,34 @@ const handleMouseMove = (e) => {
         overflow: 'hidden',
       }}
     >
+
+      {/* Background video */}
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: 0.15,
+          filter: 'brightness(0.6)',
+          pointerEvents: 'none',
+        }}
+      >
+      <source src={bgVideo} type="video/mp4" />
+      </video>
+
+
+
+
+
       {/* Background architectural image */}
-      <div
+      {/* <div
         style={{
           position: 'absolute',
           inset: 0,
@@ -78,7 +117,7 @@ const handleMouseMove = (e) => {
     filter: 'brightness(0.6)',
     pointerEvents: 'none',
         }}
-      />
+      /> */}
 
 
       {/* Grid lines decoration */}
@@ -102,12 +141,13 @@ const handleMouseMove = (e) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 0.6 }}
         style={{
-          position: 'absolute',
-          top: '90px',
-          right: '6vw',
+          position: isMobile ? 'relative' : 'absolute',
+          top: isMobile ? 'auto' : '90px',
+          right: isMobile ? 'auto' : '6vw',
+          marginBottom: isMobile ? '1rem' : 0,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-end',
+          alignItems: isMobile ? 'flex-start' : 'flex-end',
           gap: '4px',
         }}
       >
@@ -129,15 +169,16 @@ const handleMouseMove = (e) => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1.0, duration: 0.7 }}
         style={{
-          position: 'absolute',
-          top: '155px',
-          right: '6vw',
-          width: '280px',
-          height: '280px',
-         borderRadius: '50%',
+          position: isMobile ? 'relative' : 'absolute',
+          top: isMobile ? 'auto' : '155px',
+          right: isMobile ? 'auto' : '6vw',
+          width: isMobile ? '100px' : '280px',
+          height: isMobile ? '100px' : '280px',
+          borderRadius: '50%',
           overflow: 'hidden',
           border: '2px solid #343148',
           backgroundColor: '#343148',
+          marginBottom: isMobile ? '1.5rem' : 0,
         }}
       >
         <img
@@ -174,7 +215,7 @@ const handleMouseMove = (e) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              fontSize: 'clamp(3.5rem, 10vw, 10rem)',
+              fontSize: 'clamp(2.5rem, 10vw, 10rem)',
               fontWeight: 700,
               lineHeight: 0.9,
               letterSpacing: '-0.03em',
@@ -200,7 +241,7 @@ const handleMouseMove = (e) => {
           >
             <h1
               style={{
-                fontSize: 'clamp(3.5rem, 10vw, 10rem)',
+                fontSize: 'clamp(2.5rem, 10vw, 10rem)',
                 fontWeight: 800,
                 lineHeight: 0.9,
                 letterSpacing: '-0.03em',

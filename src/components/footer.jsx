@@ -28,11 +28,12 @@ export default function Footer() {
           </span>
         </a>
         <p className="mono" style={{ color: '#000000', fontSize: '0.65rem', marginTop: '6px', letterSpacing: '0.05em' }}>
-          Automation & Software Engineer · Dubai, UAE
+          AI Automation & Software Engineer
         </p>
+ 
       </div>
 
-      <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
         {['About', 'Experience', 'Projects', 'Skills', 'Contact'].map((link) => (
           <a
             key={link}
@@ -41,7 +42,7 @@ export default function Footer() {
               color: '#000000',
               textDecoration: 'none',
               fontSize: '0.8rem',
-              transition: 'color 0.2s',
+              transition: 'color 0.2s', 
             }}
             onMouseEnter={e => e.target.style.color = '#343148'}
             onMouseLeave={e => e.target.style.color = '#000000'}
@@ -49,7 +50,7 @@ export default function Footer() {
             {link}
           </a>
         ))}
-      </div>
+      </div> */}
 
       <div>
         <span className="mono" style={{ color: '#000000', fontSize: '0.65rem', letterSpacing: '0.05em' }}>
