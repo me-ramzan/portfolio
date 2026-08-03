@@ -55,6 +55,7 @@ useEffect(() => {
     'Transforming Complex Ideas into Intelligent AI Solutions.',
   ];
 
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setTextIndex((prev) => (prev + 1) % taglines.length);
