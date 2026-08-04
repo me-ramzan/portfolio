@@ -14,13 +14,7 @@ export default function Hero() {
   const [time, setTime] = useState('');
   const heroRef = useRef(null);
   const videoRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -55,7 +49,6 @@ useEffect(() => {
     'Transforming Complex Ideas into Intelligent AI Solutions.',
   ];
 
-  
   useEffect(() => {
     const interval = setInterval(() => {
       setTextIndex((prev) => (prev + 1) % taglines.length);
@@ -142,13 +135,12 @@ useEffect(() => {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 0.6 }}
         style={{
-          position: isMobile ? 'relative' : 'absolute',
-          top: isMobile ? 'auto' : '90px',
-          right: isMobile ? 'auto' : '6vw',
-          marginBottom: isMobile ? '1rem' : 0,
+          position: 'absolute',
+          top: '90px',
+          right: '6vw',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: isMobile ? 'flex-start' : 'flex-end',
+          alignItems: 'flex-end',
           gap: '4px',
         }}
       >
@@ -170,16 +162,15 @@ useEffect(() => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1.0, duration: 0.7 }}
         style={{
-          position: isMobile ? 'relative' : 'absolute',
-          top: isMobile ? 'auto' : '155px',
-          right: isMobile ? 'auto' : '6vw',
-          width: isMobile ? '100px' : '280px',
-          height: isMobile ? '100px' : '280px',
-          borderRadius: '50%',
+          position: 'absolute',
+          top: '155px',
+          right: '6vw',
+          width: '280px',
+          height: '280px',
+         borderRadius: '50%',
           overflow: 'hidden',
           border: '2px solid #343148',
           backgroundColor: '#343148',
-          marginBottom: isMobile ? '1.5rem' : 0,
         }}
       >
         <img
@@ -216,7 +207,7 @@ useEffect(() => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              fontSize: 'clamp(2.5rem, 10vw, 10rem)',
+              fontSize: 'clamp(3.5rem, 10vw, 10rem)',
               fontWeight: 700,
               lineHeight: 0.9,
               letterSpacing: '-0.03em',
@@ -242,7 +233,7 @@ useEffect(() => {
           >
             <h1
               style={{
-                fontSize: 'clamp(2.5rem, 10vw, 10rem)',
+                fontSize: 'clamp(3.5rem, 10vw, 10rem)',
                 fontWeight: 800,
                 lineHeight: 0.9,
                 letterSpacing: '-0.03em',
