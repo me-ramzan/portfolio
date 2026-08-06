@@ -19,6 +19,7 @@ const experiences = [
     ],
     tags: ['React.js', 'SCSS', 'JavaScript', 'Ghost CMS', 'QA'],
   },
+  
   {
     role: 'Software Engineer',
     company: 'DUOFANKAAR',
@@ -35,6 +36,7 @@ const experiences = [
     ],
     tags: ['React.js', 'Node.js', 'n8n', 'ML Pipelines', 'REST APIs', 'CPanel'],
   },
+
   {
     role: 'RPA Developer',
     company: 'Sybros Tech',
