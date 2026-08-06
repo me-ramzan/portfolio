@@ -37,7 +37,7 @@ const experiences = [
   },
   {
     role: 'RPA Developer',
-    company: 'SYBROS TECH',
+    company: 'Sybros Tech',
     location: 'Lahore, Pakistan',
     type: 'On-Site · Full Time',
     period: 'Mar 2024 – Apr 2025',
