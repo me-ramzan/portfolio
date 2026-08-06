@@ -36,7 +36,7 @@ const experiences = [
     tags: ['React.js', 'Node.js', 'n8n', 'ML Pipelines', 'REST APIs', 'CPanel'],
   },
   {
-    role: 'RPA Developer (Team Lead)',
+    role: 'RPA Developer',
     company: 'SYBROS TECH',
     location: 'Lahore, Pakistan',
     type: 'On-Site · Full Time',
