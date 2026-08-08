@@ -196,8 +196,8 @@ useEffect(() => {
         style={
   isMobile
     ? {
-        width: '110px',
-        height: '110px',
+        width: '200px',
+        height: '200px',
         borderRadius: '50%',
         overflow: 'hidden',
         border: '2px solid #343148',
@@ -220,6 +220,8 @@ useEffect(() => {
         <img
           src={profileImg}
           alt="Muhammad Ramzan"
+          width="280"
+          height="280"
           style={{
             width: '100%',
             height: '100%',
