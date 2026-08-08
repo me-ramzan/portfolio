@@ -5,13 +5,24 @@ import bbdoLogo from '../assets/images/bbdo.png';
 import duofankaarLogo from '../assets/images/duofankaar.png';
 import samsungLogo from '../assets/images/samsung.png';
 
-
 const companies = [
   { name: 'Sybros', logo: sybrosLogo },
   { name: 'BBDO', logo: bbdoLogo },
   { name: 'Duofankaar', logo: duofankaarLogo },
   { name: 'Samsung', logo: samsungLogo },
 ];
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 export default function About() {
   const [visible, setVisible] = useState(false);
@@ -21,6 +32,7 @@ export default function About() {
   const speedRef = useRef(0.5);
   const targetSpeedRef = useRef(0.5);
   const isHoveredRef = useRef(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -68,12 +80,19 @@ export default function About() {
       id="about"
       ref={ref}
       style={{
-        padding: '10vw 6vw 4vw',
+        padding: isMobile ? '4rem 5vw 3rem' : '10vw 6vw 4vw',
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #000000',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '4rem', alignItems: 'start' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 3fr',
+          gap: isMobile ? '1.5rem' : '4rem',
+          alignItems: 'start',
+        }}
+      >
         {/* Left label */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -111,7 +130,7 @@ export default function About() {
               color: '#000000',
               lineHeight: 1.7,
               maxWidth: '640px',
-              marginBottom: '3rem',
+              marginBottom: isMobile ? '1.5rem' : '3rem',
             }}
           >
             Automation and Software Engineer with <strong>~3 years</strong> of experience building React-based frontends and n8n-driven backends using JavaScript, React.js, Node.js, and Python. Strong RPA background with UiPath and Power Automate, plus deep CRM and enterprise integrations. Skilled in AI and ML workflows for automating complex, unstructured processes. <strong>Based in the UAE with relocation flexibility.</strong>
@@ -134,9 +153,9 @@ export default function About() {
           overflow: 'hidden',
           position: 'relative',
           backgroundColor: '#D7C49E',
-          marginLeft: '-6vw',
-          marginRight: '-6vw',
-          width: 'calc(100% + 12vw)',
+          marginLeft: isMobile ? '-5vw' : '-6vw',
+          marginRight: isMobile ? '-5vw' : '-6vw',
+          width: isMobile ? 'calc(100% + 10vw)' : 'calc(100% + 12vw)',
         }}
       >
           <style>{`
@@ -163,7 +182,7 @@ export default function About() {
               key={i}
               style={{
                 flexShrink: 0,
-                width: '250px',
+                width: isMobile ? '160px' : '250px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -175,8 +194,8 @@ export default function About() {
                 alt={company.name}
                 className="company-logo"
                 style={{
-                  maxHeight: '100px',
-                  maxWidth: '180px',
+                  maxHeight: isMobile ? '60px' : '100px',
+                  maxWidth: isMobile ? '110px' : '180px',
                   objectFit: 'contain',
                 }}
               />

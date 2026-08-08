@@ -1,18 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function Footer() {
+  const isMobile = useIsMobile();
+
   return (
     <footer
       style={{
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #1A1A1A',
-        padding: '3rem 6vw',
+        padding: isMobile ? '2.5rem 5vw' : '3rem 6vw',
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-start' : 'center',
         flexWrap: 'wrap',
-        gap: '1rem',
+        gap: isMobile ? '1.5rem' : '1rem',
       }}
     >
       <div>
@@ -30,27 +45,7 @@ export default function Footer() {
         <p className="mono" style={{ color: '#000000', fontSize: '0.65rem', marginTop: '6px', letterSpacing: '0.05em' }}>
           AI Automation & Software Engineer
         </p>
- 
       </div>
-
-      {/* <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        {['About', 'Experience', 'Projects', 'Skills', 'Contact'].map((link) => (
-          <a
-            key={link}
-            href={`#${link.toLowerCase()}`}
-            style={{
-              color: '#000000',
-              textDecoration: 'none',
-              fontSize: '0.8rem',
-              transition: 'color 0.2s', 
-            }}
-            onMouseEnter={e => e.target.style.color = '#343148'}
-            onMouseLeave={e => e.target.style.color = '#000000'}
-          >
-            {link}
-          </a>
-        ))}
-      </div> */}
 
       <div>
         <span className="mono" style={{ color: '#000000', fontSize: '0.65rem', letterSpacing: '0.05em' }}>

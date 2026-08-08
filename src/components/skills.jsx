@@ -34,9 +34,22 @@ const skillGroups = [
   },
 ];
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function Skills() {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -52,18 +65,25 @@ export default function Skills() {
       id="skills"
       ref={ref}
       style={{
-        padding: '10vw 6vw',
+        padding: isMobile ? '4rem 5vw' : '10vw 6vw',
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #000000',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '4rem', alignItems: 'start' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 3fr',
+          gap: isMobile ? '2rem' : '4rem',
+          alignItems: 'start',
+        }}
+      >
         {/* Left label */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={visible ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.6 }}
-          style={{ position: 'sticky', top: '100px' }}
+          style={isMobile ? {} : { position: 'sticky', top: '100px' }}
         >
           <span className="mono" style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em' }}>04 / SKILLS</span>
           <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', marginTop: '12px' }} />
@@ -81,8 +101,8 @@ export default function Skills() {
         {/* Skills grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '1.5rem',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: isMobile ? '1rem' : '1.5rem',
         }}>
           {skillGroups.map((group, i) => (
             <motion.div
@@ -94,7 +114,6 @@ export default function Skills() {
                 border: '1px solid #000000',
                 borderRadius: '6px',
                 padding: '1.5rem',
-                // backgroundColor: '#0000005D',
                 transition: 'border-color 0.3s, transform 0.3s',
               }}
              whileHover={{
@@ -152,11 +171,11 @@ export default function Skills() {
         animate={visible ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6, delay: 0.7 }}
         style={{
-          marginTop: '4rem',
-          paddingTop: '2.5rem',
+          marginTop: isMobile ? '2.5rem' : '4rem',
+          paddingTop: isMobile ? '1.5rem' : '2.5rem',
           borderTop: '1px solid #000000',
           display: 'flex',
-          gap: '3rem',
+          gap: isMobile ? '1rem 2rem' : '3rem',
           alignItems: 'center',
           flexWrap: 'wrap',
         }}

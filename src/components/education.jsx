@@ -39,9 +39,22 @@ const achievements = [
   },
 ];
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function Education() {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -57,12 +70,12 @@ export default function Education() {
       id="education"
       ref={ref}
       style={{
-        padding: '10vw 6vw',
+        padding: isMobile ? '4rem 5vw' : '10vw 6vw',
         backgroundColor: '#343148',
         borderTop: '1px solid #1A1A1A',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'start', flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '3rem' : '6rem', alignItems: 'start', flexWrap: 'wrap' }}>
         {/* Education */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

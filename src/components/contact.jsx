@@ -1,7 +1,19 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
@@ -10,6 +22,7 @@ export default function Contact() {
   const [sent, setSent] = useState(false);
   const isDragging = useRef(false);
   const trackRef = useRef(null);
+  const isMobile = useIsMobile();
 
   const handleDragStart = () => { isDragging.current = true; };
 
@@ -63,12 +76,12 @@ export default function Contact() {
     <section
       id="contact"
       style={{
-        padding: '10vw 6vw',
+        padding: isMobile ? '4rem 5vw' : '10vw 6vw',
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #000000',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '6rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '3rem' : '6rem', alignItems: 'start' }}>
         {/* Left */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -164,7 +177,7 @@ export default function Contact() {
           style={{
             backgroundColor: '#343148',
             borderRadius: '8px',
-            padding: '3rem',
+            padding: isMobile ? '1.75rem' : '3rem',
           }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

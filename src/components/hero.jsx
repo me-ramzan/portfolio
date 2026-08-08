@@ -7,13 +7,32 @@ import bgVideo from '../assets/videos/bg-video.mp4';
 
 
 
+
 const HERO_IMAGE = spotlightImg;
+
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
+
+
+
 
 export default function Hero() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [time, setTime] = useState('');
   const heroRef = useRef(null);
   const videoRef = useRef(null);
+  const isMobile = useIsMobile();
 
 
   useEffect(() => {
@@ -32,6 +51,16 @@ const handleMouseMove = (e) => {
   setMousePos({
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
+  });
+};
+const handleTouchMove = (e) => {
+  if (!heroRef.current) return;
+  const touch = e.touches[0];
+  if (!touch) return;
+  const rect = heroRef.current.getBoundingClientRect();
+  setMousePos({
+    x: touch.clientX - rect.left,
+    y: touch.clientY - rect.top,
   });
 };
 
@@ -58,17 +87,18 @@ useEffect(() => {
 
   return (
     <section
-      id="top"
-      ref={heroRef}
-      onMouseMove={handleMouseMove}
-      style={{
+  id="top"
+  ref={heroRef}
+  onMouseMove={handleMouseMove}
+  onTouchMove={handleTouchMove}
+  style={{
         minHeight: '100vh',
         backgroundColor: '#D7C49E',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '0 6vw',
-        paddingTop: '64px',
+        padding: isMobile ? '0 5vw' : '0 6vw',
+        paddingTop: isMobile ? '100px' : '64px',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -134,15 +164,26 @@ useEffect(() => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 0.6 }}
-        style={{
-          position: 'absolute',
-          top: '90px',
-          right: '6vw',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: '4px',
-        }}
+       style={
+  isMobile
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '4px',
+        marginBottom: '1.5rem',
+        width: '100%',
+      }
+    : {
+        position: 'absolute',
+        top: '90px',
+        right: '6vw',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '4px',
+      }
+}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
@@ -161,17 +202,29 @@ useEffect(() => {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1.0, duration: 0.7 }}
-        style={{
-          position: 'absolute',
-          top: '155px',
-          right: '6vw',
-          width: '280px',
-          height: '280px',
-         borderRadius: '50%',
-          overflow: 'hidden',
-          border: '2px solid #343148',
-          backgroundColor: '#343148',
-        }}
+        style={
+  isMobile
+    ? {
+        width: '110px',
+        height: '110px',
+        borderRadius: '50%',
+        overflow: 'hidden',
+        border: '2px solid #343148',
+        backgroundColor: '#343148',
+        marginBottom: '1.5rem',
+      }
+    : {
+        position: 'absolute',
+        top: '155px',
+        right: '6vw',
+        width: '280px',
+        height: '280px',
+        borderRadius: '50%',
+        overflow: 'hidden',
+        border: '2px solid #343148',
+        backgroundColor: '#343148',
+      }
+}
       >
         <img
           src={profileImg}
@@ -321,16 +374,16 @@ useEffect(() => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.6 }}
-          style={{ marginTop: '1.5rem', display: 'flex', gap: '16px', flexWrap: 'wrap' }}
+          style={{ marginTop: '1.5rem', display: 'flex', gap: isMobile ? '10px' : '16px', flexWrap: 'wrap' }}
         >
           <a
             href="#projects"
             style={{
               backgroundColor: '#343148',
               color: '#F4F1EA',
-              padding: '14px 32px',
+              padding: isMobile ? '12px 20px' : '14px 32px',
               borderRadius: '4px',
-              fontSize: '0.9rem',
+              fontSize: isMobile ? '0.8rem' : '0.9rem',
               fontWeight: 600,
               textDecoration: 'none',
               letterSpacing: '0.05em',
@@ -349,9 +402,9 @@ useEffect(() => {
             style={{
               backgroundColor: 'transparent',
               color: '#080808',
-              padding: '14px 32px',
+              padding: isMobile ? '12px 20px' : '14px 32px',
               borderRadius: '4px',
-              fontSize: '0.9rem',
+              fontSize: isMobile ? '0.8rem' : '0.9rem',
               fontWeight: 600,
               textDecoration: 'none',
               letterSpacing: '0.05em',

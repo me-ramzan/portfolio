@@ -19,7 +19,6 @@ const experiences = [
     ],
     tags: ['React.js', 'SCSS', 'JavaScript', 'Ghost CMS', 'QA'],
   },
-  
   {
     role: 'Software Engineer',
     company: 'DUOFANKAAR',
@@ -36,7 +35,6 @@ const experiences = [
     ],
     tags: ['React.js', 'Node.js', 'n8n', 'ML Pipelines', 'REST APIs', 'CPanel'],
   },
-
   {
     role: 'RPA Developer',
     company: 'Sybros Tech',
@@ -71,9 +69,22 @@ const experiences = [
   },
 ];
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function Experience() {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -89,18 +100,25 @@ export default function Experience() {
       id="experience"
       ref={ref}
       style={{
-        padding: '10vw 6vw',
+        padding: isMobile ? '4rem 5vw' : '10vw 6vw',
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #000000',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '4rem', alignItems: 'start' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 3fr',
+          gap: isMobile ? '2rem' : '4rem',
+          alignItems: 'start',
+        }}
+      >
         {/* Left label */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={visible ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.6 }}
-          style={{ position: 'sticky', top: '100px' }}
+          style={isMobile ? {} : { position: 'sticky', top: '100px' }}
         >
           <span className="mono" style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em' }}>02 / EXPERIENCE</span>
           <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', marginTop: '12px' }} />
@@ -111,8 +129,7 @@ export default function Experience() {
             marginTop: '1.5rem',
             lineHeight: 1.2,
           }}>
-          <span style={{ color: '#343148' }}>Work<br />History</span>
-
+            <span style={{ color: '#343148' }}>Work<br />History</span>
           </h2>
         </motion.div>
 
@@ -125,26 +142,26 @@ export default function Experience() {
             top: 0,
             bottom: 0,
             width: '1px',
-            backgroundColor: '#000000',
+            backgroundColor: '#343148',
           }} />
 
-          <div style={{ paddingLeft: '2.5rem' }}>
+          <div style={{ paddingLeft: isMobile ? '1.5rem' : '2.5rem' }}>
             {experiences.map((exp, i) => (
-             <motion.div
-  key={i}
-  initial={{ opacity: 0, x: 30 }}
-  whileInView={{ opacity: 1, x: 0 }}
-  viewport={{ once: true, amount: 0.3 }}
-  transition={{ duration: 0.6 }}
-  style={{
-    marginBottom: i < experiences.length - 1 ? '3.5rem' : 0,
-    position: 'relative',
-  }}
->
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6 }}
+                style={{
+                  marginBottom: i < experiences.length - 1 ? '3.5rem' : 0,
+                  position: 'relative',
+                }}
+              >
                 {/* Timeline dot */}
                 <div style={{
                   position: 'absolute',
-                  left: '-2.75rem',
+                  left: isMobile ? '-1.75rem' : '-2.75rem',
                   top: '6px',
                   width: '10px',
                   height: '10px',
