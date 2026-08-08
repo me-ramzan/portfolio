@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
-  { label: 'About', href: '#about' },
-  { label: 'Experience', href: '#experience' },
-  { label: 'Projects', href: '#projects' },
-  { label: 'Skills', href: '#skills' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'ABOUT', href: '#about' },
+  { label: 'EXPERIENCE', href: '#experience' },
+  { label: 'PROJECTS', href: '#projects' },
+  { label: 'SKILLS', href: '#skills' },
+  { label: 'CONTACT', href: '#contact' },
 ];
 
 function useIsMobile(breakpoint = 768) {
@@ -32,10 +32,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Mobile pe route change ya link click hote hi menu band ho jaye
   const closeMenu = () => setMenuOpen(false);
 
-  // Smooth scroll with navbar offset — menu close hone ke baad settle hoke scroll karta hai
   const handleNavClick = (e, href) => {
     e.preventDefault();
     const wasOpen = menuOpen;
@@ -84,7 +82,7 @@ export default function Navbar() {
         href="#top"
         onClick={(e) => handleNavClick(e, '#top')}
         className="mono"
-        style={{ color: '#343148', fontWeight: 600, fontSize: '0.8rem', letterSpacing: '0.1em', textDecoration: 'none' }}
+        style={{ color: '#343148', fontWeight: 600, fontSize: '0.8rem', letterSpacing: '0.1em', textDecoration: 'none', zIndex: 1001, position: 'relative' }}
       >
         Mr.
       </a>
@@ -104,6 +102,7 @@ export default function Navbar() {
               gap: '5px',
               padding: '8px',
               zIndex: 1001,
+              position: 'relative',
             }}
           >
             <motion.span
@@ -120,64 +119,79 @@ export default function Navbar() {
             />
           </button>
 
-          {/* Mobile dropdown menu */}
+          {/* Full-screen mobile menu overlay */}
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { delay: 0.5, duration: 0.3 } }}
                 style={{
                   position: 'fixed',
-                  top: '64px',
+                  top: 0,
                   left: 0,
                   right: 0,
+                  bottom: 0,
+                  height: '100vh',
                   backgroundColor: '#F4F1EA',
-                  borderBottom: '1px solid #D1D1C7',
-                  overflow: 'hidden',
+                  zIndex: 999,
                   display: 'flex',
                   flexDirection: 'column',
-                  padding: '1rem 6vw 1.5rem',
-                  gap: '0.5rem',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '0rem',
+                  padding: '0 6vw',
+                  overflow: 'hidden',
                 }}
               >
-                {navLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    onClick={(e) => handleNavClick(e, link.href)}
-                    style={{
+                {navLinks.map((link, i) => (
+                  <div key={link.label} style={{ overflow: 'hidden', padding: '0px 0' }}>
+                    <motion.a
+                      initial={{ y: '110%' }}
+                      animate={{ y: 0, transition: { delay: 0.15 + i * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] } }}
+                      exit={{ y: '-110%', transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } }}
+                      href={link.href}
+                      onClick={(e) => handleNavClick(e, link.href)}
+                      style={{
+                      display: 'inline-block',
                       color: '#080808',
                       textDecoration: 'none',
-                      fontSize: '1rem',
-                      fontWeight: 500,
-                      letterSpacing: '0.02em',
-                      padding: '10px 4px',
-                      borderBottom: '1px solid #E4E1D6',
+                      fontSize: 'clamp(2rem, 8vw, 2.8rem)',
+                      fontFamily: "'Montserrat', sans-serif",
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.29,
+                      textAlign: 'center',
+                    }}
+                    >
+                      {link.label}
+                    </motion.a>
+                  </div>
+                ))}
+                <div style={{ overflow: 'hidden', marginTop: '1.5rem' }}>
+                  <motion.a
+                    initial={{ y: '110%' }}
+                    animate={{ y: 0, transition: { delay: 0.15 + navLinks.length * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] } }}
+                    exit={{ y: '-110%', transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } }}
+                    href="mailto:me.ramzan.zulfiqar@gmail.com"
+                    onClick={closeMenu}
+                    style={{
+                      display: 'inline-block',
+                      backgroundColor: '#343148',
+                      color: '#F4F1EA',
+                      padding: '12px 45px',
+                      borderRadius: '20px',
+                      fontSize: '16px',
+                      fontFamily: "'Montserrat', sans-serif",
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      letterSpacing: '0.06em',
+                      textAlign: 'center',
                     }}
                   >
-                    {link.label}
-                  </a>
-                ))}
-                <a
-                  href="mailto:me.ramzan.zulfiqar@gmail.com"
-                  onClick={closeMenu}
-                  style={{
-                    backgroundColor: '#343148',
-                    color: '#F4F1EA',
-                    padding: '12px 20px',
-                    borderRadius: '4px',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    letterSpacing: '0.03em',
-                    textAlign: 'center',
-                    marginTop: '0.5rem',
-                  }}
-                >
-                  Hire Me
-                </a>
+                    Hire Me
+                  </motion.a>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
