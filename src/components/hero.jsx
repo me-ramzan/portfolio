@@ -53,16 +53,7 @@ const handleMouseMove = (e) => {
     y: e.clientY - rect.top,
   });
 };
-const handleTouchMove = (e) => {
-  if (!heroRef.current) return;
-  const touch = e.touches[0];
-  if (!touch) return;
-  const rect = heroRef.current.getBoundingClientRect();
-  setMousePos({
-    x: touch.clientX - rect.left,
-    y: touch.clientY - rect.top,
-  });
-};
+
 
 useEffect(() => {
   if (videoRef.current) {
@@ -90,7 +81,6 @@ useEffect(() => {
   id="top"
   ref={heroRef}
   onMouseMove={handleMouseMove}
-  onTouchMove={handleTouchMove}
   style={{
         minHeight: '100vh',
         backgroundColor: '#D7C49E',
@@ -274,16 +264,17 @@ useEffect(() => {
             MUHAMMAD<br />RAMZAN
           </motion.h1>
 
-          {/* Solid version revealed by circle mask */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              WebkitMaskImage: `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black 0%, transparent 100%)`,
-              maskImage: `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black 0%, transparent 100%)`,
-            }}
-          >
+          {/* Solid version revealed by circle mask — desktop only */}
+<div
+  style={{
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    WebkitMaskImage: isMobile ? 'none' : `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black 0%, transparent 100%)`,
+    maskImage: isMobile ? 'none' : `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black 0%, transparent 100%)`,
+    opacity: isMobile ? 0 : 1,
+  }}
+>
             <h1
               style={{
                 fontSize: 'clamp(3.5rem, 10vw, 10rem)',

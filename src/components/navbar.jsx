@@ -84,9 +84,9 @@ export default function Navbar() {
         href="#top"
         onClick={(e) => handleNavClick(e, '#top')}
         className="mono"
-        style={{ color: '#000000', fontWeight: 600, fontSize: '0.8rem', letterSpacing: '0.1em', textDecoration: 'none' }}
+        style={{ color: '#343148', fontWeight: 600, fontSize: '0.8rem', letterSpacing: '0.1em', textDecoration: 'none' }}
       >
-        
+        Mr.
       </a>
 
       {isMobile ? (

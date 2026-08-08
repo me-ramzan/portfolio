@@ -2,6 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
+import emailjs from '@emailjs/browser';
+
+const EMAILJS_SERVICE_ID = 'service_bcyigug';
+const EMAILJS_TEMPLATE_ID = 'template_pta6w9h';
+const EMAILJS_PUBLIC_KEY = '_Y1OJswaMuBHliGao';
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
@@ -20,9 +25,46 @@ export default function Contact() {
   const [sliderValue, setSliderValue] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
   const isDragging = useRef(false);
   const trackRef = useRef(null);
   const isMobile = useIsMobile();
+
+  const sendEmail = () => {
+    if (!form.name || !form.email || !form.message) {
+      setError('Please fill in all fields before confirming.');
+      setConfirmed(false);
+      setSliderValue(0);
+      return;
+    }
+
+    setSending(true);
+    setError('');
+
+    emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      {
+        name: form.name,
+        email: form.email,
+        message: form.message,
+        phone: '',
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+      .then(() => {
+        setSending(false);
+        setSent(true);
+      })
+      .catch((err) => {
+        console.error('EmailJS error:', err);
+        setSending(false);
+        setError('Something went wrong. Please try again.');
+        setConfirmed(false);
+        setSliderValue(0);
+      });
+  };
 
   const handleDragStart = () => { isDragging.current = true; };
 
@@ -32,10 +74,10 @@ export default function Contact() {
     const x = e.clientX - rect.left;
     const pct = Math.min(100, Math.max(0, (x / rect.width) * 100));
     setSliderValue(pct);
-    if (pct > 85) {
+    if (pct > 85 && !confirmed) {
       setConfirmed(true);
       isDragging.current = false;
-      setTimeout(() => setSent(true), 400);
+      sendEmail();
     }
   };
 
@@ -51,9 +93,9 @@ export default function Contact() {
     const x = touch.clientX - rect.left;
     const pct = Math.min(100, Math.max(0, (x / rect.width) * 100));
     setSliderValue(pct);
-    if (pct > 85) {
+    if (pct > 85 && !confirmed) {
       setConfirmed(true);
-      setTimeout(() => setSent(true), 400);
+      sendEmail();
     }
   };
 
@@ -227,10 +269,14 @@ export default function Contact() {
                 </div>
               </div>
 
+              {error && (
+                <p style={{ color: '#ff8080', fontSize: '0.8rem', marginBottom: '1rem' }}>{error}</p>
+              )}
+
               {/* Slider */}
               <div>
                 <label className="mono" style={{ display: 'block', fontSize: '0.65rem', color: '#9B9B8E', letterSpacing: '0.1em', marginBottom: '12px' }}>
-                  {confirmed ? '✓ CONNECTION CONFIRMED' : 'SLIDE TO CONFIRM CONNECTION '}
+                  {confirmed ? (sending ? 'SENDING...' : '✓ CONNECTION CONFIRMED') : 'SLIDE TO CONFIRM CONNECTION '}
                 </label>
                 <div
                   ref={trackRef}
@@ -290,7 +336,7 @@ export default function Contact() {
                     pointerEvents: 'none',
                   }}>
                     <span className="mono" style={{ fontSize: '0.65rem', color: confirmed ? '#F4F1EA' : '#9B9B8E', letterSpacing: '0.1em' }}>
-                      {confirmed ? 'DEPLOYING CONNECTION...' : 'CONFIRM CONNECTION'}
+                      {confirmed ? (sending ? 'DEPLOYING CONNECTION...' : 'SENT!') : 'CONFIRM CONNECTION'}
                     </span>
                   </div>
                 </div>

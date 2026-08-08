@@ -7,7 +7,20 @@ const cursorQuotes = [
   'BUILDING SMART SYSTEMS',
 ];
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function CursorTrail() {
+  const isMobile = useIsMobile();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [showQuote, setShowQuote] = useState(false);
@@ -32,6 +45,7 @@ const letterSprings = letterMotionValues.map((mv, i) => ({
   }));
 
   useEffect(() => {
+    if (isMobile) return;
       const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
       const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -39,9 +53,10 @@ const letterSprings = letterMotionValues.map((mv, i) => ({
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
+    if (isMobile) return;
     currentQuote.split('').forEach((_, i) => {
       letterMotionValues[i].x.set(mousePos.x + 18 + i * 8);
       letterMotionValues[i].y.set(mousePos.y - 8);
@@ -60,7 +75,9 @@ const letterSprings = letterMotionValues.map((mv, i) => ({
       setIsIdle(true);
     }, 400);
     return () => clearTimeout(idleTimer.current);
-  }, [mousePos]);
+  }, [mousePos, isMobile]);
+
+  if (isMobile) return null;
 
   return (
     <>
