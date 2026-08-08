@@ -9,10 +9,34 @@ import Skills from './components/skills'
 import Education from './components/education'
 import Contact from './components/contact'
 import Footer from './components/footer'
+import { useState, useEffect } from 'react'
+import Preloader from './components/preloader'
+import Lenis from 'lenis'
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
+    })
+
+    function raf(time) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
+    requestAnimationFrame(raf)
+
+    return () => lenis.destroy()
+  }, [])
+
   return (
     <div className="relative min-h-screen bg-[#EDEBE6]">
+      {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
       <CursorTrail />
       <Scroll />
       <div className="h-1 w-full bg-gradient-to-r from-black via-black/40 to-transparent"></div>
@@ -27,7 +51,7 @@ function App() {
 
       <div className="relative z-10">
         <Navbar />
-        <Hero />
+        <Hero isLoading={isLoading} />
         <About />
         <Experience />
         <Projects />

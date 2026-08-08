@@ -27,7 +27,8 @@ function useIsMobile(breakpoint = 768) {
 
 
 
-export default function Hero() {
+export default function Hero({ isLoading }) {
+  const ready = true;
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [time, setTime] = useState('');
   const heroRef = useRef(null);
@@ -152,8 +153,8 @@ useEffect(() => {
       {/* Live status */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.6 }}
+        animate={ready ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
        style={
   isMobile
     ? {
@@ -190,8 +191,8 @@ useEffect(() => {
 
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.0, duration: 0.7 }}
+        animate={ready ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+        transition={{ delay: 0.25, duration: 0.6 }}
         style={
   isMobile
     ? {
@@ -233,8 +234,8 @@ useEffect(() => {
         {/* Label */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
+          animate={ready ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+          transition={{ delay: 0, duration: 0.5 }}
           style={{ marginBottom: '2rem' }}
         >
           <span className="mono" style={{ color: '#000000', fontSize: '0.8rem', letterSpacing: '0.15em' }}>
@@ -242,13 +243,16 @@ useEffect(() => {
           </span>
         </motion.div>
 
-        {/* Hero name — mask reveal on hover */}
+        {/* Hero name — slides up in sync with preloader exit */}
         <div style={{ position: 'relative', overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <motion.div
+          initial={{ y: '110%' }}
+          animate={{ y: 0 }}
+          transition={{ delay: 3.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }} //for speed of the name
+          style={{ position: 'relative' }}
+        >
           {/* Outlined version */}
-          <motion.h1
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          <h1
             style={{
               fontSize: 'clamp(3.5rem, 10vw, 10rem)',
               fontWeight: 700,
@@ -261,8 +265,8 @@ useEffect(() => {
               margin: 0,
             }}
           >
-            MUHAMMAD<br />RAMZAN
-          </motion.h1>
+           MUHAMMAD<br />RAMZAN
+          </h1>
 
           {/* Solid version revealed by circle mask — desktop only */}
 <div
@@ -290,10 +294,12 @@ useEffect(() => {
               MUHAMMAD<br />RAMZAN
             </h1>
           </div>
+        </motion.div>
         </div>
 
 <div style={{ maxWidth: '600px', marginBottom: '2.5rem', minHeight: '5.4rem', display: 'flex', alignItems: 'flex-start' }}>
   <AnimatePresence mode="wait">
+    {ready && (
     <motion.p
       key={textIndex}
       variants={{
@@ -327,14 +333,15 @@ useEffect(() => {
         </motion.span>
       ))}
     </motion.p>
+    )}
   </AnimatePresence>
 </div>
 
         {/* Contact chips */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0, duration: 0.7 }}
+          animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ delay: 0.35, duration: 0.6 }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}
         >
           {[
@@ -363,8 +370,8 @@ useEffect(() => {
         {/* CTA */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
+          animate={ready ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.45, duration: 0.6 }}
           style={{ marginTop: '1.5rem', display: 'flex', gap: isMobile ? '10px' : '16px', flexWrap: 'wrap' }}
         >
           <a
