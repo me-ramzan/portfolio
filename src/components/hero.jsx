@@ -374,7 +374,14 @@ useEffect(() => {
           initial={{ opacity: 0 }}
           animate={ready ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: 0.45, duration: 0.6 }}
-          style={{ marginTop: '1.5rem', display: 'flex', gap: isMobile ? '10px' : '16px', flexWrap: 'wrap' }}
+          
+          style={{ 
+            marginTop: '1.5rem', 
+            marginBottom: isMobile ? '2.5rem' : 0,
+            display: 'flex', 
+            gap: isMobile ? '10px' : '16px', 
+            flexWrap: 'wrap' 
+          }}
         >
           <a
             href="#projects"
