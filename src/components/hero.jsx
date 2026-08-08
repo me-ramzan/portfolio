@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Mail, Phone } from 'lucide-react';
 import spotlightImg from '../assets/images/spotlight.jpg';
-import profileImg from '../assets/images/profile1.png';
+import profileImg from '../assets/images/ramzan.png';
 import bgVideo from '../assets/videos/bg-video.mp4';
 
 

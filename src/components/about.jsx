@@ -142,12 +142,12 @@ export default function About() {
           <style>{`
           .company-logo {
             filter: grayscale(100%);
-            // opacity: 0.6;
+            opacity: 0.6;
             transition: filter 0.3s ease, opacity 0.3s ease;
           }
           .company-logo:hover {
             filter: grayscale(0%);
-            // opacity: 1;
+            opacity: 1;
           }
         `}</style>
         <div
