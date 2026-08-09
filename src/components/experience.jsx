@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 
 const experiences = [
@@ -84,7 +84,24 @@ function useIsMobile(breakpoint = 768) {
 export default function Experience() {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
+  const leftRef = useRef(null);
+  const rightRef = useRef(null);
   const isMobile = useIsMobile();
+  const [maxY, setMaxY] = useState(0);
+
+  useEffect(() => {
+    const updateMaxY = () => {
+      if (rightRef.current && leftRef.current) {
+        setMaxY(Math.max(rightRef.current.offsetHeight - leftRef.current.offsetHeight, 0));
+      }
+    };
+    updateMaxY();
+    window.addEventListener('resize', updateMaxY);
+    return () => window.removeEventListener('resize', updateMaxY);
+  }, []);
+
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
+  const y = useTransform(scrollYProgress, [0, 1], [0, maxY]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -115,10 +132,11 @@ export default function Experience() {
       >
         {/* Left label */}
         <motion.div
+          ref={leftRef}
+          style={isMobile ? {} : { y }}
           initial={{ opacity: 0, x: -20 }}
           animate={visible ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.6 }}
-          style={isMobile ? {} : { position: 'sticky', top: '100px' }}
         >
           <span className="mono" style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em' }}>02 / EXPERIENCE</span>
           <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', marginTop: '12px' }} />
@@ -134,7 +152,7 @@ export default function Experience() {
         </motion.div>
 
         {/* Right timeline */}
-        <div style={{ position: 'relative' }}>
+        <div ref={rightRef} style={{ position: 'relative' }}>
           {/* Vertical timeline line */}
           <div style={{
             position: 'absolute',

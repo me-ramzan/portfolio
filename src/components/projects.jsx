@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 
+import aiDocProcessing from '../assets/images/AIDocumentProcessingWorkflow.png';
+import invoiceAutomation from '../assets/images/AutomatedInvoiceProcessingWorkflow.png';
+import aiCallingAgent from '../assets/images/AIVoiceCallingAgentPipeline.png';
+import futureMineralForum from '../assets/images/FutureMineralForum.png';
+import sadiaChicken from '../assets/images/SadiaChicken.png';
+import cboj from '../assets/images/CBOJ.jpg';
+
 const projects = [
   {
     number: '01',
@@ -9,6 +16,8 @@ const projects = [
     stack: ['n8n', 'OpenAI', 'Pinecone', 'Vector Search'],
     description: 'End-to-end n8n workflow integrated with OpenAI and Pinecone to intelligently process and analyze documents. Implemented vector-based semantic search that reduced manual document review time by 70%.',
     tag: 'AI / AUTOMATION',
+    image: aiDocProcessing,
+    bgColor: '#ffffff',   
   },
   {
     number: '02',
@@ -16,6 +25,8 @@ const projects = [
     stack: ['UiPath', 'SharePoint', 'Outlook', 'OCR'],
     description: 'RPA solution that automatically retrieves invoice PDFs and client signatures from Outlook, merges documents, embeds digital signatures, and archives to SharePoint. Saved 10+ hours of manual work per week.',
     tag: 'RPA / ENTERPRISE',
+    image: invoiceAutomation,
+    bgColor: '#FBF4EC',
   },
   {
     number: '03',
@@ -23,6 +34,8 @@ const projects = [
     stack: ['n8n', 'Twilio', 'ElevenLabs', 'LLM'],
     description: 'AI-powered voice calling agent integrated with Twilio for call automation and ElevenLabs for natural voice synthesis, enabling autonomous handling and resolution of customer queries.',
     tag: 'AI / VOICE',
+    image: aiCallingAgent,
+    bgColor: '#ffffff',
   },
   {
     number: '04',
@@ -30,6 +43,8 @@ const projects = [
     stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
     description: 'Built and maintained a responsive front-end website including reusable UI components. Diagnosed and resolved cross-device UI/UX inconsistencies based on visual QA review and feedback.',
     tag: 'FRONTEND / WEB',
+    image: futureMineralForum,
+    bgColor: '#000000',
   },
   {
     number: '05',
@@ -37,6 +52,8 @@ const projects = [
     stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
     description: 'Developed and maintained a responsive front-end, ensuring a consistent user experience across desktop, tablet, and mobile devices.',
     tag: 'FRONTEND / WEB',
+    image: sadiaChicken,
+    bgColor: '#FFCD00',
   },
   {
     number: '06',
@@ -44,6 +61,8 @@ const projects = [
     stack: ['React.js', 'HTML', 'C#', 'JavaScript'],
     description: 'Implemented responsive user interfaces using C#, ensuring consistent functionality and an optimized experience across desktop and mobile devices.',
     tag: 'FRONTEND / WEB',
+    image: cboj,
+    bgColor: '#ffffff',
   },
 ];
 
@@ -109,6 +128,7 @@ export default function Projects() {
         padding: isMobile ? '4rem 5vw' : '10vw 6vw',
         backgroundColor: '#343148',
         borderTop: '1px solid #1A1A1A',
+        overflow: 'visible',
       }}
     >
       {/* Section header */}
@@ -125,7 +145,7 @@ export default function Projects() {
       </motion.div>
 
       {/* Project list */}
-      <div>
+      <div style={{ position: 'relative' }}>
         {projects.map((project, i) => {
           const isActive = isMobile || hovered === i;
           return (
@@ -159,6 +179,40 @@ export default function Projects() {
                 opacity: isActive ? 1 : 0.6,
                 transition: 'opacity 0.3s ease',
               }} />
+
+              {/* Hover Image */}
+              {!isMobile && (
+                <AnimatePresence>
+                  {hovered === i && project.image && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      style={{
+                      position: 'absolute',
+                      left: '48%',
+                      top: '-10px',
+                      width: '220px',
+                      height: '220px',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.35)',
+                      zIndex: 20,
+                      pointerEvents: 'none',
+                      backgroundColor: project.bgColor || '#000000',   // <-- dynamic ho gaya
+                    }}
+                    >
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '18px' }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ flex: 1, minWidth: isMobile ? '100%' : '280px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '10px' }}>
