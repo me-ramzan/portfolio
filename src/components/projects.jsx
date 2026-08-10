@@ -17,7 +17,7 @@ const projects = [
     description: 'End-to-end n8n workflow integrated with OpenAI and Pinecone to intelligently process and analyze documents. Implemented vector-based semantic search that reduced manual document review time by 70%.',
     tag: 'AI / AUTOMATION',
     image: aiDocProcessing,
-    bgColor: '#ffffff',   
+    bgColor: '#ffffff',
   },
   {
     number: '02',
@@ -45,6 +45,7 @@ const projects = [
     tag: 'FRONTEND / WEB',
     image: futureMineralForum,
     bgColor: '#000000',
+    link: 'https://www.futuremineralsforum.com/',
   },
   {
     number: '05',
@@ -54,6 +55,7 @@ const projects = [
     tag: 'FRONTEND / WEB',
     image: sadiaChicken,
     bgColor: '#FFCD00',
+    link: 'https://www.sadia-life.com/en/',
   },
   {
     number: '06',
@@ -65,6 +67,16 @@ const projects = [
     bgColor: '#ffffff',
   },
 ];
+
+const titleStyle = {
+  fontSize: 'clamp(1.2rem, 2.5vw, 2rem)',
+  fontWeight: 700,
+  letterSpacing: '-0.02em',
+  color: '#ffffff',
+  lineHeight: 1.2,
+  marginBottom: '8px',
+  transition: 'color 0.3s',
+};
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
@@ -190,18 +202,18 @@ export default function Projects() {
                       exit={{ opacity: 0, scale: 0.85, y: 20 }}
                       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                       style={{
-                      position: 'absolute',
-                      left: '48%',
-                      top: '-10px',
-                      width: '220px',
-                      height: '220px',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      boxShadow: '0 20px 40px rgba(0,0,0,0.35)',
-                      zIndex: 20,
-                      pointerEvents: 'none',
-                      backgroundColor: project.bgColor || '#000000',   // <-- dynamic ho gaya
-                    }}
+                        position: 'absolute',
+                        left: '48%',
+                        top: '-10px',
+                        width: '220px',
+                        height: '220px',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.35)',
+                        zIndex: 20,
+                        pointerEvents: 'none',
+                        backgroundColor: project.bgColor || '#000000',
+                      }}
                     >
                       <img
                         src={project.image}
@@ -226,17 +238,47 @@ export default function Projects() {
                       letterSpacing: '0.08em',
                     }}>{project.tag}</span>
                   </div>
-                  <h3 style={{
-                    fontSize: 'clamp(1.2rem, 2.5vw, 2rem)',
-                    fontWeight: 700,
-                    letterSpacing: '-0.02em',
-                    color: '#ffffff',
-                    transition: 'color 0.3s',
-                    lineHeight: 1.2,
-                    marginBottom: '8px',
-                  }}>
-                    {project.title}
-                  </h3>
+
+                  {project.link ? (
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Visit ${project.title} website`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'flex-start',
+                        gap: '0.5rem',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 30,
+                      }}
+                    >
+                      <h3 style={{
+                        ...titleStyle,
+                        textDecoration: isActive ? 'underline' : 'none',
+                        textUnderlineOffset: '4px',
+                        textDecorationThickness: '1px',
+                      }}>
+                        {project.title}
+                      </h3>
+                      <ArrowUpRight
+                        size={22}
+                        color="#ffffff"
+                        style={{
+                          flexShrink: 0,
+                          marginTop: '4px',
+                          opacity: isActive ? 1 : 0.5,
+                          transform: isActive ? 'translate(3px, -3px)' : 'none',
+                          transition: 'opacity 0.3s ease, transform 0.3s ease',
+                        }}
+                      />
+                    </a>
+                  ) : (
+                    <h3 style={titleStyle}>{project.title}</h3>
+                  )}
+
                   <TypewriterTags tags={project.stack} active={isActive} />
                 </div>
                 <div style={{ maxWidth: isMobile ? '100%' : '380px', minHeight: isMobile ? 'auto' : '5.4rem' }}>
