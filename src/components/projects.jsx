@@ -131,6 +131,14 @@ export default function Projects() {
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    projects.forEach((project) => {
+      if (project.image) {
+        const img = new Image();
+        img.src = project.image;
+      }
+    });
+  }, []);
 
   return (
     <section
