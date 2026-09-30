@@ -12,7 +12,7 @@ const DARK = '#343148';
 const SOCIAL_ICONS = [
   {
     id: 'linkedin',
-    href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/?isSelfProfile=true',
+href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/',
     svg: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
@@ -203,8 +203,8 @@ export default function Footer() {
         }
       );
 
-      gsap.to(arrowRef.current, {
-        y: -6,
+gsap.to(arrowRef.current, {
+  yPercent: -15,
         duration: 1.4,
         ease: 'sine.inOut',
         repeat: -1,
@@ -212,7 +212,7 @@ export default function Footer() {
       });
     }, footerRef);
     return () => ctx.revert();
-  }, []);
+  }, [isMobile]);
 
   if (isMobile) {
     return (
