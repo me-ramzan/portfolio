@@ -5,6 +5,7 @@ html, body {
   overflow-x: hidden;
   width: 100%;
   max-width: 100%;
+   background-color: #D7C49E;
 }
 .mono {
   font-family: 'JetBrains Mono', 'Courier New', monospace;

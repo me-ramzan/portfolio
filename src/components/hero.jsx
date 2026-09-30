@@ -63,6 +63,9 @@ export default function Hero({ isLoading }) {
   }, []);
 
   useEffect(() => {
+    // No pinning on phones: the hero is taller than the screen there
+    if (isMobile) return;
+
     const trigger = ScrollTrigger.create({
       trigger: heroRef.current,
       start: 'top top',
@@ -71,7 +74,7 @@ export default function Hero({ isLoading }) {
       pinSpacing: false,
     });
     return () => trigger.kill();
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
