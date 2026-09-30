@@ -1,22 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Mail, Phone, MapPin } from 'lucide-react';
-import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const EMAILJS_SERVICE_ID = 'service_bcyigug';
 const EMAILJS_TEMPLATE_ID = 'template_pta6w9h';
 const EMAILJS_PUBLIC_KEY = '_Y1OJswaMuBHliGao';
+const EASE = [0.16, 1, 0.3, 1];
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
-
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [breakpoint]);
-
   return isMobile;
 }
 
@@ -29,13 +31,70 @@ export default function Contact() {
   const [error, setError] = useState('');
   const isDragging = useRef(false);
   const trackRef = useRef(null);
+  const handleElRef = useRef(null);
+  const sectionRef = useRef(null);
+  const formPanelRef = useRef(null);
+  const contactItemsRef = useRef([]);
+  const successRef = useRef(null);
   const isMobile = useIsMobile();
+
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const labelY = useSpring(useTransform(scrollYProgress, [0, 1], [40, -40]), { stiffness: 100, damping: 24, mass: 0.6 });
+  const underlineWidth = useTransform(scrollYProgress, [0, 0.4], ['0%', '100%']);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        contactItemsRef.current,
+        { opacity: 0, x: -16 },
+        {
+          opacity: 1, x: 0, duration: 0.6, stagger: 0.1, ease: 'power3.out',
+          scrollTrigger: { trigger: sectionRef.current, start: 'top 65%', toggleActions: 'play none none reverse' },
+        }
+      );
+
+      gsap.fromTo(
+        formPanelRef.current,
+        { boxShadow: '0 0px 0px rgba(0,0,0,0)' },
+        {
+          boxShadow: '0 30px 60px rgba(0,0,0,0.2)',
+          duration: 1.2,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: sectionRef.current, start: 'top 60%', toggleActions: 'play none none reverse' },
+        }
+      );
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
+
+  useEffect(() => {
+    if (sent && successRef.current) {
+      gsap.fromTo(
+        successRef.current.children,
+        { opacity: 0, y: 16, scale: 0.9 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.12, ease: 'back.out(1.7)' }
+      );
+    }
+  }, [sent]);
+
+  useEffect(() => {
+    if (handleElRef.current) {
+      gsap.to(handleElRef.current, {
+        scale: isDragging.current ? 1.08 : 1,
+        duration: 0.3,
+        ease: 'power2.out',
+      });
+    }
+  }, [sliderValue]);
 
   const sendEmail = () => {
     if (!form.name || !form.email || !form.message) {
       setError('Please fill in all fields before confirming.');
       setConfirmed(false);
       setSliderValue(0);
+      if (trackRef.current) {
+        gsap.to(trackRef.current, { x: -8, duration: 0.08, repeat: 5, yoyo: true, ease: 'power1.inOut' });
+      }
       return;
     }
 
@@ -45,12 +104,7 @@ export default function Contact() {
     emailjs.send(
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
-      {
-        name: form.name,
-        email: form.email,
-        message: form.message,
-        phone: '',
-      },
+      { name: form.name, email: form.email, message: form.message, phone: '' },
       EMAILJS_PUBLIC_KEY
     )
       .then(() => {
@@ -117,6 +171,7 @@ export default function Contact() {
   return (
     <section
       id="contact"
+      ref={sectionRef}
       style={{
         padding: isMobile ? '4rem 5vw' : '10vw 6vw',
         backgroundColor: '#D7C49E',
@@ -129,10 +184,17 @@ export default function Contact() {
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, ease: EASE }}
         >
-          <span className="mono" style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em' }}>06 / CONTACT</span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', marginTop: '12px', marginBottom: '2rem' }} />
+          <motion.span
+            className="mono"
+            style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : labelY }}
+          >
+            06 / CONTACT
+          </motion.span>
+          <div style={{ width: '32px', height: '2px', backgroundColor: '#4a4566', marginTop: '12px', marginBottom: '2rem', overflow: 'hidden' }}>
+            <motion.div style={{ width: underlineWidth, height: '100%', backgroundColor: '#343148' }} />
+          </div>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3rem)',
             fontWeight: 700,
@@ -155,6 +217,7 @@ export default function Contact() {
             ].map((item, i) => (
               <a
                 key={i}
+                ref={(el) => (contactItemsRef.current[i] = el)}
                 href={item.href}
                 style={{
                   display: 'flex',
@@ -173,49 +236,15 @@ export default function Contact() {
               </a>
             ))}
           </div>
-
-          <div style={{ display: 'flex', gap: '12px', marginTop: '2.5rem' }}>
-            {[
-  { icon: <FaLinkedin size={16} />, href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/' },
-  { icon: <FaGithub size={16} />, href: 'https://github.com/me-ramzan' },
-  ].map((s, i) => (
-    <a
-      key={i}
-        href={s.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          width: '44px',
-          height: '44px',
-          border: '1.5px solid #000000',
-          borderRadius: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#080808',
-          textDecoration: 'none',
-          transition: 'border-color 0.2s, color 0.2s',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = '#000000'; e.currentTarget.style.color = '#020303'; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = '#010000'; e.currentTarget.style.color = '#080808'; }}
-        >
-          <motion.span
-            whileHover={{ scale: 1.3 }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            {s.icon}
-          </motion.span>
-     </a>
-  ))}
-          </div>
         </motion.div>
 
         {/* Right — form */}
         <motion.div
+          ref={formPanelRef}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.2 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
           style={{
             backgroundColor: '#343148',
             borderRadius: '8px',
@@ -226,8 +255,8 @@ export default function Contact() {
           onMouseLeave={handleMouseUp}
         >
           {sent ? (
-            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-              <div style={{  color: '#F4F1EA', fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
+            <div ref={successRef} style={{ textAlign: 'center', padding: '3rem 0' }}>
+              <div style={{ color: '#F4F1EA', fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
               <h3 style={{ color: '#F4F1EA', fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Connection Confirmed</h3>
               <p style={{ color: '#9B9B8E', fontSize: '0.9rem' }}>Thanks {form.name}. I'll be in touch shortly.</p>
             </div>
@@ -246,6 +275,8 @@ export default function Contact() {
                       type={type}
                       value={form[field]}
                       onChange={handleChange(field)}
+                      onFocus={(e) => gsap.to(e.target, { borderBottomColor: '#F4F1EA', duration: 0.3 })}
+                      onBlur={(e) => gsap.to(e.target, { borderBottomColor: '#2A2A2A', duration: 0.3 })}
                       placeholder={`Enter ${label.toLowerCase()}`}
                       style={inputStyle}
                     />
@@ -258,13 +289,11 @@ export default function Contact() {
                   <textarea
                     value={form.message}
                     onChange={handleChange('message')}
+                    onFocus={(e) => gsap.to(e.target, { borderBottomColor: '#F4F1EA', duration: 0.3 })}
+                    onBlur={(e) => gsap.to(e.target, { borderBottomColor: '#2A2A2A', duration: 0.3 })}
                     placeholder="Describe your project or opportunity..."
                     rows={4}
-                    style={{
-                      ...inputStyle,
-                      resize: 'vertical',
-                      minHeight: '100px',
-                    }}
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: '100px' }}
                   />
                 </div>
               </div>
@@ -293,18 +322,17 @@ export default function Contact() {
                   }}
                   onTouchMove={handleTouchMove}
                 >
-                  {/* Fill */}
                   <div style={{
                     position: 'absolute',
                     left: 0,
                     top: 0,
                     bottom: 0,
                     width: `${sliderValue}%`,
-                    backgroundColor: confirmed ? '#f4f1ea' : '#f4f1ea',
+                    backgroundColor: '#f4f1ea',
                     transition: confirmed ? 'none' : 'width 0.1s',
                   }} />
-                  {/* Handle */}
                   <div
+                    ref={handleElRef}
                     onMouseDown={handleDragStart}
                     onTouchStart={handleDragStart}
                     style={{
@@ -326,7 +354,6 @@ export default function Contact() {
                   >
                     <span style={{ color: '#080808', fontSize: '0.7rem', fontWeight: 700 }}>››</span>
                   </div>
-                  {/* Center text */}
                   <div style={{
                     position: 'absolute',
                     inset: 0,

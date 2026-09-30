@@ -1,6 +1,5 @@
 @import "tailwindcss";
-@import "tailwindcss";
-
+@import 'lenis/dist/lenis.css';
 
 html, body {
   overflow-x: hidden;
@@ -10,9 +9,9 @@ html, body {
 .mono {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
 }
-html {
+/* html {
   scroll-behavior: smooth;
-}
+} */
 /* Hide native scrollbar but keep scrolling functional */
 html {
   scrollbar-width: none; /* Firefox */

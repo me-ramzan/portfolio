@@ -4,6 +4,10 @@ import sybrosLogo from '../assets/images/sybros.png';
 import bbdoLogo from '../assets/images/bbdo.png';
 import duofankaarLogo from '../assets/images/duofankaar.png';
 import samsungLogo from '../assets/images/samsung.png';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const companies = [
   { name: 'Sybros', logo: sybrosLogo },
@@ -41,6 +45,17 @@ export default function About() {
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const trigger = ScrollTrigger.create({
+      trigger: ref.current,
+      start: 'top top',
+      end: '+=30%',
+      pin: true,
+      pinSpacing: false,
+    });
+    return () => trigger.kill();
   }, []);
 
   useEffect(() => {
@@ -83,6 +98,8 @@ export default function About() {
         padding: isMobile ? '4rem 5vw 3rem' : '10vw 6vw 4vw',
         backgroundColor: '#D7C49E',
         borderTop: '1px solid #000000',
+        position: 'relative',
+        zIndex: 2,
       }}
     >
       <div
