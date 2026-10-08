@@ -7,6 +7,7 @@ import invoiceAutomation from '../assets/images/AutomatedInvoiceProcessingWorkfl
 import aiCallingAgent from '../assets/images/AIVoiceCallingAgentPipeline.png';
 import futureMineralForum from '../assets/images/FutureMineralForum.png';
 import sadiaChicken from '../assets/images/SadiaChicken.png';
+import hybrdx from '../assets/images/hybrdx.jpg';
 import cboj from '../assets/images/CBOJ.jpg';
 
 const projects = [
@@ -49,6 +50,16 @@ const projects = [
   },
   {
     number: '05',
+    title: 'HYBRDX - Shamal Group',
+    stack: ['JavaScript', 'HTML', 'CSS', 'Mailchimp'],
+    description: "Supported the front-end UI of Dubai's hybrid fitness competition, delivering responsive layouts, smooth animations and a live event countdown. Also designed the Mailchimp emailer for participant updates.",
+    tag: 'FRONTEND / WEB',
+    image: hybrdx,
+    bgColor: '#06313e',
+    link: 'https://www.hybrdx.ae/',
+  },
+  {
+    number: '06',
     title: 'Sadia Chicken',
     stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
     description: 'Developed and maintained a responsive front-end, ensuring a consistent user experience across desktop, tablet, and mobile devices.',
@@ -58,7 +69,7 @@ const projects = [
     link: 'https://www.sadia-life.com/en/',
   },
   {
-    number: '06',
+    number: '07',
     title: 'CBOJ',
     stack: ['React.js', 'HTML', 'C#', 'JavaScript'],
     description: 'Implemented responsive user interfaces using C#, ensuring consistent functionality and an optimized experience across desktop and mobile devices.',
