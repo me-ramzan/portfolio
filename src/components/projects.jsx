@@ -40,7 +40,7 @@ const projects = [
   },
   {
     number: '04',
-    title: 'Future Mineral Forum — UI',
+    title: 'Future Mineral Forum - UI',
     stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
     description: 'Built and maintained a responsive front-end website including reusable UI components. Diagnosed and resolved cross-device UI/UX inconsistencies based on visual QA review and feedback.',
     tag: 'FRONTEND / WEB',
