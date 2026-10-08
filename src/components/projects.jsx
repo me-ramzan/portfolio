@@ -52,7 +52,7 @@ const projects = [
     number: '05',
     title: 'HYBRDX - Shamal Group',
     stack: ['JavaScript', 'HTML', 'CSS', 'Mailchimp'],
-    description: "Supported the front-end UI of Dubai's hybrid fitness competition, delivering responsive layouts, smooth animations and a live event countdown. Also designed the Mailchimp emailer for participant updates.",
+    description: "Contributed to the front-end of a public-facing campaign site for Dubai's hybrid fitness competition. Built responsive layouts, animations and a live event countdown, and designed the Mailchimp emailer for participant updates.",
     tag: 'FRONTEND / WEB',
     image: hybrdx,
     bgColor: '#06313e',
