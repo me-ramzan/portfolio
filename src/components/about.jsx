@@ -150,7 +150,7 @@ export default function About() {
               marginBottom: isMobile ? '1.5rem' : '3rem',
             }}
           >
-            Automation and Software Engineer with <strong>~3 years</strong> of experience building React-based frontends and n8n-driven backends using JavaScript, React.js, Node.js, and Python. Strong RPA background with UiPath and Power Automate, plus deep CRM and enterprise integrations. Skilled in AI and ML workflows for automating complex, unstructured processes. <strong>Based in the UAE with relocation flexibility.</strong>
+            Automation and Software Engineer with <strong>~3 years</strong> of experience building React-based frontends and n8n-driven backends using JavaScript, React.js, Node.js, Python, and PHP/Laravel. Strong RPA background with UiPath and Power Automate, plus deep CRM, Mailchimp, and enterprise integrations. Skilled in AI and ML workflows for automating complex, unstructured processes.
           </motion.p>
         </div>
       </div>

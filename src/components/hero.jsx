@@ -191,7 +191,7 @@ export default function Hero({ isLoading }) {
           }} />
           <span className="mono" style={{ color: '#080808', fontSize: '0.9rem' }}>AVAILABLE FOR WORK</span>
         </div>
-        <span className="mono" style={{ color: '#343148', fontSize: '0.7rem' }}>Dubai, UAE</span>
+        {/* <span className="mono" style={{ color: '#343148', fontSize: '0.7rem' }}>Dubai, UAE</span> */}
       </div>
 
       <motion.div
