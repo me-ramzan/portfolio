@@ -340,7 +340,7 @@ gsap.to(arrowRef.current, {
     height={38}
     style={{ willChange: 'transform' }}
   />
-  BACK TOP
+  BACK TO TOP
 </a>
 
       <motion.div
