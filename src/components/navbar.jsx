@@ -214,30 +214,7 @@ export default function Navbar() {
                 </motion.a>
               </div>
             ))}
-            <div style={{ overflow: 'hidden', marginTop: '1.5rem', display: isMobile ? 'block' : 'none' }}>
-              <motion.a
-                initial={{ y: '110%' }}
-                animate={{ y: 0, transition: { delay: 0.15 + navLinks.length * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] } }}
-                exit={{ y: '-110%', transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } }}
-                href="mailto:me.ramzan.zulfiqar@gmail.com"
-                onClick={closeMenu}
-                style={{
-                  display: 'inline-block',
-                  backgroundColor: t.btnBg,
-                  color: t.btnText,
-                  padding: '12px 45px',
-                  borderRadius: '999px',
-                  fontSize: '16px',
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  letterSpacing: '0.06em',
-                  textAlign: 'center',
-                }}
-              >
-                Hire Me
-              </motion.a>
-            </div>
+
           </motion.div>
         )}
       </AnimatePresence>
