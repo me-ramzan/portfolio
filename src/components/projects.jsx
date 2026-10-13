@@ -105,7 +105,45 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-function TypewriterTags({ tags, active }) {
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
+function getTheme(isDark) {
+  return isDark
+    ? {
+        bg: '#121018',
+        sectionBorder: '#343148',
+        rowBorder: '#343148',
+        accent: '#D7C49E',
+        tagBg: 'rgba(244, 241, 234, 0.12)',
+      }
+    : {
+        bg: '#343148',
+        sectionBorder: '#1A1A1A',
+        rowBorder: '#2A2A2A',
+        accent: '#ffffff',
+        tagBg: '#0000005d',
+      };
+}
+
+function TypewriterTags({ tags, active, t }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px', minHeight: '28px' }}>
       <AnimatePresence>
@@ -120,7 +158,7 @@ function TypewriterTags({ tags, active }) {
             style={{
               fontSize: '0.65rem',
               padding: '4px 10px',
-              backgroundColor: '#0000005d',
+              backgroundColor: t.tagBg,
               color: '#F4F1EA',
               borderRadius: '3px',
               letterSpacing: '0.05em',
@@ -138,6 +176,7 @@ function TypewriterTags({ tags, active }) {
 function ProjectRow({ project, i, isMobile, hovered, setHovered }) {
   const rowRef = useRef(null);
   const isActive = isMobile || hovered === i;
+  const t = getTheme(useIsDark());
 
   const { scrollYProgress } = useScroll({
     target: rowRef,
@@ -182,7 +221,7 @@ function ProjectRow({ project, i, isMobile, hovered, setHovered }) {
         transition={{ duration: 0.5, ease: EASE_SOFT }}
         style={{
           position: 'relative',
-          borderTop: '1px solid #2A2A2A',
+          borderTop: `1px solid ${t.rowBorder}`,
           padding: isMobile ? '1.5rem 0' : '2.2rem 0',
           cursor: 'default',
           marginLeft: isMobile ? '-5vw' : '-6vw',
@@ -200,7 +239,7 @@ function ProjectRow({ project, i, isMobile, hovered, setHovered }) {
             top: 0,
             width: '3px',
             height: '100%',
-            backgroundColor: '#ffffff',
+            backgroundColor: t.accent,
             transformOrigin: 'center',
           }}
         />
@@ -260,7 +299,7 @@ function ProjectRow({ project, i, isMobile, hovered, setHovered }) {
               <span className="mono" style={{
                 fontSize: '0.65rem',
                 color: '#ffffff',
-                border: '1px solid #2A2A2A',
+                border: `1px solid ${t.rowBorder}`,
                 padding: '3px 8px',
                 borderRadius: '3px',
                 letterSpacing: '0.08em',
@@ -308,7 +347,7 @@ function ProjectRow({ project, i, isMobile, hovered, setHovered }) {
               <h3 style={titleStyle}>{project.title}</h3>
             )}
 
-            <TypewriterTags tags={project.stack} active={isActive} />
+            <TypewriterTags tags={project.stack} active={isActive} t={t} />
           </div>
           <div style={{ maxWidth: isMobile ? '100%' : '380px', minHeight: isMobile ? 'auto' : '5.4rem' }}>
             {isMobile ? (
@@ -366,6 +405,7 @@ export default function Projects() {
   const [hovered, setHovered] = useState(null);
   const ref = useRef(null);
   const isMobile = useIsMobile();
+  const t = getTheme(useIsDark());
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -386,14 +426,14 @@ export default function Projects() {
   }, []);
 
   return (
-    <div style={{ backgroundColor: '#343148' }}>
+    <div style={{ backgroundColor: t.bg }}>
       <section
         id="projects"
         ref={ref}
         style={{
           padding: isMobile ? '4rem 5vw' : '10vw 6vw',
-          backgroundColor: '#343148',
-          borderTop: '1px solid #1A1A1A',
+          backgroundColor: t.bg,
+          borderTop: `1px solid ${t.sectionBorder}`,
           overflow: 'visible',
           position: 'relative',
         }}
@@ -414,7 +454,7 @@ export default function Projects() {
               initial={{ width: 0 }}
               animate={headerInView ? { width: '48px' } : { width: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: EASE }}
-              style={{ height: '2px', backgroundColor: '#ffffff', marginTop: '16px' }}
+              style={{ height: '2px', backgroundColor: t.accent, marginTop: '16px' }}
             />
           </div>
         </div>
@@ -431,7 +471,7 @@ export default function Projects() {
               setHovered={setHovered}
             />
           ))}
-          <div style={{ borderTop: '1px solid #ffffff' }} />
+          <div style={{ borderTop: `1px solid ${t.accent}` }} />
         </div>
       </section>
     </div>

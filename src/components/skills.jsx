@@ -26,19 +26,70 @@ function useIsMobile(bp = 768) {
   return m;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
+function getTheme(isDark) {
+  return isDark
+    ? {
+        bg: '#121018',
+        border: '#343148',
+        hoverBorder: '#D7C49E',
+        cardBg: '#121018',
+        text: '#F4F1EA',
+        accent: '#D7C49E',
+        pillBg: '#343148',
+        pillBorder: '#4a4666',
+        ring1: 'rgba(215,196,158,0.15)',
+        ring2: 'rgba(215,196,158,0.1)',
+        shadow: '0 30px 60px rgba(0,0,0,0.5)',
+      }
+    : {
+        bg: '#D7C49E',
+        border: '#000000',
+        hoverBorder: '#343148',
+        cardBg: '#D7C49E',
+        text: '#080808',
+        accent: '#343148',
+        pillBg: '#343148',
+        pillBorder: '#424040',
+        ring1: 'rgba(52,49,72,0.15)',
+        ring2: 'rgba(52,49,72,0.1)',
+        shadow: '0 30px 60px rgba(0,0,0,0.25)',
+      };
+}
+
 function MagneticCard({ group, index, isMobile, cardRef }) {
   const [hovered, setHovered] = useState(false);
+  const t = getTheme(useIsDark());
 
   return (
     <div
       ref={cardRef}
       style={{
         position: 'relative',
-        border: '1px solid #000',
+        border: `1px solid ${t.border}`,
         borderRadius: '10px',
         padding: '1.6rem',
         overflow: 'hidden',
-        backgroundColor: '#D7C49E',
+        backgroundColor: t.cardBg,
         cursor: 'default',
         willChange: 'transform',
         opacity: 0,
@@ -55,13 +106,13 @@ function MagneticCard({ group, index, isMobile, cardRef }) {
       />
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
         <motion.span
-          animate={hovered ? { rotate: 12, scale: 1.2, color: '#8a2be2' } : { rotate: 0, scale: 1, color: '#343148' }}
+          animate={hovered ? { rotate: 12, scale: 1.2, color: '#8a2be2' } : { rotate: 0, scale: 1, color: t.accent }}
           transition={{ duration: 0.4, ease: EASE }}
           style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.05rem', fontWeight: 700 }}
         >
           {group.icon}
         </motion.span>
-        <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.02em', color: '#080808' }}>{group.category}</span>
+        <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.02em', color: t.text }}>{group.category}</span>
       </div>
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
         {group.skills.map((skill, j) => (
@@ -69,7 +120,7 @@ function MagneticCard({ group, index, isMobile, cardRef }) {
             key={j}
             className="mono"
             whileHover={isMobile ? {} : { y: -3, scale: 1.08, backgroundColor: '#8a2be2', transition: { duration: 0.2 } }}
-            style={{ fontSize: '0.65rem', padding: '4px 10px', backgroundColor: '#343148', border: '1px solid #424040', borderRadius: '3px', color: '#f4f1ea', letterSpacing: '0.04em' }}
+            style={{ fontSize: '0.65rem', padding: '4px 10px', backgroundColor: t.pillBg, border: `1px solid ${t.pillBorder}`, borderRadius: '3px', color: '#f4f1ea', letterSpacing: '0.04em' }}
           >
             {skill}
           </motion.span>
@@ -82,6 +133,9 @@ function MagneticCard({ group, index, isMobile, cardRef }) {
 export default function Skills() {
   const sectionRef = useRef(null);
   const isMobile = useIsMobile();
+  const t = getTheme(useIsDark());
+  const tRef = useRef(t);
+  tRef.current = t;
   const cardRefs = useRef([]);
   const titleRef = useRef(null);
 
@@ -90,6 +144,13 @@ export default function Skills() {
   const underlineWidth = useTransform(scrollYProgress, [0, 0.4], ['0%', '100%']);
   const bgRotate = useTransform(scrollYProgress, [0, 1], [0, 25]);
   const bgScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.9, 1.1, 0.95]);
+
+  // GSAP writes borderColor inline on hover, so re-apply it when the theme changes
+  useEffect(() => {
+    cardRefs.current.forEach((el) => {
+      if (el) gsap.set(el, { borderColor: t.border });
+    });
+  }, [t.border]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -123,11 +184,11 @@ export default function Skills() {
           yTo(py * 24);
           rxTo(py * -10);
           ryTo(px * 10);
-          gsap.to(el, { boxShadow: '0 30px 60px rgba(0,0,0,0.25)', borderColor: '#343148', duration: 0.3 });
+          gsap.to(el, { boxShadow: tRef.current.shadow, borderColor: tRef.current.hoverBorder, duration: 0.3 });
         };
         const onLeave = () => {
           xTo(0); yTo(0); rxTo(0); ryTo(0);
-          gsap.to(el, { boxShadow: '0 0px 0px rgba(0,0,0,0)', borderColor: '#000000', duration: 0.4 });
+          gsap.to(el, { boxShadow: '0 0px 0px rgba(0,0,0,0)', borderColor: tRef.current.border, duration: 0.4 });
         };
         el.addEventListener('mousemove', onMove);
         el.addEventListener('mouseleave', onLeave);
@@ -189,14 +250,14 @@ export default function Skills() {
     <section
       id="skills"
       ref={sectionRef}
-      style={{ position: 'relative', padding: isMobile ? '4rem 5vw' : '10vw 6vw', backgroundColor: '#D7C49E', borderTop: '1px solid #000', overflow: 'hidden' }}
+      style={{ position: 'relative', padding: isMobile ? '4rem 5vw' : '10vw 6vw', backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, overflow: 'hidden' }}
     >
       <motion.div
         aria-hidden
         style={{
           position: 'absolute', top: '-20%', right: '-10%', width: '600px', height: '600px',
           rotate: bgRotate, scale: bgScale, pointerEvents: 'none', zIndex: 0,
-          border: '1px dashed rgba(52,49,72,0.15)', borderRadius: '50%',
+          border: `1px dashed ${t.ring1}`, borderRadius: '50%',
         }}
       />
       <motion.div
@@ -204,7 +265,7 @@ export default function Skills() {
         style={{
           position: 'absolute', top: '-10%', right: '0%', width: '420px', height: '420px',
           rotate: useTransform(bgRotate, (r) => -r * 1.4), pointerEvents: 'none', zIndex: 0,
-          border: '1px solid rgba(52,49,72,0.1)', borderRadius: '50%',
+          border: `1px solid ${t.ring2}`, borderRadius: '50%',
         }}
       />
 
@@ -220,18 +281,18 @@ export default function Skills() {
             className="mono"
             animate={{ letterSpacing: ['0.15em', '0.25em', '0.15em'] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ color: '#000', fontSize: '0.7rem', display: 'inline-block' }}
+            style={{ color: t.text, fontSize: '0.7rem', display: 'inline-block' }}
           >
             04 / SKILLS
           </motion.span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', marginTop: '12px', overflow: 'hidden' }}>
-            <motion.div style={{ width: underlineWidth, height: '100%', backgroundColor: '#343148' }} />
+          <div style={{ width: '32px', height: '2px', backgroundColor: t.accent, marginTop: '12px', overflow: 'hidden' }}>
+            <motion.div style={{ width: underlineWidth, height: '100%', backgroundColor: t.accent }} />
           </div>
           <h2
             ref={titleRef}
             style={{
               fontSize: 'clamp(1.5rem, 2.5vw, 2.2rem)', fontWeight: 700,
-              letterSpacing: '-0.02em', marginTop: '1.5rem', lineHeight: 1.2, color: '#343148',
+              letterSpacing: '-0.02em', marginTop: '1.5rem', lineHeight: 1.2, color: t.accent,
             }}
           >
             Technical<br />Arsenal
@@ -250,9 +311,9 @@ export default function Skills() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-10% 0px' }}
         transition={{ duration: 0.8, ease: EASE }}
-        style={{ position: 'relative', zIndex: 1, marginTop: isMobile ? '2.5rem' : '4rem', paddingTop: isMobile ? '1.5rem' : '2.5rem', borderTop: '1px solid #000', display: 'flex', gap: isMobile ? '1rem 2rem' : '3rem', alignItems: 'center', flexWrap: 'wrap' }}
+        style={{ position: 'relative', zIndex: 1, marginTop: isMobile ? '2.5rem' : '4rem', paddingTop: isMobile ? '1.5rem' : '2.5rem', borderTop: `1px solid ${t.border}`, display: 'flex', gap: isMobile ? '1rem 2rem' : '3rem', alignItems: 'center', flexWrap: 'wrap' }}
       >
-        <span className="mono" style={{ color: '#343148', fontSize: '0.7rem', letterSpacing: '0.15em' }}>LANGUAGES</span>
+        <span className="mono" style={{ color: t.accent, fontSize: '0.7rem', letterSpacing: '0.15em' }}>LANGUAGES</span>
         {[{ lang: 'English', level: 'Fluent' }, { lang: 'Hindi', level: 'Fluent' }, { lang: 'Urdu', level: 'Native' }].map((l, i) => (
           <motion.div
             key={i}
@@ -263,8 +324,8 @@ export default function Skills() {
             whileHover={isMobile ? {} : { y: -3, scale: 1.05 }}
             style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
           >
-            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{l.lang}</span>
-            <span className="mono" style={{ fontSize: '0.65rem', color: '#f4f1ea', backgroundColor: '#343148', border: '1px solid #343148', padding: '3px 8px', borderRadius: '3px' }}>{l.level}</span>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: t.text }}>{l.lang}</span>
+            <span className="mono" style={{ fontSize: '0.65rem', color: '#f4f1ea', backgroundColor: t.pillBg, border: `1px solid ${t.pillBg}`, padding: '3px 8px', borderRadius: '3px' }}>{l.level}</span>
           </motion.div>
         ))}
       </motion.div>

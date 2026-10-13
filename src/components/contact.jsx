@@ -22,6 +22,26 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [sliderValue, setSliderValue] = useState(0);
@@ -37,6 +57,10 @@ export default function Contact() {
   const contactItemsRef = useRef([]);
   const successRef = useRef(null);
   const isMobile = useIsMobile();
+  const isDark = useIsDark();
+  const t = isDark
+    ? { bg: '#121018', border: '#343148', text: '#F4F1EA', accent: '#D7C49E', stroke: '#F4F1EA', track: '#343148', fill: '#D7C49E', linkHover: '#D7C49E', linkBase: '#F4F1EA' }
+    : { bg: '#D7C49E', border: '#000000', text: '#000000', accent: '#343148', stroke: '#080808', track: '#4a4566', fill: '#343148', linkHover: '#343148', linkBase: '#080808' };
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
   const labelY = useSpring(useTransform(scrollYProgress, [0, 1], [40, -40]), { stiffness: 100, damping: 24, mass: 0.6 });
@@ -174,8 +198,8 @@ export default function Contact() {
       ref={sectionRef}
       style={{
         padding: isMobile ? '4rem 5vw' : '10vw 6vw',
-        backgroundColor: '#D7C49E',
-        borderTop: '1px solid #000000',
+        backgroundColor: t.bg,
+        borderTop: `1px solid ${t.border}`,
       }}
     >
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '3rem' : '6rem', alignItems: 'start' }}>
@@ -188,12 +212,12 @@ export default function Contact() {
         >
           <motion.span
             className="mono"
-            style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : labelY }}
+            style={{ color: t.text, fontSize: '0.7rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : labelY }}
           >
             06 / CONTACT
           </motion.span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: '#4a4566', marginTop: '12px', marginBottom: '2rem', overflow: 'hidden' }}>
-            <motion.div style={{ width: underlineWidth, height: '100%', backgroundColor: '#343148' }} />
+          <div style={{ width: '32px', height: '2px', backgroundColor: t.track, marginTop: '12px', marginBottom: '2rem', overflow: 'hidden' }}>
+            <motion.div style={{ width: underlineWidth, height: '100%', backgroundColor: t.fill }} />
           </div>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3rem)',
@@ -202,10 +226,10 @@ export default function Contact() {
             lineHeight: 1.1,
             marginBottom: '1.5rem',
           }}>
-            <span style={{ color: '#343148' }}>Let's Build<br /></span>
-            <span style={{ WebkitTextStroke: '1.5px #080808', color: 'transparent' }}>Something Great</span>
+            <span style={{ color: t.accent }}>Let's Build<br /></span>
+            <span style={{ WebkitTextStroke: `1.5px ${t.stroke}`, color: 'transparent' }}>Something Great</span>
           </h2>
-          <p style={{ color: '#000000', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '2.5rem' }}>
+          <p style={{ color: t.text, fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '2.5rem' }}>
             Open to full-time roles, freelance projects, and collaborations across the UAE and beyond.
           </p>
 
@@ -223,15 +247,15 @@ export default function Contact() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  color: '#080808',
+                  color: t.linkBase,
                   textDecoration: 'none',
                   fontSize: '0.9rem',
                   transition: 'color 0.2s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#343148'}
-                onMouseLeave={e => e.currentTarget.style.color = '#080808'}
+                onMouseEnter={e => e.currentTarget.style.color = t.linkHover}
+                onMouseLeave={e => e.currentTarget.style.color = t.linkBase}
               >
-                <span style={{ color: '#343148' }}>{item.icon}</span>
+                <span style={{ color: t.accent }}>{item.icon}</span>
                 {item.text}
               </a>
             ))}

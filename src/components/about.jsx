@@ -28,6 +28,26 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
 export default function About() {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
@@ -37,6 +57,10 @@ export default function About() {
   const targetSpeedRef = useRef(0.5);
   const isHoveredRef = useRef(false);
   const isMobile = useIsMobile();
+  const isDark = useIsDark();
+  const t = isDark
+    ? { bg: '#121018', border: '#343148', text: '#F4F1EA', accent: '#D7C49E', stroke: '#F4F1EA' }
+    : { bg: '#D7C49E', border: '#000000', text: '#000000', accent: '#343148', stroke: '#080808' };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -55,9 +79,8 @@ export default function About() {
       pin: true,
       pinSpacing: false,
     });
-    return () => trigger.kill();
+    return () => trigger.kill(true);
   }, []);
-
   useEffect(() => {
     let animationFrame;
 
@@ -96,8 +119,8 @@ export default function About() {
       ref={ref}
       style={{
         padding: isMobile ? '4rem 5vw 3rem' : '10vw 6vw 4vw',
-        backgroundColor: '#D7C49E',
-        borderTop: '1px solid #000000',
+        backgroundColor: t.bg,
+        borderTop: `1px solid ${t.border}`,
         position: 'relative',
         zIndex: 2,
       }}
@@ -116,8 +139,8 @@ export default function About() {
           animate={visible ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <span className="mono" style={{ color: '#000000', fontSize: '0.7rem', letterSpacing: '0.15em' }}>01 / ABOUT</span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', marginTop: '12px' }} />
+          <span className="mono" style={{ color: t.text, fontSize: '0.7rem', letterSpacing: '0.15em' }}>01 / ABOUT</span>
+          <div style={{ width: '32px', height: '2px', backgroundColor: t.accent, marginTop: '12px' }} />
         </motion.div>
 
         {/* Right content */}
@@ -134,8 +157,8 @@ export default function About() {
               marginBottom: '2rem',
             }}
           >
-            <span style={{ color: '#343148' }}>Engineering Excellence</span><br />
-            <span style={{ WebkitTextStroke: '1.5px #080808', color: 'transparent' }}>at Every Layer</span>
+            <span style={{ color: t.accent }}>Engineering Excellence</span><br />
+            <span style={{ WebkitTextStroke: `1.5px ${t.stroke}`, color: 'transparent' }}>at Every Layer</span>
           </motion.h2>
 
           <motion.p
@@ -144,7 +167,7 @@ export default function About() {
             transition={{ duration: 0.7, delay: 0.2 }}
             style={{
               fontSize: '1.1rem',
-              color: '#000000',
+              color: t.text,
               lineHeight: 1.7,
               maxWidth: '640px',
               marginBottom: isMobile ? '1.5rem' : '3rem',
@@ -164,12 +187,12 @@ export default function About() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
-          borderTop: '1px solid #000000',
+          borderTop: `1px solid ${t.border}`,
           marginTop: '2.5rem',
           padding: '2.5rem 0 0.5rem',
           overflow: 'hidden',
           position: 'relative',
-          backgroundColor: '#D7C49E',
+          backgroundColor: t.bg,
           marginLeft: isMobile ? '-5vw' : '-6vw',
           marginRight: isMobile ? '-5vw' : '-6vw',
           width: isMobile ? 'calc(100% + 10vw)' : 'calc(100% + 12vw)',

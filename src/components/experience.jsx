@@ -94,7 +94,59 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
+function getTheme(isDark) {
+  return isDark
+    ? {
+        bg: '#121018',
+        border: '#343148',
+        card: '#343148',
+        cardText: '#FFFFFF',
+        panel: '#121018',
+        panelText: '#F4F1EA',
+        accent: '#D7C49E',
+        number: '#D7C49E',
+        heading: '#D7C49E',
+        label: '#F4F1EA',
+        shadow: '0 -10px 30px rgba(0,0,0,0.4)',
+      }
+    : {
+        bg: '#D7C49E',
+        border: '#000000',
+        card: '#343148',
+        cardText: '#FFFFFF',
+        panel: '#D7C49E',
+        panelText: '#343148',
+        accent: '#343148',
+        number: '#343148',
+        heading: '#343148',
+        label: '#000000',
+        shadow: '0 -10px 30px rgba(0,0,0,0.12)',
+      };
+}
+
 function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRef }) {
+  const t = getTheme(useIsDark());
+
   const { scrollYProgress } = useScroll({
     target: cardRef,
     offset: ['start end', 'start start'],
@@ -167,7 +219,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
         top: 0,
         display: 'flex',
         alignItems: 'flex-end',
-        backgroundColor: '#D7C49E',
+        backgroundColor: t.bg,
         zIndex: index + 1,
         marginBottom: isMobile ? '1.25rem' : 0,
         padding: isMobile ? 0 : '0 4vw',
@@ -184,8 +236,8 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
           borderTopRightRadius: isMobile ? 24 : 32,
           borderBottomLeftRadius: 24,
           borderBottomRightRadius: isLast ? 24 : 0,
-          backgroundColor: '#343148',
-          boxShadow: '0 -10px 30px rgba(0,0,0,0.12)',
+          backgroundColor: t.card,
+          boxShadow: t.shadow,
           padding: isMobile ? '2.25rem 1.5rem' : '4rem 4.5rem',
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr',
@@ -196,7 +248,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
       >
         {/* Left: role, meta, description, CTA-style tags */}
         <div>
-          <span ref={numberRef} className="mono" style={{ fontSize: '0.7rem', letterSpacing: '0.15em', color: '#343148' }}>
+          <span ref={numberRef} className="mono" style={{ fontSize: '0.7rem', letterSpacing: '0.15em', color: t.number }}>
             {String(index + 1).padStart(2, '0')} / {total.toString().padStart(2, '0')}
           </span>
 
@@ -205,7 +257,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
               fontSize: 'clamp(2rem, 4.5vw, 3.4rem)',
               fontWeight: 700,
               letterSpacing: '-0.02em',
-              color: '#FFFFFF',
+              color: t.cardText,
               lineHeight: 1.05,
               margin: '1rem 0 0.5rem',
             }}
@@ -214,8 +266,8 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
           </h3>
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#FFFFFF' }}>{exp.company}</span>
-            <span className="mono" style={{ fontSize: '0.7rem', color: '#FFFFFF' }}>
+            <span style={{ fontSize: '1rem', fontWeight: 600, color: t.cardText }}>{exp.company}</span>
+            <span className="mono" style={{ fontSize: '0.7rem', color: t.cardText }}>
               {exp.location} · {exp.type}
             </span>
           </div>
@@ -229,9 +281,9 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
                 style={{
                   fontSize: '0.7rem',
                   padding: '8px 16px',
-                  border: '1px solid #FFFFFF',
+                  border: `1px solid ${t.cardText}`,
                   borderRadius: '999px',
-                  color: '#FFFFFF',
+                  color: t.cardText,
                   letterSpacing: '0.03em',
                   display: 'inline-block',
                 }}
@@ -245,7 +297,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
             style={{
               fontSize: '1.05rem',
               lineHeight: 1.7,
-              color: '#FFFFFF',
+              color: t.cardText,
               maxWidth: '46ch',
               marginBottom: '1.5rem',
             }}
@@ -260,10 +312,10 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
               gap: '10px',
               padding: '12px 22px',
               borderRadius: '999px',
-              border: '1px solid #FFFFFF',
+              border: `1px solid ${t.cardText}`,
               fontSize: '0.85rem',
               fontWeight: 600,
-              color: '#FFFFFF',
+              color: t.cardText,
             }}
           >
             {exp.period} · {exp.duration}
@@ -273,7 +325,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
         {/* Right: highlights, styled like a dark preview panel */}
         <div
           style={{
-            backgroundColor: '#D7C49E',
+            backgroundColor: t.panel,
             borderRadius: isMobile ? 20 : 28,
             padding: isMobile ? '1.75rem' : '2.5rem',
             minHeight: isMobile ? 'auto' : '60vh',
@@ -284,7 +336,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
         >
           <span
             className="mono"
-            style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: '#343148', marginBottom: '1.25rem', display: 'block' }}
+            style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: t.accent, marginBottom: '1.25rem', display: 'block' }}
           >
             KEY CONTRIBUTIONS
           </span>
@@ -294,7 +346,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
                 key={j}
                 ref={(el) => (highlightsRef.current[j] = el)}
                 style={{
-                  color: '#343148',
+                  color: t.panelText,
                   fontSize: '0.95rem',
                   lineHeight: 1.65,
                   marginBottom: j < exp.highlights.length - 1 ? '14px' : 0,
@@ -304,7 +356,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
                   gap: '10px',
                 }}
               >
-                <span style={{ color: '#343148', flexShrink: 0 }}>›</span>
+                <span style={{ color: t.accent, flexShrink: 0 }}>›</span>
                 {h}
               </li>
             ))}
@@ -318,6 +370,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
 export default function Experience() {
   const sectionRef = useRef(null);
   const isMobile = useIsMobile();
+  const t = getTheme(useIsDark());
   const cardRefs = useRef([]);
   cardRefs.current = experiences.map((_, i) => cardRefs.current[i] ?? React.createRef());
   const endRef = useRef(null);
@@ -356,8 +409,8 @@ export default function Experience() {
       ref={sectionRef}
       style={{
         position: 'relative',
-        backgroundColor: '#D7C49E',
-        borderTop: '1px solid #000000',
+        backgroundColor: t.bg,
+        borderTop: `1px solid ${t.border}`,
         zIndex: 3,
       }}
     >
@@ -376,11 +429,11 @@ export default function Experience() {
       >
         <motion.span
           className="mono"
-          style={{ color: '#000000', fontSize: '0.75rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : labelY }}
+          style={{ color: t.label, fontSize: '0.75rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : labelY }}
         >
           02 / EXPERIENCE
         </motion.span>
-        <div style={{ width: '32px', height: '2px', backgroundColor: '#343148', margin: '14px 0 1.5rem' }} />
+        <div style={{ width: '32px', height: '2px', backgroundColor: t.accent, margin: '14px 0 1.5rem' }} />
         <h2
           ref={headingRef}
           style={{
@@ -388,7 +441,7 @@ export default function Experience() {
             fontWeight: 700,
             letterSpacing: '-0.03em',
             lineHeight: 0.95,
-            color: '#343148',
+            color: t.heading,
             margin: 0,
             transformOrigin: 'left center',
           }}

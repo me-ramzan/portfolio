@@ -6,13 +6,11 @@ import arrowUp from '../assets/images/arroww.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const DARK = '#343148';
-
 // Swap these hrefs for your real profile links
 const SOCIAL_ICONS = [
   {
     id: 'linkedin',
-href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/',
+    href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/',
     svg: (
       <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
@@ -44,6 +42,32 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
+function getTheme(isDark) {
+  return isDark
+    ? { bg: '#121018', border: '#343148', accent: '#D7C49E', text: '#F4F1EA', link: '#F4F1EA', linkHover: '#D7C49E' }
+    : { bg: '#D7C49E', border: '#1A1A1A', accent: '#343148', text: '#000000', link: '#1A1A1A', linkHover: '#343148' };
+}
+
 function scrollToTop(e) {
   e.preventDefault();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -52,6 +76,7 @@ function scrollToTop(e) {
 function FollowMeSocial({ isMobile }) {
   const [expanded, setExpanded] = useState(false);
   const [active, setActive] = useState(null);
+  const t = getTheme(useIsDark());
 
   return (
     <div
@@ -69,7 +94,7 @@ function FollowMeSocial({ isMobile }) {
         gap: 10,
         height: 90,
         minWidth: 240,
-        color: DARK,
+        color: t.accent,
         userSelect: 'none',
         cursor: 'pointer',
       }}
@@ -87,9 +112,9 @@ function FollowMeSocial({ isMobile }) {
       </div>
 
       <motion.div
-  animate={{ y: expanded ? 34 : 0 }}
-  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-  style={{
+        animate={{ y: expanded ? 34 : 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        style={{
           position: expanded ? 'absolute' : 'relative',
           right: 0,
           top: expanded ? 28 : 0,
@@ -111,13 +136,13 @@ function FollowMeSocial({ isMobile }) {
                 width: 26,
                 height: 26,
                 borderRadius: '50%',
-                border: `1.3px solid ${DARK}`,
+                border: `1.3px solid ${t.accent}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={DARK} strokeWidth="1.8">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.accent} strokeWidth="1.8">
                 <circle cx="18" cy="5" r="2.5" />
                 <circle cx="6" cy="12" r="2.5" />
                 <circle cx="18" cy="19" r="2.5" />
@@ -132,30 +157,30 @@ function FollowMeSocial({ isMobile }) {
             const isActive = active === icon.id;
             return (
               <motion.a
-  key={icon.id}
-  href={icon.href}
-  target="_blank"
-  rel="noreferrer"
-  onMouseEnter={() => setActive(icon.id)}
-  onMouseLeave={() => setActive(null)}
-  initial={{ opacity: 0, y: 8 }}
-  animate={{
-    opacity: active && !isActive ? 0.35 : 1,
-    y: 0,
-    scale: isActive ? 1.3 : 1,
-  }}
-  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: i * 0.03 }}
-  style={{
-    width: 30,
-    height: 30,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: DARK,
-    textDecoration: 'none',
-  }}
->
+                key={icon.id}
+                href={icon.href}
+                target="_blank"
+                rel="noreferrer"
+                onMouseEnter={() => setActive(icon.id)}
+                onMouseLeave={() => setActive(null)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{
+                  opacity: active && !isActive ? 0.35 : 1,
+                  y: 0,
+                  scale: isActive ? 1.3 : 1,
+                }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: i * 0.03 }}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: t.accent,
+                  textDecoration: 'none',
+                }}
+              >
                 <div style={{ width: 14, height: 14 }}>{icon.svg}</div>
               </motion.a>
             );
@@ -167,6 +192,7 @@ function FollowMeSocial({ isMobile }) {
 
 export default function Footer() {
   const isMobile = useIsMobile();
+  const t = getTheme(useIsDark());
   const footerRef = useRef(null);
   const arrowRef = useRef(null);
   const nameRef = useRef(null);
@@ -203,8 +229,8 @@ export default function Footer() {
         }
       );
 
-gsap.to(arrowRef.current, {
-  yPercent: -15,
+      gsap.to(arrowRef.current, {
+        yPercent: -15,
         duration: 1.4,
         ease: 'sine.inOut',
         repeat: -1,
@@ -219,8 +245,8 @@ gsap.to(arrowRef.current, {
       <footer
         ref={footerRef}
         style={{
-          backgroundColor: '#D7C49E',
-          borderTop: '1px solid #1A1A1A',
+          backgroundColor: t.bg,
+          borderTop: `1px solid ${t.border}`,
           padding: '2.5rem 6vw 2rem',
           position: 'relative',
         }}
@@ -239,7 +265,7 @@ gsap.to(arrowRef.current, {
             textDecoration: 'none',
           }}
         >
-          <img ref={arrowRef} src={arrowUp} alt="Back to top" width={34} height={34} style={{ willChange: 'transform' }} />
+          <img ref={arrowRef} src={arrowUp} alt="Back to top" width={34} height={34} style={{ willChange: 'transform', filter: t.bg === '#121018' ? 'invert(1)' : 'none' }} />
         </a>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', textAlign: 'center' }}>
@@ -249,7 +275,7 @@ gsap.to(arrowRef.current, {
               fontFamily: "'Space Grotesk', sans-serif",
               fontSize: '1.1rem',
               fontWeight: 700,
-              color: '#343148',
+              color: t.accent,
               letterSpacing: '-0.02em',
             }}
           >
@@ -258,7 +284,7 @@ gsap.to(arrowRef.current, {
           <span
             ref={rightsRef}
             className="mono"
-            style={{ color: '#000000', fontSize: '0.65rem', letterSpacing: '0.05em' }}
+            style={{ color: t.text, fontSize: '0.65rem', letterSpacing: '0.05em' }}
           >
             2026 ©. ALL RIGHTS RESERVED.
           </span>
@@ -271,7 +297,7 @@ gsap.to(arrowRef.current, {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '18px',
-            color: DARK,
+            color: t.accent,
             marginTop: '1.5rem',
           }}
         >
@@ -281,7 +307,7 @@ gsap.to(arrowRef.current, {
               href={icon.href}
               target="_blank"
               rel="noreferrer"
-              style={{ width: 18, height: 18, color: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 18, height: 18, color: t.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {icon.svg}
             </a>
@@ -295,8 +321,8 @@ gsap.to(arrowRef.current, {
     <footer
       ref={footerRef}
       style={{
-        backgroundColor: '#D7C49E',
-        borderTop: '1px solid #1A1A1A',
+        backgroundColor: t.bg,
+        borderTop: `1px solid ${t.border}`,
         padding: '3rem 6vw',
         display: 'grid',
         gridTemplateColumns: '1fr auto 1fr',
@@ -306,42 +332,41 @@ gsap.to(arrowRef.current, {
       }}
     >
       <a
-        
-  href="#top"
-  onClick={scrollToTop}
-  className="mono"
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    textDecoration: 'none',
-    color: '#1A1A1A',
-    fontSize: '0.85rem',
-    letterSpacing: '0.05em',
-    fontWeight: 600,
-    transition: 'color 0.3s ease, gap 0.3s ease',
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.color = DARK;
-    e.currentTarget.style.gap = '14px';
-    gsap.to(e.currentTarget.querySelector('img'), { scale: 1.2, rotate: 8, duration: 0.3, ease: 'back.out(2)' });
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.color = '#1A1A1A';
-    e.currentTarget.style.gap = '10px';
-    gsap.to(e.currentTarget.querySelector('img'), { scale: 1, rotate: 0, duration: 0.3, ease: 'power2.out' });
-  }}
->
-  <img
-    ref={arrowRef}
-    src={arrowUp}
-    alt=""
-    width={38}
-    height={38}
-    style={{ willChange: 'transform' }}
-  />
-  BACK TO TOP
-</a>
+        href="#top"
+        onClick={scrollToTop}
+        className="mono"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          textDecoration: 'none',
+          color: t.link,
+          fontSize: '0.85rem',
+          letterSpacing: '0.05em',
+          fontWeight: 600,
+          transition: 'color 0.3s ease, gap 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = t.linkHover;
+          e.currentTarget.style.gap = '14px';
+          gsap.to(e.currentTarget.querySelector('img'), { scale: 1.2, rotate: 8, duration: 0.3, ease: 'back.out(2)' });
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = t.link;
+          e.currentTarget.style.gap = '10px';
+          gsap.to(e.currentTarget.querySelector('img'), { scale: 1, rotate: 0, duration: 0.3, ease: 'power2.out' });
+        }}
+      >
+        <img
+          ref={arrowRef}
+          src={arrowUp}
+          alt=""
+          width={38}
+          height={38}
+          style={{ willChange: 'transform', filter: t.bg === '#121018' ? 'invert(1)' : 'none' }}
+        />
+        BACK TO TOP
+      </a>
 
       <motion.div
         style={{
@@ -360,7 +385,7 @@ gsap.to(arrowRef.current, {
             fontFamily: "'Space Grotesk', sans-serif",
             fontSize: '1.2rem',
             fontWeight: 700,
-            color: '#343148',
+            color: t.accent,
             letterSpacing: '-0.02em',
           }}
         >
@@ -369,7 +394,7 @@ gsap.to(arrowRef.current, {
         <span
           ref={rightsRef}
           className="mono"
-          style={{ color: '#000000', fontSize: '0.65rem', letterSpacing: '0.05em' }}
+          style={{ color: t.text, fontSize: '0.65rem', letterSpacing: '0.05em' }}
         >
           2026 ©. ALL RIGHTS RESERVED.
         </span>

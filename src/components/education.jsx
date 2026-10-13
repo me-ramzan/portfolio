@@ -55,9 +55,60 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
+function getTheme(isDark) {
+  return isDark
+    ? {
+        bg: '#121018',
+        sectionBorder: '#343148',
+        divider: '#343148',
+        track: '#343148',
+        fill: '#D7C49E',
+        pillBg: '#343148',
+        pillBorder: '#4a4566',
+        pillHover: '#4a4566',
+        iconBg: 'rgba(215, 196, 158, 0.1)',
+        iconBorder: 'rgba(215, 196, 158, 0.3)',
+        iconColor: '#D7C49E',
+      }
+    : {
+        bg: '#343148',
+        sectionBorder: '#1A1A1A',
+        divider: '#2A2A2A',
+        track: '#4a4566',
+        fill: '#ffffff',
+        pillBg: '#1e1d1b',
+        pillBorder: '#2A2A2A',
+        pillHover: '#4a4566',
+        iconBg: 'rgba(0, 71, 255, 0.1)',
+        iconBorder: 'rgba(0, 71, 255, 0.3)',
+        iconColor: '#f0f4ff',
+      };
+}
+
 export default function Education() {
   const sectionRef = useRef(null);
   const isMobile = useIsMobile();
+  const t = getTheme(useIsDark());
   const eduColRef = useRef(null);
   const achColRef = useRef(null);
   const numberRefs = useRef([]);
@@ -143,8 +194,8 @@ export default function Education() {
       ref={sectionRef}
       style={{
         padding: isMobile ? '4rem 5vw' : '10vw 6vw',
-        backgroundColor: '#343148',
-        borderTop: '1px solid #1A1A1A',
+        backgroundColor: t.bg,
+        borderTop: `1px solid ${t.sectionBorder}`,
         overflow: 'hidden',
       }}
     >
@@ -157,8 +208,8 @@ export default function Education() {
           >
             05 / EDUCATION
           </motion.span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: '#4a4566', marginTop: '12px', marginBottom: '2.5rem', overflow: 'hidden' }}>
-            <motion.div style={{ width: eduUnderline, height: '100%', backgroundColor: '#ffffff' }} />
+          <div style={{ width: '32px', height: '2px', backgroundColor: t.track, marginTop: '12px', marginBottom: '2.5rem', overflow: 'hidden' }}>
+            <motion.div style={{ width: eduUnderline, height: '100%', backgroundColor: t.fill }} />
           </div>
 
           {education.map((edu, i) => (
@@ -168,7 +219,7 @@ export default function Education() {
               style={{
                 marginBottom: i < education.length - 1 ? '2.5rem' : 0,
                 paddingBottom: i < education.length - 1 ? '2.5rem' : 0,
-                borderBottom: i < education.length - 1 ? '1px solid #2A2A2A' : 'none',
+                borderBottom: i < education.length - 1 ? `1px solid ${t.divider}` : 'none',
                 transformOrigin: 'left top',
               }}
             >
@@ -203,13 +254,13 @@ export default function Education() {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: i * 0.15 + j * 0.05 + 0.2, ease: EASE }}
-                    whileHover={isMobile ? {} : { y: -2, backgroundColor: '#4a4566' }}
+                    whileHover={isMobile ? {} : { y: -2, backgroundColor: t.pillHover }}
                     style={{
                       fontSize: '0.62rem',
                       padding: '3px 8px',
-                      border: '1px solid #2A2A2A',
+                      border: `1px solid ${t.pillBorder}`,
                       borderRadius: '3px',
-                      backgroundColor: '#1e1d1b',
+                      backgroundColor: t.pillBg,
                       color: '#f7eeee',
                     }}
                   >
@@ -229,8 +280,8 @@ export default function Education() {
           >
             ACHIEVEMENTS
           </motion.span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: '#4a4566', marginTop: '12px', marginBottom: '2.5rem', overflow: 'hidden' }}>
-            <motion.div style={{ width: achUnderline, height: '100%', backgroundColor: '#ffffff' }} />
+          <div style={{ width: '32px', height: '2px', backgroundColor: t.track, marginTop: '12px', marginBottom: '2.5rem', overflow: 'hidden' }}>
+            <motion.div style={{ width: achUnderline, height: '100%', backgroundColor: t.fill }} />
           </div>
 
           {achievements.map((ach, i) => (
@@ -240,7 +291,7 @@ export default function Education() {
               style={{
                 marginBottom: i < achievements.length - 1 ? '2rem' : 0,
                 paddingBottom: i < achievements.length - 1 ? '2rem' : 0,
-                borderBottom: i < achievements.length - 1 ? '1px solid #2A2A2A' : 'none',
+                borderBottom: i < achievements.length - 1 ? `1px solid ${t.divider}` : 'none',
                 display: 'flex',
                 gap: '1rem',
                 transformOrigin: 'right top',
@@ -254,15 +305,15 @@ export default function Education() {
                   height: '36px',
                   flexShrink: 0,
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(0, 71, 255, 0.1)',
-                  border: '1px solid rgba(0, 71, 255, 0.3)',
+                  backgroundColor: t.iconBg,
+                  border: `1px solid ${t.iconBorder}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginTop: '2px',
                 }}
               >
-                <Award size={14} color="#f0f4ff" />
+                <Award size={14} color={t.iconColor} />
               </motion.div>
               <div>
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff', marginBottom: '4px' }}>

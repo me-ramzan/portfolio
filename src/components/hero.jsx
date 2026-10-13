@@ -22,6 +22,26 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+function useIsDark() {
+  const read = () => {
+    const root = document.documentElement;
+    const attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    if (root.classList.contains('dark')) return true;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  const [isDark, setIsDark] = useState(read);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    mq.addEventListener('change', update);
+    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
+  }, []);
+  return isDark;
+}
+
 export default function Hero({ isLoading }) {
   const ready = true;
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -33,6 +53,10 @@ export default function Hero({ isLoading }) {
   const ctaRefs = useRef([]);
   const chipRefs = useRef([]);
   const isMobile = useIsMobile();
+  const isDark = useIsDark();
+  const t = isDark
+    ? { bg: '#121018', text: '#F4F1EA', strong: '#F4F1EA', stroke: '#F4F1EA', fill: '#F4F1EA', line: '#D7C49E', chipBorder: '#F4F1EA', chipHover: '#D7C49E', profileBg: '#D7C49E', btnBg: '#D7C49E', btnText: '#121018', btnHover: '#F4F1EA' }
+    : { bg: '#D7C49E', text: '#080808', strong: '#000000', stroke: '#0a0a0a', fill: '#121018', line: '#343148', chipBorder: '#343148', chipHover: '#000000', profileBg: '#343148', btnBg: '#343148', btnText: '#F4F1EA', btnHover: '#000000' };
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.2]);
@@ -73,7 +97,7 @@ export default function Hero({ isLoading }) {
       pin: true,
       pinSpacing: false,
     });
-    return () => trigger.kill();
+    return () => trigger.kill(true);
   }, [isMobile]);
 
   useEffect(() => {
@@ -122,7 +146,8 @@ export default function Hero({ isLoading }) {
       onMouseMove={handleMouseMove}
       style={{
         minHeight: '100vh',
-        backgroundColor: '#D7C49E',
+        backgroundColor: t.bg,
+        transition: 'background-color 0.3s',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -189,7 +214,7 @@ export default function Hero({ isLoading }) {
             backgroundColor: '#02b84b',
             animation: 'pulse 2s infinite',
           }} />
-          <span className="mono" style={{ color: '#080808', fontSize: '0.9rem' }}>AVAILABLE FOR WORK</span>
+          <span className="mono" style={{ color: t.text, fontSize: '0.9rem' }}>AVAILABLE FOR WORK</span>
         </div>
         {/* <span className="mono" style={{ color: '#343148', fontSize: '0.7rem' }}>Dubai, UAE</span> */}
       </div>
@@ -205,8 +230,9 @@ export default function Hero({ isLoading }) {
                 height: '200px',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '2px solid #343148',
-                backgroundColor: '#343148',
+                border: `2px solid ${t.line}`,
+                backgroundColor: t.profileBg,
+                transition: 'background-color 0.5s ease',
                 marginBottom: '1.5rem',
                 y: profileFloatY,
               }
@@ -218,8 +244,9 @@ export default function Hero({ isLoading }) {
                 height: '280px',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '2px solid #343148',
-                backgroundColor: '#343148',
+                border: `2px solid ${t.line}`,
+                backgroundColor: t.profileBg,
+                transition: 'background-color 0.5s ease',
                 y: profileFloatY,
               }
         }
@@ -241,7 +268,7 @@ export default function Hero({ isLoading }) {
           transition={{ delay: 0, duration: 0.5, ease: EASE }}
           style={{ marginBottom: '2rem' }}
         >
-          <span className="mono" style={{ color: '#000000', fontSize: '0.8rem', letterSpacing: '0.15em' }}>
+         <span className="mono" style={{ color: t.strong, fontSize: '0.8rem', letterSpacing: '0.15em' }}>
             AI AUTOMATION & SOFTWARE ENGINEER
           </span>
         </motion.div>
@@ -259,7 +286,7 @@ export default function Hero({ isLoading }) {
                 fontWeight: 700,
                 lineHeight: 0.9,
                 letterSpacing: '-0.03em',
-                WebkitTextStroke: '1.5px #0a0a0a',
+                WebkitTextStroke: `1.5px ${t.stroke}`,
                 color: 'transparent',
                 fontFamily: "'Space Grotesk', sans-serif",
                 userSelect: 'none',
@@ -285,7 +312,7 @@ export default function Hero({ isLoading }) {
                   fontWeight: 800,
                   lineHeight: 0.9,
                   letterSpacing: '-0.03em',
-                  color: '#121018',
+                  color: t.fill,
                   fontFamily: "'Space Grotesk', sans-serif",
                   userSelect: 'none',
                   margin: 0,
@@ -311,7 +338,7 @@ export default function Hero({ isLoading }) {
                 exit="exit"
                 style={{
                   fontSize: 'clamp(1rem, 1.8vw, 1.25rem)',
-                  color: '#000000',
+                  color: t.strong,
                   lineHeight: 1.6,
                   margin: 0,
                   display: 'flex',
@@ -347,21 +374,21 @@ export default function Hero({ isLoading }) {
             <div
               key={i}
               ref={(el) => (chipRefs.current[i] = el)}
-              onMouseEnter={(e) => !isMobile && gsap.to(e.currentTarget, { y: -3, borderColor: '#000000', duration: 0.25 })}
-              onMouseLeave={(e) => !isMobile && gsap.to(e.currentTarget, { y: 0, borderColor: '#343148', duration: 0.25 })}
+              onMouseEnter={(e) => !isMobile && gsap.to(e.currentTarget, { y: -3, borderColor: t.chipHover, duration: 0.25 })}
+              onMouseLeave={(e) => !isMobile && gsap.to(e.currentTarget, { y: 0, borderColor: t.chipBorder, duration: 0.25 })}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                border: '1px solid #343148',
+                border: `1px solid ${t.chipBorder}`,
                 borderRadius: '4px',
                 backgroundColor: 'transparent',
                 opacity: 0,
               }}
             >
-              <span style={{ color: '#000000' }}>{item.icon}</span>
-              <span className="mono" style={{ fontSize: '0.7rem', color: '#080808' }}>{item.text}</span>
+              <span style={{ color: t.strong }}>{item.icon}</span>
+              <span className="mono" style={{ fontSize: '0.7rem', color: t.text }}>{item.text}</span>
             </div>
           ))}
         </div>
@@ -380,8 +407,8 @@ export default function Hero({ isLoading }) {
             ref={(el) => (ctaRefs.current[0] = el)}
             href="#projects"
             style={{
-              backgroundColor: '#343148',
-              color: '#F4F1EA',
+              backgroundColor: t.btnBg,
+              color: t.btnText,
               padding: isMobile ? '12px 20px' : '14px 32px',
               borderRadius: '4px',
               fontSize: isMobile ? '0.8rem' : '0.9rem',
@@ -394,32 +421,33 @@ export default function Hero({ isLoading }) {
               alignItems: 'center',
               opacity: 0,
             }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#000000'; gsap.to(e.currentTarget, { scale: 1.04, duration: 0.2 }); }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#343148'; gsap.to(e.currentTarget, { scale: 1, duration: 0.2 }); }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.btnHover; gsap.to(e.currentTarget, { scale: 1.04, duration: 0.2 }); }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.btnBg; gsap.to(e.currentTarget, { scale: 1, duration: 0.2 }); }}
           >
             VIEW WORK
           </a>
+
           <a
-            ref={(el) => (ctaRefs.current[1] = el)}
+            ref={(el) => (ctaRefs.current[2] = el)}
             href="#contact"
             style={{
               backgroundColor: 'transparent',
-              color: '#080808',
+              color: t.text,
               padding: isMobile ? '12px 20px' : '14px 32px',
               borderRadius: '4px',
               fontSize: isMobile ? '0.8rem' : '0.9rem',
               fontWeight: 600,
               textDecoration: 'none',
               letterSpacing: '0.05em',
-              border: '1.5px solid #080808',
+              border: `1.5px solid ${t.text}`,
               transition: 'all 0.2s',
               minHeight: '48px',
               display: 'flex',
               alignItems: 'center',
               opacity: 0,
             }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#343148'; e.currentTarget.style.color = '#F4F1EA'; gsap.to(e.currentTarget, { scale: 1.04, duration: 0.2 }); }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#020203'; gsap.to(e.currentTarget, { scale: 1, duration: 0.2 }); }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.btnBg; e.currentTarget.style.color = t.btnText; gsap.to(e.currentTarget, { scale: 1.04, duration: 0.2 }); }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = t.text; gsap.to(e.currentTarget, { scale: 1, duration: 0.2 }); }}
           >
             GET IN TOUCH
           </a>
