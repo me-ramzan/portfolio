@@ -186,7 +186,7 @@ export default function Hero({ isLoading }) {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: '#00C851',
+            backgroundColor: '#02b84b',
             animation: 'pulse 2s infinite',
           }} />
           <span className="mono" style={{ color: '#080808', fontSize: '0.9rem' }}>AVAILABLE FOR WORK</span>
