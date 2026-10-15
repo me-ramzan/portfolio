@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
-import { ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, LayoutGroup, useScroll, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import { ArrowUpRight, Lock } from 'lucide-react';
+import MobileProjects from './MobileProjects';
 
 import aiDocProcessing from '../assets/images/AIDocumentProcessingWorkflow.png';
 import invoiceAutomation from '../assets/images/AutomatedInvoiceProcessingWorkflow.png';
@@ -9,6 +10,7 @@ import futureMineralForum from '../assets/images/FutureMineralForum.png';
 import sadiaChicken from '../assets/images/SadiaChicken.png';
 import hybrdx from '../assets/images/hybrdx.jpg';
 import cboj from '../assets/images/CBOJ.jpg';
+import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
 
 const projects = [
   {
@@ -79,399 +81,497 @@ const projects = [
   },
 ];
 
-// Premium easing — soft deceleration, no bounce
-const EASE = [0.22, 1, 0.36, 1];
-const EASE_SOFT = [0.19, 1, 0.22, 1];
-
-const titleStyle = {
-  fontSize: 'clamp(1.2rem, 2.5vw, 2rem)',
-  fontWeight: 700,
-  letterSpacing: '-0.02em',
-  color: '#ffffff',
-  lineHeight: 1.2,
-  marginBottom: '8px',
-  transition: 'color 0.4s ease',
-};
-
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
-function useIsDark() {
-  const read = () => {
-    const root = document.documentElement;
-    const attr = root.getAttribute('data-theme');
-    if (attr) return attr === 'dark';
-    if (root.classList.contains('dark')) return true;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  };
-  const [isDark, setIsDark] = useState(read);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const update = () => setIsDark(read());
-    const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
-    mq.addEventListener('change', update);
-    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
-  }, []);
-  return isDark;
-}
+const FILTERS = [
+  { key: 'ALL', label: 'All' },
+  { key: 'AI', label: 'AI' },
+  { key: 'RPA', label: 'RPA' },
+  { key: 'FRONTEND', label: 'Web' },
+];
+const categoryOf = (p) => p.tag.split('/')[0].trim();
+const isMetric = (w) => /\d/.test(w);
 
 function getTheme(isDark) {
   return isDark
     ? {
         bg: '#121018',
         sectionBorder: '#343148',
-        rowBorder: '#343148',
+        text: '#F4F1EA',
+        muted: 'rgba(244,241,234,0.55)',
+        faint: 'rgba(244,241,234,0.32)',
+        line: 'rgba(244,241,234,0.12)',
         accent: '#D7C49E',
-        tagBg: 'rgba(244, 241, 234, 0.12)',
+        accentText: '#121018',
+        panel: '#1b1824',
+        chip: 'rgba(244,241,234,0.08)',
       }
     : {
         bg: '#343148',
         sectionBorder: '#1A1A1A',
-        rowBorder: '#2A2A2A',
-        accent: '#ffffff',
-        tagBg: '#0000005d',
+        text: '#FFFFFF',
+        muted: 'rgba(255,255,255,0.65)',
+        faint: 'rgba(255,255,255,0.38)',
+        line: 'rgba(255,255,255,0.14)',
+        accent: '#D7C49E',
+        accentText: '#343148',
+        panel: '#2a2740',
+        chip: 'rgba(0,0,0,0.22)',
       };
 }
 
-function TypewriterTags({ tags, active, t }) {
+/* ------------------------------------------------------------------ */
+/* List row                                                            */
+/* ------------------------------------------------------------------ */
+function ProjectRow({ project, active, onActivate, registerRef, t }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px', minHeight: '28px' }}>
-      <AnimatePresence>
-        {active && tags.map((tag, i) => (
-          <motion.span
-            key={tag}
-            className="mono"
-            initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -6, filter: 'blur(4px)' }}
-            transition={{ duration: 0.35, delay: i * 0.05, ease: EASE }}
-            style={{
-              fontSize: '0.65rem',
-              padding: '4px 10px',
-              backgroundColor: t.tagBg,
-              color: '#F4F1EA',
-              borderRadius: '3px',
-              letterSpacing: '0.05em',
-            }}
+    <motion.button
+      type="button"
+      ref={registerRef}
+      layout
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.6, ease: EASE }}
+      onMouseEnter={onActivate}
+      onFocus={onActivate}
+      onClick={onActivate}
+      aria-current={active ? 'true' : undefined}
+      style={{
+        position: 'relative',
+        display: 'grid',
+        gridTemplateColumns: '3.2rem 1fr auto',
+        alignItems: 'start',
+        gap: '1rem',
+        width: '100%',
+        textAlign: 'left',
+        padding: '2.1rem 0 2.1rem 1.25rem',
+        background: 'none',
+        border: 'none',
+        borderTop: `1px solid ${t.line}`,
+        color: t.text,
+        cursor: 'pointer',
+        font: 'inherit',
+      }}
+    >
+      {/* Active indicator */}
+      <motion.span
+        aria-hidden
+        animate={{ scaleY: active ? 1 : 0, opacity: active ? 1 : 0 }}
+        transition={{ duration: 0.45, ease: EASE }}
+        style={{ position: 'absolute', left: 0, top: '1.9rem', bottom: '1.9rem', width: 3, borderRadius: 3, backgroundColor: t.accent, transformOrigin: 'top' }}
+      />
+
+      <span className="mono" style={{ fontSize: '0.75rem', color: active ? t.accent : t.faint, paddingTop: '0.55rem', transition: 'color 0.3s' }}>
+        {project.number}
+      </span>
+
+      <span style={{ minWidth: 0 }}>
+        <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.62rem', letterSpacing: '0.12em', color: active ? t.accent : t.muted, transition: 'color 0.3s' }}>
+          {project.tag}
+          {project.link && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: t.muted }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#3ddc84' }} />
+              LIVE
+            </span>
+          )}
+        </span>
+        <motion.span
+          animate={{ opacity: active ? 1 : 0.45, x: active ? 6 : 0 }}
+          transition={{ duration: 0.45, ease: EASE }}
+          style={{ display: 'block', fontSize: 'clamp(1.35rem, 2.1vw, 2rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.15, margin: '0.5rem 0 0.75rem' }}
+        >
+          {project.title}
+        </motion.span>
+        <span className="mono" style={{ fontSize: '0.66rem', letterSpacing: '0.04em', color: active ? t.muted : t.faint, transition: 'color 0.3s' }}>
+          {project.stack.join('  ·  ')}
+        </span>
+      </span>
+
+      <motion.span
+        aria-hidden
+        animate={{ opacity: active ? 1 : 0.25, rotate: active ? 0 : -45, x: active ? 0 : -6 }}
+        transition={{ duration: 0.45, ease: EASE }}
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: '50%',
+          border: `1px solid ${active ? t.accent : t.line}`,
+          display: 'grid',
+          placeItems: 'center',
+          marginTop: '0.4rem',
+          color: active ? t.accent : t.text,
+        }}
+      >
+        <ArrowUpRight size={18} />
+      </motion.span>
+    </motion.button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Sticky preview panel                                                */
+/* ------------------------------------------------------------------ */
+function PreviewPanel({ project, index, total, t }) {
+  return (
+    <div
+      style={{
+        // fits below the navbar on any screen height
+        height: 'min(74vh, calc(100vh - 190px))',
+        minHeight: 420,
+        borderRadius: 24,
+        overflow: 'hidden',
+        backgroundColor: t.panel,
+        border: `1px solid ${t.line}`,
+        boxShadow: '0 40px 80px rgba(0,0,0,0.3)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Image */}
+      <div style={{ position: 'relative', flex: '0 0 50%', overflow: 'hidden' }}>
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.div
+            key={project.number}
+            initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
+            animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
+            exit={{ opacity: 0.6, transition: { duration: 0.6 } }}
+            transition={{ duration: 0.75, ease: EASE }}
+            style={{ position: 'absolute', inset: 0, backgroundColor: project.bgColor || '#000' }}
           >
-            {tag}
-          </motion.span>
-        ))}
-      </AnimatePresence>
+            <motion.img
+              src={project.image}
+              alt={project.title}
+              initial={{ scale: 1.15 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 1.1, ease: EASE }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2.25rem' }}
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        <span
+          className="mono"
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            zIndex: 2,
+            padding: '6px 12px',
+            borderRadius: 999,
+            fontSize: '0.62rem',
+            letterSpacing: '0.12em',
+            color: '#fff',
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+        >
+          {project.number} / {String(total).padStart(2, '0')}
+        </span>
+      </div>
+
+      {/* Progress */}
+      <div style={{ height: 2, backgroundColor: t.line }}>
+        <motion.div
+          animate={{ scaleX: (index + 1) / total }}
+          transition={{ duration: 0.6, ease: EASE }}
+          style={{ height: '100%', backgroundColor: t.accent, transformOrigin: 'left' }}
+        />
+      </div>
+
+      {/* Details */}
+      <div style={{ position: 'relative', flex: 1, padding: '1.75rem 2rem 1.75rem', overflow: 'hidden' }}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={project.number}
+            initial="hidden"
+            animate="show"
+            exit={{ opacity: 0, y: -8, transition: { duration: 0.18 } }}
+            variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+          >
+            {[
+              <span key="tag" className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.14em', color: t.accent }}>
+                {project.tag}
+              </span>,
+              <h3 key="title" style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text, margin: '0.5rem 0 0.75rem' }}>
+                {project.title}
+              </h3>,
+              <p key="desc" style={{ fontSize: '0.92rem', lineHeight: 1.7, color: t.muted, margin: 0 }}>
+                {project.description.split(' ').map((w, i) => (
+                  <span key={i} style={isMetric(w) ? { color: t.accent, fontWeight: 700 } : undefined}>
+                    {w}{' '}
+                  </span>
+                ))}
+              </p>,
+            ].map((node, i) => (
+              <motion.div
+                key={i}
+                variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+              >
+                {node}
+              </motion.div>
+            ))}
+
+            <motion.div
+              variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+              style={{ marginTop: 'auto', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
+            >
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {project.stack.map((s) => (
+                  <span key={s} className="mono" style={{ fontSize: '0.62rem', padding: '5px 10px', borderRadius: 999, backgroundColor: t.chip, color: t.text }}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+
+              {project.link ? (
+                <motion.a
+                  href={project.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '11px 18px',
+                    borderRadius: 999,
+                    backgroundColor: t.accent,
+                    color: t.accentText,
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Visit live site <ArrowUpRight size={16} />
+                </motion.a>
+              ) : (
+                <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.6rem', letterSpacing: '0.1em', color: t.faint }}>
+                  <Lock size={12} /> PRIVATE CLIENT PROJECT
+                </span>
+              )}
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-// Each project row observes its own scroll progress for a premium reveal
-function ProjectRow({ project, i, isMobile, hovered, setHovered }) {
-  const rowRef = useRef(null);
-  const isActive = isMobile || hovered === i;
-  const t = getTheme(useIsDark());
+/* ------------------------------------------------------------------ */
+/* Column that makes its child follow the scroll (JS, not CSS sticky)  */
+/* Works even when a parent has overflow set or a smooth-scroll lib.   */
+/* ------------------------------------------------------------------ */
+const FOLLOW_TOP = 0.12; // keep the panel 12% from the top of the screen…
+const FOLLOW_MIN_PX = 104; // …but never under the navbar
 
-  const { scrollYProgress } = useScroll({
-    target: rowRef,
-    offset: ['start 95%', 'start 55%'],
-  });
+function FollowColumn({ children }) {
+  const colRef = useRef(null);
+  const panelRef = useRef(null);
+  const { scrollY } = useScroll();
+  const y = useMotionValue(0);
+  const m = useRef({ top: 0, h: 0, ph: 0 });
 
-  // Smooth the raw scroll progress so it feels like it's riding Lenis's momentum
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 24,
-    mass: 0.6,
-  });
+  const update = useCallback(
+    (sy) => {
+      const { top, h, ph } = m.current;
+      const target = sy + Math.max(window.innerHeight * FOLLOW_TOP, FOLLOW_MIN_PX) - top;
+      y.set(Math.min(Math.max(target, 0), Math.max(0, h - ph)));
+    },
+    [y]
+  );
 
-  const y = useTransform(smoothProgress, [0, 1], [40, 0]);
-  const opacity = useTransform(smoothProgress, [0, 1], [0, 1]);
-  const blur = useTransform(smoothProgress, [0, 1], [6, 0]);
-  const filter = useTransform(blur, (v) => `blur(${v}px)`);
+  const measure = useCallback(() => {
+    const col = colRef.current;
+    const panel = panelRef.current;
+    if (!col || !panel) return;
+    const r = col.getBoundingClientRect();
+    m.current = { top: r.top + window.scrollY, h: col.offsetHeight, ph: panel.offsetHeight };
+    update(window.scrollY);
+  }, [update]);
 
-  // Mouse-follow "magnetic" offset for the hover image
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const handleMouseMove = (e) => {
-    if (isMobile) return;
-    const rect = rowRef.current.getBoundingClientRect();
-    setMousePos({
-      x: (e.clientX - rect.left - rect.width / 2) * 0.04,
-      y: (e.clientY - rect.top - rect.height / 2) * 0.04,
-    });
-  };
+  useMotionValueEvent(scrollY, 'change', update);
+
+  useEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (colRef.current) ro.observe(colRef.current);
+    ro.observe(document.body); // content above may change height (images, fonts)
+    window.addEventListener('resize', measure);
+    const late = setTimeout(measure, 800);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+      clearTimeout(late);
+    };
+  }, [measure]);
 
   return (
-    <motion.div
-      ref={rowRef}
-      style={{ y, opacity, filter }}
-      onMouseEnter={() => !isMobile && setHovered(i)}
-      onMouseLeave={() => !isMobile && setHovered(null)}
-      onMouseMove={handleMouseMove}
-    >
-      <motion.div
-        animate={{
-          backgroundColor: hovered === i ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0)',
-        }}
-        transition={{ duration: 0.5, ease: EASE_SOFT }}
-        style={{
-          position: 'relative',
-          borderTop: `1px solid ${t.rowBorder}`,
-          padding: isMobile ? '1.5rem 0' : '2.2rem 0',
-          cursor: 'default',
-          marginLeft: isMobile ? '-5vw' : '-6vw',
-          marginRight: isMobile ? '-5vw' : '-6vw',
-          paddingLeft: isMobile ? '5vw' : '6vw',
-          paddingRight: isMobile ? '5vw' : '6vw',
-        }}
-      >
-        <motion.div
-          animate={{ opacity: isActive ? 1 : 0.5, scaleY: isActive ? 1 : 0.85 }}
-          transition={{ duration: 0.4, ease: EASE }}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: '3px',
-            height: '100%',
-            backgroundColor: t.accent,
-            transformOrigin: 'center',
-          }}
-        />
-
-        {/* Hover Image with magnetic parallax */}
-        {!isMobile && (
-          <AnimatePresence>
-            {hovered === i && project.image && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 30, rotate: -2 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  y: 0,
-                  rotate: 0,
-                  x: mousePos.x,
-                  transition: { duration: 0.5, ease: EASE },
-                }}
-                exit={{ opacity: 0, scale: 0.85, y: 20, transition: { duration: 0.3, ease: EASE } }}
-                style={{
-                  position: 'absolute',
-                  left: '48%',
-                  top: '-10px',
-                  width: '220px',
-                  height: '220px',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
-                  zIndex: 20,
-                  pointerEvents: 'none',
-                  backgroundColor: project.bgColor || '#000000',
-                }}
-              >
-                <motion.img
-                  src={project.image}
-                  alt={project.title}
-                  animate={{ x: mousePos.x * 0.5, y: mousePos.y * 0.5 }}
-                  transition={{ type: 'spring', stiffness: 150, damping: 20 }}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '18px' }}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ flex: 1, minWidth: isMobile ? '100%' : '280px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '10px' }}>
-              <motion.span
-                className="mono"
-                animate={{ opacity: isActive ? 1 : 0.6 }}
-                transition={{ duration: 0.3 }}
-                style={{ color: '#f6f8ff', fontSize: '0.7rem' }}
-              >
-                {project.number}
-              </motion.span>
-              <span className="mono" style={{
-                fontSize: '0.65rem',
-                color: '#ffffff',
-                border: `1px solid ${t.rowBorder}`,
-                padding: '3px 8px',
-                borderRadius: '3px',
-                letterSpacing: '0.08em',
-              }}>{project.tag}</span>
-            </div>
-
-            {project.link ? (
-              <a
-                href={project.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Visit ${project.title} website`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'flex-start',
-                  gap: '0.5rem',
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  zIndex: 30,
-                }}
-              >
-                <h3 style={{
-                  ...titleStyle,
-                  textDecoration: isActive ? 'underline' : 'none',
-                  textUnderlineOffset: '4px',
-                  textDecorationThickness: '1px',
-                }}>
-                  {project.title}
-                </h3>
-                <motion.div
-                  animate={{
-                    opacity: isActive ? 1 : 0.5,
-                    x: isActive ? 3 : 0,
-                    y: isActive ? -3 : 0,
-                    rotate: isActive ? 45 : 0,
-                  }}
-                  transition={{ duration: 0.4, ease: EASE }}
-                  style={{ flexShrink: 0, marginTop: '4px' }}
-                >
-                  <ArrowUpRight size={22} color="#ffffff" />
-                </motion.div>
-              </a>
-            ) : (
-              <h3 style={titleStyle}>{project.title}</h3>
-            )}
-
-            <TypewriterTags tags={project.stack} active={isActive} t={t} />
-          </div>
-          <div style={{ maxWidth: isMobile ? '100%' : '380px', minHeight: isMobile ? 'auto' : '5.4rem' }}>
-            {isMobile ? (
-              <p style={{ color: '#ffffff', fontSize: '0.9rem', lineHeight: 1.7, margin: 0 }}>
-                {project.description}
-              </p>
-            ) : (
-              <AnimatePresence mode="wait">
-                {hovered === i && (
-                  <motion.p
-                    key={i}
-                    variants={{
-                      animate: { transition: { staggerChildren: 0.015 } },
-                      exit: { transition: { staggerChildren: 0.01, staggerDirection: -1 } },
-                    }}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    style={{
-                      color: '#ffffff',
-                      fontSize: '0.9rem',
-                      lineHeight: 1.7,
-                      margin: 0,
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.3em',
-                    }}
-                  >
-                    {project.description.split(' ').map((word, wi) => (
-                      <motion.span
-                        key={wi}
-                        variants={{
-                          initial: { opacity: 0, y: -10, filter: 'blur(3px)' },
-                          animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE } },
-                          exit: { opacity: 0, y: 8, filter: 'blur(2px)', transition: { duration: 0.25, ease: EASE } },
-                        }}
-                        style={{ display: 'inline-block' }}
-                      >
-                        {word}
-                      </motion.span>
-                    ))}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            )}
-          </div>
-        </div>
+    <div ref={colRef} style={{ alignSelf: 'stretch', position: 'relative' }}>
+      <motion.div ref={panelRef} style={{ y, willChange: 'transform' }}>
+        {children}
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Section                                                             */
+/* ------------------------------------------------------------------ */
 export default function Projects() {
-  const [headerInView, setHeaderInView] = useState(false);
-  const [hovered, setHovered] = useState(null);
   const ref = useRef(null);
   const isMobile = useIsMobile();
-  const t = getTheme(useIsDark());
+  const isDark = useIsDark();
+  const t = getTheme(isDark);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setHeaderInView(entry.isIntersecting),
-      { threshold: 0.1 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+  const [filter, setFilter] = useState('ALL');
+  const [activeId, setActiveId] = useState(projects[0].number);
+  const rowRefs = useRef(new Map());
 
+  const visible = filter === 'ALL' ? projects : projects.filter((p) => categoryOf(p) === filter);
+  const countFor = (key) => (key === 'ALL' ? projects.length : projects.filter((p) => categoryOf(p) === key).length);
+
+  // Preload images so the preview never flashes empty
   useEffect(() => {
-    projects.forEach((project) => {
-      if (project.image) {
-        const img = new Image();
-        img.src = project.image;
-      }
+    projects.forEach((p) => {
+      const img = new Image();
+      img.src = p.image;
     });
   }, []);
+
+  // Keep the active project valid after filtering
+  useEffect(() => {
+    if (!visible.some((p) => p.number === activeId)) setActiveId(visible[0]?.number);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
+
+  // Scroll-sync: whichever row crosses the middle of the screen becomes active
+  useEffect(() => {
+    if (isMobile) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveId(e.target.dataset.id);
+        });
+      },
+      { rootMargin: '-48% 0px -48% 0px', threshold: 0 }
+    );
+    rowRefs.current.forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, [isMobile, filter]);
+
+  const register = useCallback(
+    (id) => (el) => {
+      if (el) {
+        el.dataset.id = id;
+        rowRefs.current.set(id, el);
+      } else {
+        rowRefs.current.delete(id);
+      }
+    },
+    []
+  );
+
+  // Mobile: App Store–style expanding case-study cards
+  if (isMobile) {
+    return <MobileProjects projects={projects} isDark={isDark} sectionRef={ref} />;
+  }
+
+  const activeIndex = Math.max(0, visible.findIndex((p) => p.number === activeId));
+  const activeProject = visible[activeIndex] || visible[0];
 
   return (
     <div style={{ backgroundColor: t.bg }}>
       <section
         id="projects"
         ref={ref}
-        style={{
-          padding: isMobile ? '4rem 5vw' : '10vw 6vw',
-          backgroundColor: t.bg,
-          borderTop: `1px solid ${t.sectionBorder}`,
-          overflow: 'visible',
-          position: 'relative',
-        }}
+        style={{ position: 'relative', padding: '9vw 6vw 8vw', backgroundColor: t.bg, borderTop: `1px solid ${t.sectionBorder}` }}
       >
-        {/* Section header */}
-        <div style={{ marginBottom: isMobile ? '2.5rem' : '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ overflow: 'hidden' }}>
+        {/* Header */}
+        <SectionLabel index="03" title="Projects" color={t.text} accent={t.accent} />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '2rem', flexWrap: 'wrap', marginBottom: '3.5rem' }}>
+          {/* The wrapper is observed (always on screen), so the heading reliably slides up out of its mask */}
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
             <motion.h2
-              className="mono"
-              initial={{ y: '110%', opacity: 0 }}
-              animate={headerInView ? { y: '0%', opacity: 1 } : { y: '110%', opacity: 0 }}
+              variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
               transition={{ duration: 1, ease: EASE }}
-              style={{ color: '#ffffff', fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', fontWeight: 800, margin: 0 }}
+              style={{ fontSize: 'clamp(3.2rem, 7.5vw, 7rem)', fontWeight: 700, letterSpacing: '-0.045em', lineHeight: 0.95, color: t.text, margin: 0, paddingBottom: '0.1em' }}
             >
-              PROJECTS
+              Selected work<span style={{ color: t.accent }}>.</span>
             </motion.h2>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={headerInView ? { width: '48px' } : { width: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: EASE }}
-              style={{ height: '2px', backgroundColor: t.accent, marginTop: '16px' }}
-            />
-          </div>
+          </motion.div>
+
+          {/* Filters */}
+          <LayoutGroup id="projects-desktop-filters">
+            <div role="tablist" aria-label="Filter projects" style={{ display: 'flex', gap: 4, padding: 5, borderRadius: 999, backgroundColor: t.chip, border: `1px solid ${t.line}` }}>
+              {FILTERS.map((f) => {
+                const on = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setFilter(f.key)}
+                    style={{
+                      position: 'relative',
+                      padding: '10px 20px',
+                      border: 'none',
+                      borderRadius: 999,
+                      background: 'transparent',
+                      color: on ? t.accentText : t.text,
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'color 0.3s',
+                    }}
+                  >
+                    {on && (
+                      <motion.span
+                        layoutId="projects-desktop-pill"
+                        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                        style={{ position: 'absolute', inset: 0, borderRadius: 999, backgroundColor: t.accent }}
+                      />
+                    )}
+                    <span style={{ position: 'relative' }}>
+                      {f.label}
+                      <sup className="mono" style={{ fontSize: '0.58rem', marginLeft: 3, opacity: 0.7 }}>{countFor(f.key)}</sup>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
         </div>
 
-        {/* Project list */}
-        <div style={{ position: 'relative' }}>
-          {projects.map((project, i) => (
-            <ProjectRow
-              key={i}
-              project={project}
-              i={i}
-              isMobile={isMobile}
-              hovered={hovered}
-              setHovered={setHovered}
-            />
-          ))}
-          <div style={{ borderTop: `1px solid ${t.accent}` }} />
+        {/* Showcase */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: '5vw', alignItems: 'start' }}>
+          <div>
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visible.map((p) => (
+                <ProjectRow
+                  key={p.number}
+                  project={p}
+                  active={p.number === activeProject?.number}
+                  onActivate={() => setActiveId(p.number)}
+                  registerRef={register(p.number)}
+                  t={t}
+                />
+              ))}
+            </AnimatePresence>
+            <div style={{ borderTop: `1px solid ${t.line}` }} />
+            {/* Runway: lets the last project reach the middle of the screen while the panel stays fully visible */}
+            <div aria-hidden="true" style={{ height: '32vh' }} />
+          </div>
+
+          {/* Stretched column = room for the sticky panel to follow the whole list */}
+          <FollowColumn>
+            {activeProject && <PreviewPanel project={activeProject} index={activeIndex} total={visible.length} t={t} />}
+          </FollowColumn>
         </div>
       </section>
     </div>

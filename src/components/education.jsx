@@ -1,12 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { Award } from 'lucide-react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
-
-const EASE = [0.16, 1, 0.3, 1];
+import { motion, useInView, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
+import { Award, GraduationCap, BadgeCheck } from 'lucide-react';
+import MobileEducation from './MobileEducation';
+import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
 
 const education = [
   {
@@ -45,287 +41,429 @@ const achievements = [
   },
 ];
 
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [breakpoint]);
-  return isMobile;
-}
+const GOLD = '#D7C49E';
+const NAVY = '#343148';
+const INK = '#121018';
+const AUTO_MS = 4500;
 
-function useIsDark() {
-  const read = () => {
-    const root = document.documentElement;
-    const attr = root.getAttribute('data-theme');
-    if (attr) return attr === 'dark';
-    if (root.classList.contains('dark')) return true;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  };
-  const [isDark, setIsDark] = useState(read);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const update = () => setIsDark(read());
-    const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
-    mq.addEventListener('change', update);
-    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
-  }, []);
-  return isDark;
-}
+// One list of "passes": degrees first, then awards
+const yearsOf = (p) => p.match(/\d{4}/g) || [];
+const PASSES = [
+  ...education.map((e) => {
+    const [title, short] = e.degree.split(' — ');
+    const y = yearsOf(e.period);
+    return {
+      kind: 'degree',
+      label: 'DEGREE',
+      title: title.trim(),
+      code: (short || '').replace(/\s*\(Honou?rs\)/i, '').trim(),
+      honors: /honou?rs/i.test(e.degree),
+      issuer: e.institution,
+      year: y[1] || y[0] || '',
+      span: y.length > 1 ? `${y[0]} — ${y[1]}` : y[0] || '',
+      chips: e.subjects,
+    };
+  }),
+  ...achievements.map((a) => ({
+    kind: 'award',
+    label: 'RECOGNITION',
+    title: a.title,
+    issuer: a.org,
+    desc: a.desc,
+  })),
+];
 
 function getTheme(isDark) {
   return isDark
     ? {
-        bg: '#121018',
-        sectionBorder: '#343148',
-        divider: '#343148',
-        track: '#343148',
-        fill: '#D7C49E',
-        pillBg: '#343148',
-        pillBorder: '#4a4566',
-        pillHover: '#4a4566',
-        iconBg: 'rgba(215, 196, 158, 0.1)',
-        iconBorder: 'rgba(215, 196, 158, 0.3)',
-        iconColor: '#D7C49E',
+        bg: INK,
+        sectionBorder: NAVY,
+        text: '#F4F1EA',
+        muted: 'rgba(244,241,234,0.55)',
+        line: 'rgba(244,241,234,0.12)',
+        rowOn: 'rgba(215,196,158,0.08)',
       }
     : {
-        bg: '#343148',
+        bg: NAVY,
         sectionBorder: '#1A1A1A',
-        divider: '#2A2A2A',
-        track: '#4a4566',
-        fill: '#ffffff',
-        pillBg: '#1e1d1b',
-        pillBorder: '#2A2A2A',
-        pillHover: '#4a4566',
-        iconBg: 'rgba(0, 71, 255, 0.1)',
-        iconBorder: 'rgba(0, 71, 255, 0.3)',
-        iconColor: '#f0f4ff',
+        text: '#FFFFFF',
+        muted: 'rgba(255,255,255,0.62)',
+        line: 'rgba(255,255,255,0.16)',
+        rowOn: 'rgba(215,196,158,0.12)',
       };
 }
 
+/* ---------- Pass contents ---------- */
+function PassFace({ pass, index }) {
+  const isDegree = pass.kind === 'degree';
+  // Degrees: deep navy pass. Awards: gold pass.
+  const fg = isDegree ? '#F4F1EA' : INK;
+  const sub = isDegree ? 'rgba(244,241,234,0.62)' : 'rgba(18,16,24,0.62)';
+  const hair = isDegree ? 'rgba(244,241,234,0.14)' : 'rgba(18,16,24,0.16)';
+  const accent = isDegree ? GOLD : NAVY;
+  const Icon = isDegree ? GraduationCap : Award;
+
+  return (
+    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', color: fg }}>
+      {/* Top row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.62rem', letterSpacing: '0.16em', color: accent }}>
+          <span
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isDegree ? 'rgba(215,196,158,0.14)' : 'rgba(52,49,72,0.12)',
+            }}
+          >
+            <Icon size={16} color={accent} />
+          </span>
+          {pass.label}
+          {pass.code ? ` · ${pass.code.toUpperCase()}` : ''}
+          {pass.honors ? ' · HONORS' : ''}
+        </span>
+        <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.58rem', letterSpacing: '0.14em', color: sub }}>
+          {String(index + 1).padStart(2, '0')} / {String(PASSES.length).padStart(2, '0')}
+        </span>
+      </div>
+
+      {/* Title */}
+      <div style={{ marginTop: 'auto' }}>
+        <div className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.16em', color: sub, marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <BadgeCheck size={13} color={accent} />
+          {pass.issuer.toUpperCase()}
+        </div>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: 'clamp(1.6rem, 2.4vw, 2.3rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.035em',
+            lineHeight: 1.08,
+            maxWidth: '16ch',
+          }}
+        >
+          {pass.title}
+        </h3>
+      </div>
+
+      {/* Bottom */}
+      <div style={{ marginTop: '1.4rem', paddingTop: '1.1rem', borderTop: `1px solid ${hair}` }}>
+        {isDegree ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {pass.chips.map((c) => (
+                <span
+                  key={c}
+                  className="mono"
+                  style={{ fontSize: '0.6rem', padding: '5px 10px', borderRadius: 999, border: `1px solid ${hair}`, color: fg, whiteSpace: 'nowrap' }}
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div className="mono" style={{ fontSize: '0.56rem', letterSpacing: '0.14em', color: sub }}>{pass.span}</div>
+              <div style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1, color: GOLD }}>{pass.year}</div>
+            </div>
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.6, color: 'rgba(18,16,24,0.78)', maxWidth: '52ch' }}>
+            {pass.desc}
+          </p>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
+function PassShell({ pass, children }) {
+  const isDegree = pass.kind === 'degree';
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: 26,
+        padding: '1.8rem 2rem 1.7rem',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        background: isDegree
+          ? `linear-gradient(135deg, #3d3954 0%, ${NAVY} 45%, #26233a 100%)`
+          : `linear-gradient(135deg, #e6d6b4 0%, ${GOLD} 50%, #c4ae80 100%)`,
+        border: isDegree ? '1px solid rgba(215,196,158,0.28)' : '1px solid rgba(255,255,255,0.35)',
+        boxShadow: '0 30px 60px rgba(0,0,0,0.4)',
+      }}
+    >
+      {/* Certificate-style rings */}
+      <svg aria-hidden="true" viewBox="0 0 200 200" style={{ position: 'absolute', right: -60, bottom: -70, width: 300, height: 300, opacity: isDegree ? 0.12 : 0.18 }}>
+        {[90, 78, 66, 54, 42, 30].map((r) => (
+          <circle key={r} cx="100" cy="100" r={r} fill="none" stroke={isDegree ? GOLD : NAVY} strokeWidth="0.6" />
+        ))}
+      </svg>
+      {children}
+    </div>
+  );
+}
+
+/* Front pass: 3D tilt and a light sheen that follows the cursor */
+function FrontPass({ pass, index }) {
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const rx = useSpring(useTransform(my, [0, 1], [5, -5]), { stiffness: 160, damping: 18 });
+  const ry = useSpring(useTransform(mx, [0, 1], [-7, 7]), { stiffness: 160, damping: 18 });
+  const sx = useTransform(mx, (v) => `${v * 100}%`);
+  const sy = useTransform(my, (v) => `${v * 100}%`);
+  const sheen = useMotionTemplate`radial-gradient(420px circle at ${sx} ${sy}, rgba(255,255,255,0.18), transparent 55%)`;
+
+  return (
+    <motion.div
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        mx.set((e.clientX - r.left) / r.width);
+        my.set((e.clientY - r.top) / r.height);
+      }}
+      onMouseLeave={() => {
+        mx.set(0.5);
+        my.set(0.5);
+      }}
+      style={{ position: 'absolute', inset: 0, rotateX: rx, rotateY: ry, transformPerspective: 1000 }}
+    >
+      <PassShell pass={pass}>
+        <motion.div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: sheen, pointerEvents: 'none' }} />
+        <PassFace pass={pass} index={index} />
+      </PassShell>
+    </motion.div>
+  );
+}
+
+/* Arrow icons (circle outline style). They use currentColor, so they follow the theme. */
+function CircleChevronRight({ size = 50 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" />
+      <polyline points="21,15 30,24 21,33" />
+    </svg>
+  );
+}
+
+function CircleChevronLeft({ size = 50 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" />
+      <polyline points="27,15 18,24 27,33" />
+    </svg>
+  );
+}
+
+/* ---------- Section ---------- */
 export default function Education() {
   const sectionRef = useRef(null);
+  const stackRef = useRef(null);
   const isMobile = useIsMobile();
-  const t = getTheme(useIsDark());
-  const eduColRef = useRef(null);
-  const achColRef = useRef(null);
-  const numberRefs = useRef([]);
-  const cardRefs = useRef([]);
+  const isDark = useIsDark();
+  const t = getTheme(isDark);
+  const [active, setActive] = useState(0);
+  const [manual, setManual] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const inView = useInView(stackRef, { amount: 0.5 });
+  const auto = inView && !manual && !hovering;
 
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
-  const labelY = useSpring(useTransform(scrollYProgress, [0, 1], [50, -50]), { stiffness: 100, damping: 24, mass: 0.6 });
-  const achLabelY = useSpring(useTransform(scrollYProgress, [0, 1], [30, -70]), { stiffness: 100, damping: 24, mass: 0.6 });
-  const eduUnderline = useTransform(scrollYProgress, [0, 0.35], ['0%', '100%']);
-  const achUnderline = useTransform(scrollYProgress, [0, 0.35], ['0%', '100%']);
-
+  // Gently cycle through the passes until the visitor takes over
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Animated period-year counters (GSAP text scramble/count-up feel)
-      numberRefs.current.forEach((el) => {
-        if (!el) return;
-        const fullText = el.dataset.text || '';
-        gsap.fromTo(
-          el,
-          { opacity: 0 },
-          {
-            opacity: 1,
-            duration: 0.3,
-            scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' },
-            onStart: () => {
-              let progress = { v: 0 };
-              gsap.to(progress, {
-                v: 1,
-                duration: 1.1,
-                ease: 'power2.out',
-                onUpdate: () => {
-                  const reveal = Math.floor(progress.v * fullText.length);
-                  el.textContent = fullText
-                    .split('')
-                    .map((c, i) => (i < reveal || c === ' ' || c === '–' || c === '·' ? c : '•'))
-                    .join('');
-                },
-              });
-            },
-          }
-        );
-      });
+    if (isMobile || !auto) return;
+    const id = setTimeout(() => setActive((a) => (a + 1) % PASSES.length), AUTO_MS);
+    return () => clearTimeout(id);
+  }, [isMobile, auto, active]);
 
-      // Card entrance: skew + slide, GSAP-driven for a snappier premium feel than CSS transitions
-      cardRefs.current.forEach((el, i) => {
-        if (!el) return;
-        gsap.fromTo(
-          el,
-          { autoAlpha: 0, y: 60, skewY: 3 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            skewY: 0,
-            duration: 1,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
-          }
-        );
-      });
+  // Mobile: editorial timeline + swipeable achievement deck
+  if (isMobile) {
+    return <MobileEducation education={education} achievements={achievements} isDark={isDark} sectionRef={sectionRef} />;
+  }
 
-      // Subtle continuous drift on the two column headers, independent of Framer's spring
-      [eduColRef.current, achColRef.current].forEach((col, i) => {
-        if (!col) return;
-        gsap.to(col, {
-          y: i === 0 ? -14 : 14,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.2,
-          },
-        });
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const n = PASSES.length;
+  const depthOf = (i) => (i - active + n) % n; // 0 = front
+  const pick = (i) => {
+    setManual(true);
+    setActive(i);
+  };
 
   return (
     <section
       id="education"
       ref={sectionRef}
-      style={{
-        padding: isMobile ? '4rem 5vw' : '10vw 6vw',
-        backgroundColor: t.bg,
-        borderTop: `1px solid ${t.sectionBorder}`,
-        overflow: 'hidden',
-      }}
+      style={{ padding: '9vw 6vw 9vw', backgroundColor: t.bg, borderTop: `1px solid ${t.sectionBorder}` }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '3rem' : '6rem', alignItems: 'start', flexWrap: 'wrap' }}>
-        {/* Education */}
-        <div ref={eduColRef}>
-          <motion.span
-            className="mono"
-            style={{ color: '#ffffff', fontSize: '1rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : labelY }}
-          >
-            05 / EDUCATION
-          </motion.span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: t.track, marginTop: '12px', marginBottom: '2.5rem', overflow: 'hidden' }}>
-            <motion.div style={{ width: eduUnderline, height: '100%', backgroundColor: t.fill }} />
-          </div>
+      <SectionLabel
+        index="05"
+        title="Education"
+        color={t.text}
+        accent={GOLD}
+        aside={`${String(education.length).padStart(2, '0')} DEGREES · ${String(achievements.length).padStart(2, '0')} AWARDS`}
+      />
 
-          {education.map((edu, i) => (
-            <div
-              key={i}
-              ref={(el) => (cardRefs.current[i] = el)}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 0.85fr) 1.15fr', gap: '6vw', alignItems: 'center' }}>
+        {/* Left: heading + index */}
+        <div>
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
+            <motion.h2
+              variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
+              transition={{ duration: 1, ease: EASE }}
               style={{
-                marginBottom: i < education.length - 1 ? '2.5rem' : 0,
-                paddingBottom: i < education.length - 1 ? '2.5rem' : 0,
-                borderBottom: i < education.length - 1 ? `1px solid ${t.divider}` : 'none',
-                transformOrigin: 'left top',
+                fontSize: 'clamp(3rem, 6.2vw, 6rem)',
+                fontWeight: 700,
+                letterSpacing: '-0.045em',
+                lineHeight: 0.95,
+                color: t.text,
+                margin: 0,
+                paddingTop: '0.04em',
+                paddingBottom: '0.26em',
+                marginBottom: '-0.16em',
               }}
             >
-              <span
-                className="mono"
-                ref={(el) => (numberRefs.current[i] = el)}
-                data-text={edu.period}
-                style={{ color: '#f3f7ff', fontSize: '0.7rem' }}
-              >
-                {edu.period}
-              </span>
-              <h3 style={{
-                fontSize: 'clamp(1rem, 1.6vw, 1.25rem)',
-                fontWeight: 700,
-                color: '#ffffff',
-                marginTop: '8px',
-                marginBottom: '4px',
-                lineHeight: 1.3,
-              }}>
-                {edu.degree}
-              </h3>
-              <p style={{ color: '#ffffff', fontSize: '0.875rem', marginBottom: '12px' }}>
-                {edu.institution} · {edu.location}
-              </p>
-              <p style={{ color: '#ffffff', fontSize: '0.8rem', marginBottom: '12px' }}>{edu.details}</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {edu.subjects.map((s, j) => (
-                  <motion.span
-                    key={j}
-                    className="mono"
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: i * 0.15 + j * 0.05 + 0.2, ease: EASE }}
-                    whileHover={isMobile ? {} : { y: -2, backgroundColor: t.pillHover }}
-                    style={{
-                      fontSize: '0.62rem',
-                      padding: '3px 8px',
-                      border: `1px solid ${t.pillBorder}`,
-                      borderRadius: '3px',
-                      backgroundColor: t.pillBg,
-                      color: '#f7eeee',
-                    }}
-                  >
-                    {s}
-                  </motion.span>
-                ))}
-              </div>
-            </div>
-          ))}
+              Credentials<span style={{ color: GOLD }}>.</span>
+            </motion.h2>
+          </motion.div>
+          <p style={{ margin: '1.25rem 0 2.5rem', fontSize: '1.02rem', lineHeight: 1.65, color: t.muted, maxWidth: '38ch' }}>
+            A Computer Science degree with honors, backed by recognition earned on real projects.
+          </p>
+
+          <div role="tablist" aria-label="Credentials" style={{ borderTop: `1px solid ${t.line}` }}>
+            {PASSES.map((p, i) => {
+              const on = i === active;
+              return (
+                <button
+                  key={p.title}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => pick(i)}
+                  onMouseEnter={() => pick(i)}
+                  onFocus={() => pick(i)}
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    display: 'grid',
+                    gridTemplateColumns: '2.4rem 1fr auto',
+                    alignItems: 'center',
+                    padding: '1rem 0.9rem',
+                    border: 'none',
+                    borderBottom: `1px solid ${t.line}`,
+                    background: on ? t.rowOn : 'transparent',
+                    transition: 'background-color 0.35s',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    color: 'inherit',
+                    font: 'inherit',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.12em', color: on ? GOLD : t.muted }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em', color: on ? t.text : t.muted, transition: 'color 0.35s' }}>
+                    {p.title}
+                  </span>
+                  <span className="mono" style={{ fontSize: '0.58rem', letterSpacing: '0.14em', color: on ? GOLD : t.muted }}>
+                    {p.kind === 'degree' ? p.year : 'AWARD'}
+                  </span>
+                  {/* Auto-play progress */}
+                  {on && auto && (
+                    <motion.span
+                      key={`prog-${active}`}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: AUTO_MS / 1000, ease: 'linear' }}
+                      style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, backgroundColor: GOLD, transformOrigin: 'left' }}
+                    />
+                  )}
+                  {on && !auto && <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, backgroundColor: GOLD }} />}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Achievements */}
-        <div ref={achColRef}>
-          <motion.span
-            className="mono"
-            style={{ color: '#ffffff', fontSize: '1rem', letterSpacing: '0.15em', display: 'inline-block', y: isMobile ? 0 : achLabelY }}
-          >
-            ACHIEVEMENTS
-          </motion.span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: t.track, marginTop: '12px', marginBottom: '2.5rem', overflow: 'hidden' }}>
-            <motion.div style={{ width: achUnderline, height: '100%', backgroundColor: t.fill }} />
+        {/* Right: the wallet stack */}
+        <div
+          ref={stackRef}
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+          style={{ position: 'relative', height: 'clamp(430px, 34vw, 480px)', paddingTop: 96, boxSizing: 'border-box' }}
+        >
+          <div style={{ position: 'relative', height: '100%' }}>
+            {PASSES.map((p, i) => {
+              const d = depthOf(i);
+              const visible = d < 4;
+              return (
+                <motion.div
+                  key={p.title}
+                  onClick={() => d !== 0 && pick(i)}
+                  initial={false}
+                  animate={{
+                    y: -d * 30,
+                    scale: 1 - d * 0.055,
+                    opacity: visible ? 1 - d * 0.18 : 0,
+                  }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: n - d,
+                    cursor: d === 0 ? 'default' : 'pointer',
+                    pointerEvents: visible ? 'auto' : 'none',
+                    transformOrigin: 'center top',
+                  }}
+                >
+                  {d === 0 ? (
+                    <FrontPass pass={p} index={i} />
+                  ) : (
+                    <PassShell pass={p}>
+                      <PassFace pass={p} index={i} />
+                    </PassShell>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
 
-          {achievements.map((ach, i) => (
-            <div
-              key={i}
-              ref={(el) => (cardRefs.current[education.length + i] = el)}
-              style={{
-                marginBottom: i < achievements.length - 1 ? '2rem' : 0,
-                paddingBottom: i < achievements.length - 1 ? '2rem' : 0,
-                borderBottom: i < achievements.length - 1 ? `1px solid ${t.divider}` : 'none',
-                display: 'flex',
-                gap: '1rem',
-                transformOrigin: 'right top',
-              }}
-            >
-              <motion.div
-                whileHover={isMobile ? {} : { scale: 1.15, rotate: 8 }}
-                transition={{ duration: 0.3, ease: EASE }}
+          {/* Prev / next */}
+          <div style={{ position: 'absolute', right: 0, bottom: -70, display: 'flex', gap: 10 }}>
+            {[
+              { Icon: CircleChevronLeft, f: () => pick((active - 1 + n) % n), a: 'Previous credential' },
+              { Icon: CircleChevronRight, f: () => pick((active + 1) % n), a: 'Next credential' },
+            ].map(({ Icon, f, a }) => (
+              <motion.button
+                key={a}
+                type="button"
+                aria-label={a}
+                onClick={f}
+                initial={false}
+                whileHover={{ scale: 1.08, color: GOLD }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ duration: 0.25, ease: EASE }}
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  flexShrink: 0,
-                  borderRadius: '50%',
-                  backgroundColor: t.iconBg,
-                  border: `1px solid ${t.iconBorder}`,
-                  display: 'flex',
+                  width: 50,
+                  height: 50,
+                  padding: 0,
+                  border: 'none',
+                  background: 'transparent',
+                  color: t.text,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginTop: '2px',
                 }}
               >
-                <Award size={14} color={t.iconColor} />
-              </motion.div>
-              <div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff', marginBottom: '4px' }}>
-                  {ach.title}
-                </h4>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#eff3ff', marginBottom: '8px', display: 'block' }}>
-                  {ach.org}
-                </span>
-                <p style={{ color: '#ffffff', fontSize: '0.85rem', lineHeight: 1.6 }}>{ach.desc}</p>
-              </div>
-            </div>
-          ))}
+                <Icon />
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
     </section>

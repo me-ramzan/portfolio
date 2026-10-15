@@ -12,6 +12,7 @@ import Footer from './components/footer'
 import { useState, useEffect } from 'react'
 import Preloader from './components/preloader'
 import Lenis from 'lenis'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
@@ -25,13 +26,24 @@ function App() {
       touchMultiplier: 1.5,
     })
 
+    // Let other components (e.g. the Experience role bar) scroll through Lenis
+    window.lenis = lenis
+
+    // Keep GSAP pins/scroll animations in sync with Lenis (removes pin jitter)
+    lenis.on('scroll', ScrollTrigger.update)
+
+    let rafId
     function raf(time) {
       lenis.raf(time)
-      requestAnimationFrame(raf)
+      rafId = requestAnimationFrame(raf)
     }
-    requestAnimationFrame(raf)
+    rafId = requestAnimationFrame(raf)
 
-    return () => lenis.destroy()
+    return () => {
+      cancelAnimationFrame(rafId)
+      lenis.destroy()
+      if (window.lenis === lenis) delete window.lenis
+    }
   }, [])
 
   return (

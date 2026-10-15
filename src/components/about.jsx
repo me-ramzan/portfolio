@@ -6,6 +6,7 @@ import duofankaarLogo from '../assets/images/duofankaar.png';
 import samsungLogo from '../assets/images/samsung.png';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useIsMobile, useIsDark, SectionLabel } from '../lib/ui';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,38 +16,6 @@ const companies = [
   { name: 'Duofankaar', logo: duofankaarLogo },
   { name: 'Samsung', logo: samsungLogo },
 ];
-
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
-function useIsDark() {
-  const read = () => {
-    const root = document.documentElement;
-    const attr = root.getAttribute('data-theme');
-    if (attr) return attr === 'dark';
-    if (root.classList.contains('dark')) return true;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  };
-  const [isDark, setIsDark] = useState(read);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const update = () => setIsDark(read());
-    const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
-    mq.addEventListener('change', update);
-    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
-  }, []);
-  return isDark;
-}
 
 export default function About() {
   const [visible, setVisible] = useState(false);
@@ -72,15 +41,31 @@ export default function About() {
   }, []);
 
   useEffect(() => {
+    // Pin on desktop only — on phones it fights touch scrolling
+    if (isMobile) return;
+    // If the section is taller than the screen, pin it when its BOTTOM reaches the
+    // bottom of the screen (so the logo strip is fully visible before Experience slides over).
+    const tall = () => ref.current && ref.current.offsetHeight > window.innerHeight;
     const trigger = ScrollTrigger.create({
       trigger: ref.current,
-      start: 'top top',
-      end: '+=30%',
+      start: () => (tall() ? 'bottom bottom' : 'top top'),
+      // Hold until the next section has fully covered About, so the release is never visible
+      end: () => `+=${tall() ? window.innerHeight : ref.current.offsetHeight}`,
       pin: true,
       pinSpacing: false,
+      pinType: 'fixed',
+      invalidateOnRefresh: true,
     });
-    return () => trigger.kill(true);
-  }, []);
+    // Re-measure once images (logos) and fonts have loaded
+    const refresh = () => ScrollTrigger.refresh();
+    window.addEventListener('load', refresh);
+    const late = setTimeout(refresh, 1200);
+    return () => {
+      window.removeEventListener('load', refresh);
+      clearTimeout(late);
+      trigger.kill(true);
+    };
+  }, [isMobile]);
   useEffect(() => {
     let animationFrame;
 
@@ -114,11 +99,14 @@ export default function About() {
   };
 
   return (
+    // Stable wrapper: GSAP wraps the pinned <section> in a pin-spacer, so neighbours
+    // (like the Hero) must never use the section itself as React's insert reference.
+    <div style={{ display: 'contents' }}>
     <section
       id="about"
       ref={ref}
       style={{
-        padding: isMobile ? '4rem 5vw 3rem' : '10vw 6vw 4vw',
+        padding: isMobile ? '4rem 5vw 3rem' : 'min(10vw, 16vh) 6vw min(4vw, 6vh)',
         backgroundColor: t.bg,
         borderTop: `1px solid ${t.border}`,
         position: 'relative',
@@ -139,8 +127,7 @@ export default function About() {
           animate={visible ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <span className="mono" style={{ color: t.text, fontSize: '0.7rem', letterSpacing: '0.15em' }}>01 / ABOUT</span>
-          <div style={{ width: '32px', height: '2px', backgroundColor: t.accent, marginTop: '12px' }} />
+          <SectionLabel index="01" title="About" color={t.text} accent={t.accent} style={{ marginBottom: 0 }} />
         </motion.div>
 
         {/* Right content */}
@@ -244,5 +231,6 @@ export default function About() {
         </div>
       </motion.div>
     </section>
+    </div>
   );
 }

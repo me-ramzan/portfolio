@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import arrowUp from '../assets/images/arroww.png';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { useIsMobile, useIsDark, EASE } from '../lib/ui';
 
-gsap.registerPlugin(ScrollTrigger);
-
-// Swap these hrefs for your real profile links
-const SOCIAL_ICONS = [
+/* ---- Your links (edit here) ---- */
+const NAME = 'Muhammad Ramzan';
+const TAGLINE = 'All rights reserved';
+const LINKS = [
   {
     id: 'linkedin',
+    label: 'LinkedIn',
     href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/',
-    svg: (
-      <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
         <rect x="2" y="9" width="4" height="12" />
         <circle cx="4" cy="4" r="2" />
@@ -21,171 +20,120 @@ const SOCIAL_ICONS = [
   },
   {
     id: 'github',
+    label: 'GitHub',
     href: 'https://github.com/me-ramzan',
-    svg: (
-      <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+      </svg>
+    ),
+  },
+  {
+    id: 'email',
+    label: 'Email',
+    href: 'mailto:me.ramzan.zulfiqar@gmail.com',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 7 9 6 9-6" />
       </svg>
     ),
   },
 ];
 
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= breakpoint);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
-function useIsDark() {
-  const read = () => {
-    const root = document.documentElement;
-    const attr = root.getAttribute('data-theme');
-    if (attr) return attr === 'dark';
-    if (root.classList.contains('dark')) return true;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  };
-  const [isDark, setIsDark] = useState(read);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const update = () => setIsDark(read());
-    const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
-    mq.addEventListener('change', update);
-    return () => { mo.disconnect(); mq.removeEventListener('change', update); };
-  }, []);
-  return isDark;
-}
+const GOLD = '#D7C49E';
 
 function getTheme(isDark) {
   return isDark
-    ? { bg: '#121018', border: '#343148', accent: '#D7C49E', text: '#F4F1EA', link: '#F4F1EA', linkHover: '#D7C49E' }
-    : { bg: '#D7C49E', border: '#1A1A1A', accent: '#343148', text: '#000000', link: '#1A1A1A', linkHover: '#343148' };
+    ? { bg: '#121018', border: '#343148', text: '#F4F1EA', muted: 'rgba(244,241,234,0.55)', ring: 'rgba(244,241,234,0.22)', hover: GOLD, hoverText: '#121018' }
+    : { bg: '#D7C49E', border: '#1A1A1A', text: '#121018', muted: 'rgba(18,16,24,0.6)', ring: 'rgba(18,16,24,0.28)', hover: '#343148', hoverText: '#F4F1EA' };
 }
 
+/* Scrolls through Lenis when available (no fighting with smooth scroll) */
 function scrollToTop(e) {
   e.preventDefault();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (window.lenis && typeof window.lenis.scrollTo === 'function') {
+    window.lenis.scrollTo(0, { duration: 1.4 });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
-function FollowMeSocial({ isMobile }) {
-  const [expanded, setExpanded] = useState(false);
-  const [active, setActive] = useState(null);
-  const t = getTheme(useIsDark());
-
+/* Circle-outline up arrow (arrow-up-circle) */
+function CircleArrowUp({ size = 34 }) {
   return (
-    <div
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => {
-        setExpanded(false);
-        setActive(null);
-      }}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: 10,
-        height: 90,
-        minWidth: 240,
-        color: t.accent,
-        userSelect: 'none',
-        cursor: 'pointer',
-      }}
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" />
+      <line x1="24" y1="34" x2="24" y2="14" />
+      <polyline points="16,22 24,14 32,22" />
+    </svg>
+  );
+}
+
+function BackToTop({ t, showLabel }) {
+  return (
+    <motion.a
+      href="#top"
+      onClick={scrollToTop}
+      aria-label="Back to top"
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      whileTap={{ scale: 0.95 }}
+      className="mono"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: t.text, textDecoration: 'none' }}
     >
-      <div
-        className="mono"
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: 2.5,
-          whiteSpace: 'nowrap',
-        }}
+      <motion.span
+        variants={{ rest: { y: 0, color: t.text }, hover: { y: -3, color: t.hover } }}
+        transition={{ duration: 0.3, ease: EASE }}
+        style={{ display: 'inline-flex' }}
       >
-        FOLLOW ME
-      </div>
+        <CircleArrowUp />
+      </motion.span>
+      {showLabel && (
+        <motion.span
+          variants={{ rest: { x: 0, color: t.text }, hover: { x: 3, color: t.hover } }}
+          transition={{ duration: 0.3, ease: EASE }}
+          style={{ fontSize: '0.62rem', letterSpacing: '0.16em', fontWeight: 600 }}
+        >
+          BACK TO TOP
+        </motion.span>
+      )}
+    </motion.a>
+  );
+}
 
-      <motion.div
-        animate={{ y: expanded ? 34 : 0 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          position: expanded ? 'absolute' : 'relative',
-          right: 0,
-          top: expanded ? 28 : 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          height: 32,
-        }}
-      >
-        <AnimatePresence>
-          {!expanded && (
-            <motion.div
-              key="share"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: '50%',
-                border: `1.3px solid ${t.accent}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.accent} strokeWidth="1.8">
-                <circle cx="18" cy="5" r="2.5" />
-                <circle cx="6" cy="12" r="2.5" />
-                <circle cx="18" cy="19" r="2.5" />
-                <path d="M8.2 10.7 15.8 6.6M8.2 13.3l7.6 4.1" />
-              </svg>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {expanded &&
-          SOCIAL_ICONS.map((icon, i) => {
-            const isActive = active === icon.id;
-            return (
-              <motion.a
-                key={icon.id}
-                href={icon.href}
-                target="_blank"
-                rel="noreferrer"
-                onMouseEnter={() => setActive(icon.id)}
-                onMouseLeave={() => setActive(null)}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{
-                  opacity: active && !isActive ? 0.35 : 1,
-                  y: 0,
-                  scale: isActive ? 1.3 : 1,
-                }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: i * 0.03 }}
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: t.accent,
-                  textDecoration: 'none',
-                }}
-              >
-                <div style={{ width: 14, height: 14 }}>{icon.svg}</div>
-              </motion.a>
-            );
-          })}
-      </motion.div>
+function SocialLinks({ t }) {
+  return (
+    <div style={{ display: 'flex', gap: 10 }}>
+      {LINKS.map((l) => (
+        <motion.a
+          key={l.id}
+          href={l.href}
+          target={l.href.startsWith('http') ? '_blank' : undefined}
+          rel={l.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+          aria-label={l.label}
+          title={l.label}
+          initial={false}
+          whileHover={{ y: -3, backgroundColor: t.hover, color: t.hoverText, borderColor: t.hover }}
+          whileTap={{ scale: 0.94 }}
+          transition={{ duration: 0.25, ease: EASE }}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px solid ${t.ring}`,
+            backgroundColor: 'rgba(0,0,0,0)',
+            color: t.text,
+            textDecoration: 'none',
+          }}
+        >
+          {l.icon}
+        </motion.a>
+      ))}
     </div>
   );
 }
@@ -193,224 +141,56 @@ function FollowMeSocial({ isMobile }) {
 export default function Footer() {
   const isMobile = useIsMobile();
   const t = getTheme(useIsDark());
-  const footerRef = useRef(null);
-  const arrowRef = useRef(null);
-  const nameRef = useRef(null);
-  const rightsRef = useRef(null);
-  const socialColRef = useRef(null);
+  const year = new Date().getFullYear();
 
-  const { scrollYProgress } = useScroll({ target: footerRef, offset: ['start end', 'end end'] });
-  const nameY = useSpring(useTransform(scrollYProgress, [0, 1], [30, -10]), { stiffness: 100, damping: 24, mass: 0.5 });
+  const reveal = {
+    initial: { opacity: 0, y: 16 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: 0.6 },
+  };
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        [arrowRef.current],
-        { opacity: 0, y: 20 },
-        {
-          opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
-          scrollTrigger: { trigger: footerRef.current, start: 'top 90%', toggleActions: 'play none none reverse' },
-        }
-      );
-      gsap.fromTo(
-        [nameRef.current, rightsRef.current],
-        { opacity: 0, y: 20 },
-        {
-          opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out',
-          scrollTrigger: { trigger: footerRef.current, start: 'top 90%', toggleActions: 'play none none reverse' },
-        }
-      );
-      gsap.fromTo(
-        socialColRef.current,
-        { opacity: 0, y: 20 },
-        {
-          opacity: 1, y: 0, duration: 0.8, delay: 0.15, ease: 'power3.out',
-          scrollTrigger: { trigger: footerRef.current, start: 'top 90%', toggleActions: 'play none none reverse' },
-        }
-      );
-
-      gsap.to(arrowRef.current, {
-        yPercent: -15,
-        duration: 1.4,
-        ease: 'sine.inOut',
-        repeat: -1,
-        yoyo: true,
-      });
-    }, footerRef);
-    return () => ctx.revert();
-  }, [isMobile]);
+  const credit = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
+      <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em', color: t.text }}>
+        {NAME}
+      </span>
+      <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.14em', color: t.muted, textTransform: 'uppercase' }}>
+        © {year} · {TAGLINE}
+      </span>
+    </div>
+  );
 
   if (isMobile) {
     return (
-      <footer
-        ref={footerRef}
-        style={{
-          backgroundColor: t.bg,
-          borderTop: `1px solid ${t.border}`,
-          padding: '2.5rem 6vw 2rem',
-          position: 'relative',
-        }}
-      >
-        <a
-          href="#top"
-          onClick={scrollToTop}
-          style={{
-            position: 'absolute',
-            left: '6vw',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textDecoration: 'none',
-          }}
+      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, padding: '2.5rem 6vw 2.25rem' }}>
+        <motion.div
+          {...reveal}
+          transition={{ duration: 0.7, ease: EASE }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}
         >
-          <img ref={arrowRef} src={arrowUp} alt="Back to top" width={34} height={34} style={{ willChange: 'transform', filter: t.bg === '#121018' ? 'invert(1)' : 'none' }} />
-        </a>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', textAlign: 'center' }}>
-          <span
-            ref={nameRef}
-            style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              color: t.accent,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            MUHAMMAD RAMZAN
-          </span>
-          <span
-            ref={rightsRef}
-            className="mono"
-            style={{ color: t.text, fontSize: '0.65rem', letterSpacing: '0.05em' }}
-          >
-            2026 ©. ALL RIGHTS RESERVED.
-          </span>
-        </div>
-
-        <div
-          ref={socialColRef}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '18px',
-            color: t.accent,
-            marginTop: '1.5rem',
-          }}
-        >
-          {SOCIAL_ICONS.map((icon) => (
-            <a
-              key={icon.id}
-              href={icon.href}
-              target="_blank"
-              rel="noreferrer"
-              style={{ width: 18, height: 18, color: t.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {icon.svg}
-            </a>
-          ))}
-        </div>
+          <SocialLinks t={t} />
+          {credit}
+          <BackToTop t={t} showLabel />
+        </motion.div>
       </footer>
     );
   }
 
   return (
-    <footer
-      ref={footerRef}
-      style={{
-        backgroundColor: t.bg,
-        borderTop: `1px solid ${t.border}`,
-        padding: '3rem 6vw',
-        display: 'grid',
-        gridTemplateColumns: '1fr auto 1fr',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '1rem',
-      }}
-    >
-      <a
-        href="#top"
-        onClick={scrollToTop}
-        className="mono"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          textDecoration: 'none',
-          color: t.link,
-          fontSize: '0.85rem',
-          letterSpacing: '0.05em',
-          fontWeight: 600,
-          transition: 'color 0.3s ease, gap 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = t.linkHover;
-          e.currentTarget.style.gap = '14px';
-          gsap.to(e.currentTarget.querySelector('img'), { scale: 1.2, rotate: 8, duration: 0.3, ease: 'back.out(2)' });
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = t.link;
-          e.currentTarget.style.gap = '10px';
-          gsap.to(e.currentTarget.querySelector('img'), { scale: 1, rotate: 0, duration: 0.3, ease: 'power2.out' });
-        }}
-      >
-        <img
-          ref={arrowRef}
-          src={arrowUp}
-          alt=""
-          width={38}
-          height={38}
-          style={{ willChange: 'transform', filter: t.bg === '#121018' ? 'invert(1)' : 'none' }}
-        />
-        BACK TO TOP
-      </a>
-
+    <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, padding: '2.25rem 6vw' }}>
       <motion.div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '6px',
-          gridColumn: '2',
-          justifySelf: 'center',
-          y: nameY,
-        }}
+        {...reveal}
+        transition={{ duration: 0.8, ease: EASE }}
+        style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '1.5rem' }}
       >
-        <span
-          ref={nameRef}
-          style={{
-            fontFamily: "'Space Grotesk', sans-serif",
-            fontSize: '1.2rem',
-            fontWeight: 700,
-            color: t.accent,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          MUHAMMAD RAMZAN
-        </span>
-        <span
-          ref={rightsRef}
-          className="mono"
-          style={{ color: t.text, fontSize: '0.65rem', letterSpacing: '0.05em' }}
-        >
-          2026 ©. ALL RIGHTS RESERVED.
-        </span>
+        <div style={{ justifySelf: 'start' }}>
+          <BackToTop t={t} showLabel />
+        </div>
+        {credit}
+        <div style={{ justifySelf: 'end' }}>
+          <SocialLinks t={t} />
+        </div>
       </motion.div>
-
-      <div
-        ref={socialColRef}
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gridColumn: '3',
-          width: '100%',
-        }}
-      >
-        <FollowMeSocial isMobile={isMobile} />
-      </div>
     </footer>
   );
 }
