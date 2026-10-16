@@ -1,4 +1,4 @@
-import CursorTrail from './components/CursorTrail'
+import CursorMagnetic from './components/CursorMagnetic'
 import Scroll from './components/scroll'
 import Navbar from './components/navbar'
 import Hero from './components/hero'
@@ -49,7 +49,7 @@ function App() {
   return (
     <div className="relative min-h-screen bg-[#EDEBE6]">
       {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
-      <CursorTrail />
+      <CursorMagnetic />
       <Scroll />
       <div className="h-1 w-full bg-gradient-to-r from-black via-black/40 to-transparent"></div>
       <div className="hidden md:block fixed top-0 right-6 w-px h-full bg-blue-600/70"></div>

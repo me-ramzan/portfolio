@@ -52,3 +52,25 @@ html.theme-transition *::after {
     stroke 0.5s ease,
     box-shadow 0.5s ease !important;
 }
+
+/* Custom cursor: hide native cursor on desktop */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+html.custom-cursor input,
+html.custom-cursor textarea {
+  cursor: text !important;
+}
+
+/* Focus mode: other text in the section fades while reading a paragraph */
+.cursor-focus-on :is(p, li, h1, h2, h3, h4, blockquote) {
+  transition: opacity 0.4s ease;
+}
+.cursor-focus-on :is(p, li, h1, h2, h3, h4, blockquote):not(.cursor-focus-target):not(:has(.cursor-focus-target)) {
+  opacity: 0.35;
+}
+.cursor-focus-target,
+.cursor-focus-target :is(p, li, h1, h2, h3, h4, blockquote) {
+  opacity: 1 !important;
+}

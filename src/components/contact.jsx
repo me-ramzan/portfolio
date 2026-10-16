@@ -41,7 +41,7 @@ function useLocalTime() {
   const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE }).format(now);
   const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: TIMEZONE }).format(now));
   const diff = TZ_OFFSET_HOURS - -now.getTimezoneOffset() / 60;
-  const diffText = diff === 0 ? 'Same time as you' : `${Math.abs(diff)}h ${diff > 0 ? 'ahead of' : 'behind'} you`;
+  const diffText = diff === 0 ? '' : `${Math.abs(diff)}h ${diff > 0 ? 'ahead of' : 'behind'} you`;
   return { time, diffText, working: hour >= 9 && hour < 19 };
 }
 
@@ -219,23 +219,29 @@ export default function Contact() {
     return Object.keys(er).length === 0;
   };
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (status === 'sending' || !validate()) return;
-    setStatus('sending');
-    try {
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        { name: form.name, email: form.email, message: `[${topic}] ${form.message}`, phone: '' },
-        EMAILJS_PUBLIC_KEY
-      );
-      setStatus('sent');
-    } catch (err) {
-      console.error('EmailJS error:', err);
-      setStatus('error');
-    }
-  };
+const submit = async (e) => {
+  e.preventDefault();
+  if (status === 'sending' || !validate()) return;
+  setStatus('sending');
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      {
+        name: form.name,
+        email: form.email,
+        topic: topic,
+        message: form.message,
+        phone: 'Not provided',
+      },
+      EMAILJS_PUBLIC_KEY
+    );
+    setStatus('sent');
+  } catch (err) {
+    console.error('EmailJS error:', err);
+    setStatus('error');
+  }
+};
 
   const copyEmail = async (e) => {
     e.preventDefault();
@@ -264,14 +270,14 @@ export default function Contact() {
         aside={
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ position: 'relative', width: 8, height: 8 }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', backgroundColor: '#02b84b' }} />
-              <motion.span
+              {/* <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', backgroundColor: '#02b84b' }} /> */}
+              {/* <motion.span
                 animate={{ scale: [1, 2.6], opacity: [0.6, 0] }}
                 transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
                 style={{ position: 'absolute', inset: 0, borderRadius: '50%', backgroundColor: '#02b84b' }}
-              />
+              /> */}
             </span>
-            AVAILABLE FOR WORK
+            {/* AVAILABLE FOR WORK */}
           </span>
         }
       />

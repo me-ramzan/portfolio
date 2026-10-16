@@ -18,6 +18,7 @@ const TIMEZONE = 'Asia/Dubai';
 const TZ_OFFSET_HOURS = 4;
 const RESPONSE_TIME = 'Replies within 24 hours';
 const OPEN_TO = ['Full-time', 'Freelance', 'Remote'];
+const TOPICS = ['Full-time role', 'Freelance project', 'Collaboration', 'Just saying hi'];
 const WHATSAPP_TEXT = 'Hi! I came across your portfolio and would like to connect.';
 
 function getColors(isDark) {
@@ -132,6 +133,8 @@ function Field({ label, value, onChange, type = 'text', multiline, error, autoCo
         onBlur={() => setFocus(false)}
         rows={multiline ? 3 : undefined}
         autoComplete={autoComplete}
+        aria-label={label}
+        aria-invalid={!!error}
         style={{
           width: '100%',
           background: 'transparent',
@@ -183,6 +186,7 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
   const actionsIn = useInView(actionsRef, { once: true, amount: 0.4 });
 
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [topic, setTopic] = useState(TOPICS[0]);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
   const [copied, setCopied] = useState(false);
@@ -211,7 +215,13 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
       await emailjs.send(
         emailConfig.serviceId,
         emailConfig.templateId,
-        { name: form.name, email: form.email, message: form.message, phone: '' },
+        {
+          name: form.name,
+          email: form.email,
+          topic: topic,
+          message: form.message,
+          phone: 'Not provided',
+        },
         emailConfig.publicKey
       );
       setStatus('sent');
@@ -394,6 +404,42 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
             <motion.form key="form" onSubmit={submit} noValidate exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
               <div className="mono" style={{ fontSize: '0.58rem', letterSpacing: '0.16em', color: GOLD, marginBottom: 6 }}>
                 OR LEAVE A MESSAGE
+              </div>
+              <div style={{ fontSize: '0.8rem', color: PANEL_MUTED, marginTop: 4 }}>
+                What's this about?
+              </div>
+
+              {/* Topic chips: even 2 x 2 grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '12px 0 10px' }}>
+                {TOPICS.map((tp) => {
+                  const on = topic === tp;
+                  return (
+                    <motion.button
+                      key={tp}
+                      type="button"
+                      onClick={() => setTopic(tp)}
+                      whileTap={{ scale: 0.97 }}
+                      aria-pressed={on}
+                      style={{
+                        width: '100%',
+                        padding: '11px 8px',
+                        borderRadius: 12,
+                        border: `1px solid ${on ? GOLD : 'rgba(244,241,234,0.14)'}`,
+                        backgroundColor: on ? GOLD : 'rgba(244,241,234,0.04)',
+                        color: on ? '#1d1a28' : 'rgba(244,241,234,0.8)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        WebkitTapHighlightColor: 'transparent',
+                        transition: 'background-color 0.25s, color 0.25s, border-color 0.25s',
+                      }}
+                    >
+                      {tp}
+                    </motion.button>
+                  );
+                })}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
