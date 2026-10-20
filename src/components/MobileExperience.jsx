@@ -142,23 +142,51 @@ function HighlightsSheet({ exp, index, total, t, onClose }) {
   const dragControls = useDragControls();
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    // Lock the page behind the sheet (works on iPhone too, and pauses Lenis)
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyTouch: body.style.touchAction,
+    };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    window.lenis?.stop?.();
+
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = prev;
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.touchAction = prev.bodyTouch;
+      window.lenis?.start?.();
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose]);
 
-  const list = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.07, delayChildren: 0.18 } },
+  const EASE_OUT = [0.22, 1, 0.36, 1];
+  const words = exp.description.split(' ');
+  const descStart = 0.35; // description starts after the title
+  const listStart = descStart + words.length * 0.012 + 0.15; // list starts after the description
+
+  // Description: word-by-word fade with a soft blur
+  const desc = { hidden: {}, show: { transition: { staggerChildren: 0.012, delayChildren: descStart } } };
+  const word = {
+    hidden: { opacity: 0, y: 6, filter: 'blur(6px)' },
+    show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.45, ease: EASE_OUT } },
   };
+
+  // Contributions: each row rises in, then a line draws underneath it
+  const list = { hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: listStart } } };
   const item = {
-    hidden: { opacity: 0, x: 24 },
-    show: { opacity: 1, x: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+    hidden: { opacity: 0, y: 18 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE_OUT } },
+  };
+  const line = {
+    hidden: { scaleX: 0 },
+    show: { scaleX: 1, transition: { duration: 0.6, ease: EASE_OUT, delay: 0.15 } },
   };
 
   return (
@@ -175,7 +203,9 @@ function HighlightsSheet({ exp, index, total, t, onClose }) {
           backdropFilter: 'blur(3px)',
           WebkitBackdropFilter: 'blur(3px)',
           zIndex: 999,
+          touchAction: 'none',
         }}
+        onTouchMove={(e) => e.preventDefault()}
       />
       <motion.div
         role="dialog"
@@ -214,30 +244,56 @@ function HighlightsSheet({ exp, index, total, t, onClose }) {
           onPointerDown={(e) => dragControls.start(e)}
           style={{ padding: '12px 1.5rem 1rem', touchAction: 'none', cursor: 'grab' }}
         >
-          <div
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 44, opacity: 0.3 }}
+            transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.1 }}
             style={{
-              width: 44,
               height: 5,
               borderRadius: 999,
               backgroundColor: t.panelText,
-              opacity: 0.3,
               margin: '0 auto 1.25rem',
             }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
             <div>
-              <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: t.accent }}>
+              <motion.span
+                className="mono"
+                initial={{ opacity: 0, letterSpacing: '0.4em' }}
+                animate={{ opacity: 1, letterSpacing: '0.15em' }}
+                transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.12 }}
+                style={{ display: 'inline-block', fontSize: '0.65rem', color: t.accent }}
+              >
                 {pad2(index + 1)} / {pad2(total)} · {exp.period}
-              </span>
-              <h4 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.02em', margin: '6px 0 2px', lineHeight: 1.1 }}>
-                {exp.role}
-              </h4>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, opacity: 0.85 }}>{exp.company}</div>
+              </motion.span>
+              {/* Title slides up out of a mask */}
+              <div style={{ overflow: 'hidden', margin: '6px 0 2px' }}>
+                <motion.h4
+                  initial={{ y: '110%' }}
+                  animate={{ y: '0%' }}
+                  transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.18 }}
+                  style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1, paddingBottom: 2 }}
+                >
+                  {exp.role}
+                </motion.h4>
+              </div>
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 0.85, x: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.28 }}
+                style={{ fontSize: '0.9rem', fontWeight: 600 }}
+              >
+                {exp.company}
+              </motion.div>
             </div>
-            <button
+            <motion.button
               type="button"
               onClick={onClose}
               aria-label="Close"
+              initial={{ scale: 0, rotate: -90 }}
+              animate={{ scale: 1, rotate: 0 }}
+              whileTap={{ scale: 0.88, rotate: 90 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 22, delay: 0.2 }}
               style={{
                 flexShrink: 0,
                 width: 36,
@@ -251,38 +307,94 @@ function HighlightsSheet({ exp, index, total, t, onClose }) {
               }}
             >
               ✕
-            </button>
+            </motion.button>
           </div>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: '0 1.5rem calc(2rem + env(safe-area-inset-bottom))' }}>
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.65, margin: '0 0 1.5rem', opacity: 0.9 }}>
-            {exp.description}
-          </p>
+        <div
+          data-lenis-prevent
+          style={{
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+            padding: '0 1.5rem calc(2rem + env(safe-area-inset-bottom))',
+          }}
+        >
+          <motion.p
+            variants={desc}
+            initial="hidden"
+            animate="show"
+            style={{ fontSize: '0.95rem', lineHeight: 1.65, margin: '0 0 1.5rem', opacity: 0.9 }}
+          >
+            {words.map((w, i) => (
+              <motion.span key={i} variants={word} style={{ display: 'inline-block', whiteSpace: 'pre' }}>
+                {w}{i < words.length - 1 ? ' ' : ''}
+              </motion.span>
+            ))}
+          </motion.p>
 
-          <span className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.15em', color: t.accent, display: 'block', marginBottom: '1rem' }}>
-            KEY CONTRIBUTIONS
-          </span>
+          {/* Label with a line that draws out beside it */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+            <motion.span
+              className="mono"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: EASE_OUT, delay: listStart - 0.1 }}
+              style={{ fontSize: '0.62rem', letterSpacing: '0.15em', color: t.accent, whiteSpace: 'nowrap' }}
+            >
+              KEY CONTRIBUTIONS
+            </motion.span>
+            <motion.span
+              aria-hidden
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.8, ease: EASE_OUT, delay: listStart }}
+              style={{ flex: 1, height: 1, backgroundColor: t.panelText, opacity: 0.25, transformOrigin: 'left' }}
+            />
+          </div>
 
           <motion.ul variants={list} initial="hidden" animate="show" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {exp.highlights.map((h, j) => (
-              <motion.li
-                key={j}
-                variants={item}
-                style={{
-                  display: 'flex',
-                  gap: 10,
-                  fontSize: '0.92rem',
-                  lineHeight: 1.6,
-                  paddingBottom: j < exp.highlights.length - 1 ? 14 : 0,
-                  marginBottom: j < exp.highlights.length - 1 ? 14 : 0,
-                  borderBottom: j < exp.highlights.length - 1 ? `1px solid ${t.panelText}26` : 'none',
-                }}
-              >
-                <span style={{ color: t.accent, flexShrink: 0 }}>›</span>
-                {h}
-              </motion.li>
-            ))}
+            {exp.highlights.map((h, j) => {
+              const last = j === exp.highlights.length - 1;
+              return (
+                <motion.li
+                  key={j}
+                  variants={item}
+                  style={{
+                    position: 'relative',
+                    display: 'grid',
+                    gridTemplateColumns: '2rem 1fr',
+                    alignItems: 'baseline',
+                    fontSize: '0.92rem',
+                    lineHeight: 1.6,
+                    paddingBottom: last ? 0 : 14,
+                    marginBottom: last ? 0 : 14,
+                  }}
+                >
+                  <span className="mono" style={{ color: t.accent, fontSize: '0.72rem', fontWeight: 700 }}>
+                    {pad2(j + 1)}
+                  </span>
+                  <span>{h}</span>
+                  {!last && (
+                    <motion.span
+                      aria-hidden
+                      variants={line}
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 1,
+                        backgroundColor: t.panelText,
+                        opacity: 0.15,
+                        transformOrigin: 'left',
+                      }}
+                    />
+                  )}
+                </motion.li>
+              );
+            })}
           </motion.ul>
         </div>
       </motion.div>
