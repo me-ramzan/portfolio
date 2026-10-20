@@ -173,3 +173,8 @@ export function SectionLabel({ index, title, color, accent, aside, style }) {
     </div>
   );
 }
+export const haptic = (pattern = 10) => {
+  if (typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
+    navigator.vibrate?.(pattern);
+  }
+};

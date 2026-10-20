@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Matter from 'matter-js';
+import { haptic } from '../lib/ui';
 
 const { Engine, Bodies, Body, Composite, Constraint } = Matter;
 
@@ -194,7 +195,7 @@ export default function MobileSkillsPhysics({ skillGroups, theme: t, sectionRef 
       Body.setVelocity(b, { x: (Math.random() - 0.5) * 20, y: -(9 + Math.random() * 14) });
       Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.4);
     });
-    navigator.vibrate?.(30);
+    haptic(30);
   };
 
   const toggleFocus = (gi) => {
@@ -228,7 +229,7 @@ export default function MobileSkillsPhysics({ skillGroups, theme: t, sectionRef 
     dragRef.current = c;
     e.currentTarget.setPointerCapture?.(e.pointerId);
     setGrabbed(i);
-    navigator.vibrate?.(8);
+    haptic(8);
   };
 
   const onPillMove = (e) => {

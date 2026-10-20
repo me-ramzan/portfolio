@@ -10,11 +10,33 @@ import futureMineralForum from '../assets/images/FutureMineralForum.png';
 import sadiaChicken from '../assets/images/SadiaChicken.png';
 import hybrdx from '../assets/images/hybrdx.jpg';
 import cboj from '../assets/images/CBOJ.jpg';
+import bunningsAU from '../assets/images/bunningsAU.svg';
+import wellskyARCC from '../assets/images/wellskyARCC.png';
+import machShip from '../assets/images/machship.jpg';
+import powerBI from '../assets/images/powerBI.png';
 import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
 
-const projects = [
+
+/*   CHANGE THE ORDER OF YOUR PROJECTS HERE                         */
+/*  Delete a line to hide that project.                               */
+
+const ORDER = [
+  'wellsky',
+  'bunnings',
+  'sadia', 
+  'fmf', 
+  'hybrdx',
+  'calling-agent',
+  'invoice',
+  'doc-ai',         
+  'machship', 
+  'cboj',              
+  'powerbi',        
+];
+
+const projectData = [
   {
-    number: '01',
+    id: 'doc-ai',
     title: 'AI-Powered Document Processing System',
     stack: ['n8n', 'OpenAI', 'Pinecone', 'Vector Search'],
     description: 'End-to-end n8n workflow integrated with OpenAI and Pinecone to intelligently process and analyze documents. Implemented vector-based semantic search that reduced manual document review time by 70%.',
@@ -23,7 +45,7 @@ const projects = [
     bgColor: '#ffffff',
   },
   {
-    number: '02',
+    id: 'invoice',
     title: 'Invoice Processing Automation',
     stack: ['UiPath', 'SharePoint', 'Outlook', 'OCR'],
     description: 'RPA solution that automatically retrieves invoice PDFs and client signatures from Outlook, merges documents, embeds digital signatures, and archives to SharePoint. Saved 10+ hours of manual work per week.',
@@ -32,7 +54,7 @@ const projects = [
     bgColor: '#FBF4EC',
   },
   {
-    number: '03',
+    id: 'calling-agent',
     title: 'AI Calling Agent for Customer Support',
     stack: ['n8n', 'Twilio', 'ElevenLabs', 'LLM'],
     description: 'AI-powered voice calling agent integrated with Twilio for call automation and ElevenLabs for natural voice synthesis, enabling autonomous handling and resolution of customer queries.',
@@ -41,7 +63,7 @@ const projects = [
     bgColor: '#ffffff',
   },
   {
-    number: '04',
+    id: 'fmf',
     title: 'Future Mineral Forum - UI',
     stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
     description: 'Built and maintained a responsive front-end website including reusable UI components. Diagnosed and resolved cross-device UI/UX inconsistencies based on visual QA review and feedback.',
@@ -51,7 +73,7 @@ const projects = [
     link: 'https://www.futuremineralsforum.com/',
   },
   {
-    number: '05',
+    id: 'hybrdx',
     title: 'HYBRDX - Shamal Group',
     stack: ['JavaScript', 'HTML', 'CSS', 'Mailchimp'],
     description: "Contributed to the front-end of a public-facing campaign site for Dubai's hybrid fitness competition. Built responsive layouts, animations and a live event countdown, and designed the Mailchimp emailer for participant updates.",
@@ -61,7 +83,7 @@ const projects = [
     link: 'https://www.hybrdx.ae/',
   },
   {
-    number: '06',
+    id: 'sadia',
     title: 'Sadia Chicken',
     stack: ['React.js', 'HTML', 'CSS', 'JavaScript'],
     description: 'Developed and maintained a responsive front-end, ensuring a consistent user experience across desktop, tablet, and mobile devices.',
@@ -71,7 +93,7 @@ const projects = [
     link: 'https://www.sadia-life.com/en/',
   },
   {
-    number: '07',
+    id: 'cboj',
     title: 'CBOJ',
     stack: ['React.js', 'HTML', 'C#', 'JavaScript'],
     description: 'Implemented responsive user interfaces using C#, ensuring consistent functionality and an optimized experience across desktop and mobile devices.',
@@ -79,7 +101,49 @@ const projects = [
     image: cboj,
     bgColor: '#ffffff',
   },
+  {
+    id: 'bunnings',
+    title: 'Bunnings AU',
+    stack: ['UiPath', 'AppScript', 'VB.NET', 'GoogleSheets'],
+    description: 'Automated product validation for Bunnings AU by matching product name and model number with Regex against a Google Sheets catalog, and emailing requesters when an item was unavailable. Built with UiPath.',
+    tag: 'RPA / Enterprise',
+    image: bunningsAU,
+    bgColor: '#06313e',
+  },
+  {
+    id: 'wellsky',
+    title: 'WellSky ARCC',
+    stack: ['UiPath', 'AppScript', 'VB.NET', 'Regex', 'GoogleSheets'],
+    description: 'Built an automated appointment scheduling system for WellSky ARCC that synced doctor and patient appointments to calendars and sent timely email notifications, using UiPath, Google Apps Script, VB.NET, Regex, and Google Sheets.',
+    tag: 'RPA / Enterprise',
+    image: wellskyARCC,
+    bgColor: '#ffffff',
+  },
+  {
+    id: 'machship',
+    title: 'MachShip Consignment Automation',
+    stack: ['UiPath', 'HubSpot', 'GoogleSheets', 'Regex', 'VB.NET'],
+    description: 'Engineered an automated order-tracking workflow for Machship that verifies order IDs, returns order status, and creates HubSpot tickets with customer details for unmatched orders.',
+    tag: 'RPA / Enterprise',
+    image: machShip,
+    bgColor: '#004AAD',
+  },
+  {
+    id: 'powerbi',
+    title: 'Automation Monitoring Dashboard',
+    stack: ['PowerBI'],
+    description: 'Built a Power BI dashboard that monitors all ongoing automation projects, showing total projects, running status, queue allocation, and successful versus failed runs at a glance.',
+    tag: 'RPA / Analytics',
+    image: powerBI,
+    bgColor: '#ffffff',
+  },
 ];
+
+// Builds the final list in the ORDER above and numbers it 01, 02, 03...
+const projects = ORDER
+  .map((id) => projectData.find((p) => p.id === id))
+  .filter(Boolean)
+  .map((p, i) => ({ ...p, number: String(i + 1).padStart(2, '0') }));
 
 const FILTERS = [
   { key: 'ALL', label: 'All' },

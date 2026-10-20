@@ -6,6 +6,7 @@ import {
   LayoutGroup,
   useInView,
   useDragControls,
+  animate,
 } from 'framer-motion';
 import { ArrowUpRight, X } from 'lucide-react';
 
@@ -19,6 +20,7 @@ const FILTERS = [
 ];
 
 const categoryOf = (p) => p.tag.split('/')[0].trim();
+const INITIAL_COUNT = 5;
 
 function getColors(isDark) {
   return isDark
@@ -52,7 +54,7 @@ const isMetric = (w) => /\d/.test(w);
 /* ------------------------------------------------------------------ */
 /* Card in the list                                                    */
 /* ------------------------------------------------------------------ */
-function ProjectCard({ project, onOpen, c }) {
+function ProjectCard({ project, onOpen, c, animateIn = true }) {
   const ref = useRef(null);
   const id = project.number;
 
@@ -67,8 +69,8 @@ function ProjectCard({ project, onOpen, c }) {
   return (
     <motion.div
       ref={ref}
-      layout
-      initial={{ opacity: 0, scale: 0.96 }}
+      layout={animateIn}
+      initial={animateIn ? { opacity: 0, scale: 0.96 } : false}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.2 } }}
       transition={{ duration: 0.45, ease: EASE }}
@@ -504,6 +506,48 @@ export default function MobileProjects({ projects, isDark, sectionRef }) {
   const filtered = filter === 'ALL' ? projects : projects.filter((p) => categoryOf(p) === filter);
   const countFor = (key) => (key === 'ALL' ? projects.length : projects.filter((p) => categoryOf(p) === key).length);
 
+const [showAll, setShowAll] = useState(false);
+const extraRef = useRef(null);
+
+const firstCards = filtered.slice(0, INITIAL_COUNT);
+const extraCards = filtered.slice(INITIAL_COUNT);
+const hiddenCount = extraCards.length;
+
+const changeFilter = (key) => {
+  setFilter(key);
+  setShowAll(false);
+};
+
+const toggleShowAll = () => {
+  if (!showAll) {
+    setShowAll(true);
+    return;
+  }
+  // Collapsing: glide back to project 5 at the same speed the list folds away
+  const marker = extraRef.current;
+  if (marker) {
+    const top = marker.getBoundingClientRect().top;
+    if (top < window.innerHeight * 0.6) {
+      const from = window.scrollY;
+      const to = top + from - window.innerHeight * 0.6;
+      if (window.lenis?.scrollTo) {
+        window.lenis.scrollTo(to, {
+          duration: 0.7,
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+          lock: true,
+        });
+      } else {
+        animate(from, to, {
+          duration: 0.7,
+          ease: [0.33, 1, 0.68, 1],
+          onUpdate: (v) => window.scrollTo(0, v),
+        });
+      }
+    }
+  }
+  setShowAll(false);
+};
+
   return (
     <div style={{ backgroundColor: c.bg }}>
       <section
@@ -572,7 +616,7 @@ export default function MobileProjects({ projects, isDark, sectionRef }) {
                 <button
                   key={f.key}
                   type="button"
-                  onClick={() => setFilter(f.key)}
+                  onClick={() => changeFilter(f.key)}
                   style={{
                     position: 'relative',
                     flex: 1,
@@ -606,14 +650,93 @@ export default function MobileProjects({ projects, isDark, sectionRef }) {
           </div>
         </LayoutGroup>
 
-        {/* Cards */}
-        <motion.div layout style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <AnimatePresence initial={false}>
-            {filtered.map((p) => (
-              <ProjectCard key={p.number} project={p} onOpen={setSelected} c={c} />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+{/* Cards: first 5 */}
+<motion.div layout style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+  <AnimatePresence initial={false}>
+    {firstCards.map((p) => (
+      <ProjectCard key={p.number} project={p} onOpen={setSelected} c={c} />
+    ))}
+  </AnimatePresence>
+</motion.div>
+
+{/* Marker: where the extra cards begin */}
+<div ref={extraRef} />
+
+{/* Extra cards: slide open smoothly */}
+<AnimatePresence initial={false}>
+  {showAll && hiddenCount > 0 && (
+    <motion.div
+      key="extra-cards"
+      initial={{ height: 0, opacity: 0 }}
+      animate={{
+        height: 'auto',
+        opacity: 1,
+        transition: { height: { duration: 1, ease: [0.65, 0, 0.35, 1] }, opacity: { duration: 0.4 } },
+      }}
+      exit={{
+        height: 0,
+        opacity: 0,
+        transition: { height: { duration: 0.7, ease: [0.33, 1, 0.68, 1] }, opacity: { duration: 0.4 } },
+      }}
+      style={{ overflow: 'hidden', margin: '0 -24px' }}
+    >
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 18, padding: '18px 24px 24px' }}
+      >
+        {extraCards.map((p) => (
+          <motion.div
+            key={p.number}
+            variants={{
+              hidden: { opacity: 0, y: 40 },
+              show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+            }}
+          >
+            <ProjectCard project={p} onOpen={setSelected} c={c} animateIn={false} />
+          </motion.div>
+        ))}
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+{/* Show all / Show less */}
+{hiddenCount > 0 && (
+  <motion.button
+
+    type="button"
+    onClick={toggleShowAll}
+    whileTap={{ scale: 0.97 }}
+    style={{
+      width: '100%',
+      marginTop: 22,
+      padding: '15px 20px',
+      borderRadius: 999,
+      border: `1px solid ${c.accent}`,
+      background: showAll ? 'transparent' : c.accent,
+      color: showAll ? c.accent : c.accentText,
+      fontWeight: 700,
+      fontSize: '0.9rem',
+      cursor: 'pointer',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+      transition: 'background-color 0.3s, color 0.3s',
+    }}
+  >
+    {showAll ? 'Show less' : `Show all ${filtered.length} projects`}
+    <motion.span
+      animate={{ rotate: showAll ? -90 : 90 }}
+      transition={{ duration: 0.3, ease: EASE }}
+      style={{ display: 'inline-flex' }}
+    >
+      <ArrowUpRight size={16} style={{ transform: 'rotate(-45deg)' }} />
+    </motion.span>
+  </motion.button>
+)}
       </section>
 
       {/* Expanded case study (portal so no parent transform can break position: fixed) */}

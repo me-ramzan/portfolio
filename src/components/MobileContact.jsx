@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Mail, Phone, MessageCircle, Copy, Check, ArrowRight, Clock, MapPin } from 'lucide-react';
 import emailjs from '@emailjs/browser';
+import { haptic } from '../lib/ui';
 
 const EASE = [0.16, 1, 0.3, 1];
 const GOLD = '#D7C49E';
@@ -225,7 +226,7 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
         emailConfig.publicKey
       );
       setStatus('sent');
-      navigator.vibrate?.([15, 40, 15]);
+      haptic([15, 40, 15]);
     } catch (err) {
       console.error('EmailJS error:', err);
       setStatus('error');

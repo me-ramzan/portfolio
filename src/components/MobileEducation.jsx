@@ -8,6 +8,7 @@ import {
   animate,
 } from 'framer-motion';
 import { Award, Mic, Rocket } from 'lucide-react';
+import { haptic } from '../lib/ui';
 
 const EASE = [0.16, 1, 0.3, 1];
 const GOLD = '#D7C49E';
@@ -185,7 +186,7 @@ function DeckCard({ item, index, depth, total, onSwipe, c }) {
     const far = Math.abs(info.offset.x) > 90 || Math.abs(info.velocity.x) > 500;
     if (far) {
       const dir = Math.sign(info.offset.x || info.velocity.x) || 1;
-      navigator.vibrate?.(12);
+      haptic(12);
       await animate(x, dir * 520, { duration: 0.28, ease: 'easeIn' });
       onSwipe();
       x.set(0);
