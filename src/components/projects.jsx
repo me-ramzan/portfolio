@@ -12,7 +12,7 @@ import hybrdx from '../assets/images/hybrdx.jpg';
 import cboj from '../assets/images/CBOJ.jpg';
 import bunningsAU from '../assets/images/bunningsAU.svg';
 import wellskyARCC from '../assets/images/wellskyARCC.png';
-import machShip from '../assets/images/machship.jpg';
+import machShip from '../assets/images/machShip.jpg';
 import powerBI from '../assets/images/powerBI.png';
 import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
 
