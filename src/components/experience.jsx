@@ -18,7 +18,7 @@ const experiences = [
     location: 'Dubai, UAE',
     type: 'On-Site · Full Time',
     period: 'Apr 2026 – Present',
-    duration: '6 months',
+    duration: '8 months',
     description:
       'Building UI components and resolving UI/UX issues for a global creative agency, while keeping CRM integrations and CMS-driven sites running smoothly in production.',
     highlights: [
