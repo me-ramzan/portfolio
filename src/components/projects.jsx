@@ -15,6 +15,7 @@ import wellskyARCC from '../assets/images/wellskyARCC.png';
 import machShip from '../assets/images/machShip.jpg';
 import powerBI from '../assets/images/powerBI.png';
 import pulse from '../assets/images/pulse-logo-for-dark-backgrounds.svg';
+import edb from '../assets/images/edb.png';
 import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
 
 
@@ -28,6 +29,7 @@ const ORDER = [
   'fmf', 
   'pulse',
   'hybrdx',
+  'edb',
   'calling-agent',
   'invoice',
   'doc-ai',         
@@ -147,6 +149,16 @@ const projectData = [
     tag: 'Mobile App · iOS & Android',
     image: pulse,
     bgColor: '#0E1116',
+  },
+  {
+    id: 'edb',
+    title: 'EDB Bahrain',
+    stack: ['WordPress', 'QA Testing', 'Cross-Browser Testing', 'Responsive Testing'],
+    description: 'Independently managed all website content on WordPress and performed QA testing across devices and browsers for the Bahrain Economic Development Board. ',
+    tag: 'FRONTEND / CMS & QA',
+    image: edb,
+    bgColor: '#ffffff',
+    link: 'https://www.bahrainedb.com/',
   },
 ];
 
