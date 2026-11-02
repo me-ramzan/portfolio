@@ -279,6 +279,7 @@ function ProjectDetail({ project, onClose, c }) {
       <motion.div
         ref={scrollRef}
         layoutId={`card-${id}`}
+        data-lenis-prevent
         role="dialog"
         aria-modal="true"
         aria-label={project.title}
@@ -293,13 +294,17 @@ function ProjectDetail({ project, onClose, c }) {
         transition={{ type: 'spring', stiffness: 260, damping: 32 }}
         style={{
           position: 'fixed',
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100dvh',
           zIndex: 9999,
           backgroundColor: c.sheetBg,
           borderRadius: 0,
           overflowY: 'auto',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y',
         }}
       >
         {/* Hero media — drag down from here to close */}
@@ -308,7 +313,7 @@ function ProjectDetail({ project, onClose, c }) {
           onPointerDown={(e) => dragControls.start(e)}
           style={{
             position: 'relative',
-            height: '46vh',
+            height: '46svh',
             backgroundColor: project.bgColor || '#000',
             overflow: 'hidden',
             borderRadius: 0,
@@ -373,7 +378,7 @@ function ProjectDetail({ project, onClose, c }) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.5, ease: EASE } }}
           exit={{ opacity: 0, transition: { duration: 0.12 } }}
-          style={{ padding: '1.75rem 1.5rem calc(3rem + env(safe-area-inset-bottom))', color: c.text }}
+          style={{ padding: '1.75rem 1.5rem calc(7rem + env(safe-area-inset-bottom))', color: c.text }}
         >
           <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.14em', color: c.accent }}>
             {project.number} · {project.tag}

@@ -14,6 +14,7 @@ import bunningsAU from '../assets/images/bunningsAU.svg';
 import wellskyARCC from '../assets/images/wellskyARCC.png';
 import machShip from '../assets/images/machShip.jpg';
 import powerBI from '../assets/images/powerBI.png';
+import pulse from '../assets/images/pulse-logo-for-dark-backgrounds.svg';
 import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
 
 
@@ -25,6 +26,7 @@ const ORDER = [
   'bunnings',
   'sadia', 
   'fmf', 
+  'pulse',
   'hybrdx',
   'calling-agent',
   'invoice',
@@ -136,6 +138,15 @@ const projectData = [
     tag: 'RPA / Analytics',
     image: powerBI,
     bgColor: '#ffffff',
+  },
+  {
+    id: 'pulse',
+    title: 'Pulse - Fitness App',
+    stack: ['React Native, Expo, TypeScript, Supabase'],
+    description: 'Designed and developed a cross-platform fitness app that combines workout tracking, guided training plans, step counting and nutrition logging in a single codebase for iOS and Android.',
+    tag: 'Mobile App · iOS & Android',
+    image: pulse,
+    bgColor: '#0E1116',
   },
 ];
 
