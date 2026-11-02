@@ -276,10 +276,9 @@ function ProjectDetail({ project, onClose, c }) {
         style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9998 }}
       />
 
+      {/* Sheet: fixed frame, does NOT scroll itself */}
       <motion.div
-        ref={scrollRef}
         layoutId={`card-${id}`}
-        data-lenis-prevent
         role="dialog"
         aria-modal="true"
         aria-label={project.title}
@@ -301,158 +300,187 @@ function ProjectDetail({ project, onClose, c }) {
           zIndex: 9999,
           backgroundColor: c.sheetBg,
           borderRadius: 0,
-          overflowY: 'auto',
-          overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        {/* Hero media — drag down from here to close */}
-        <motion.div
-          layoutId={`media-${id}`}
-          onPointerDown={(e) => dragControls.start(e)}
+        {/* Close button: pinned, never scrolls away */}
+        <motion.button
+          type="button"
+          aria-label="Close"
+          onClick={close}
+          onPointerDown={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1, transition: { delay: 0.25 } }}
+          exit={{ opacity: 0, transition: { duration: 0.1 } }}
           style={{
-            position: 'relative',
-            height: '46svh',
-            backgroundColor: project.bgColor || '#000',
-            overflow: 'hidden',
-            borderRadius: 0,
-            touchAction: 'none',
+            position: 'absolute',
+            top: 'max(16px, env(safe-area-inset-top))',
+            right: 16,
+            zIndex: 3,
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'grid',
+            placeItems: 'center',
+            cursor: 'pointer',
           }}
         >
-          <motion.img
-            src={project.image}
-            alt={project.title}
-            initial={{ scale: 1.08 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.8, ease: EASE }}
-            style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '3.5rem 2rem 2rem' }}
-          />
+          <X size={18} color="#fff" />
+        </motion.button>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { delay: 0.25 } }}
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            style={{
-              position: 'absolute',
-              top: 10,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 40,
-              height: 5,
-              borderRadius: 999,
-              backgroundColor: 'rgba(0,0,0,0.35)',
-            }}
-          />
-
-          <motion.button
-            type="button"
-            aria-label="Close"
-            onClick={close}
-            onPointerDown={(e) => e.stopPropagation()}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1, transition: { delay: 0.25 } }}
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            style={{
-              position: 'absolute',
-              top: 'max(16px, env(safe-area-inset-top))',
-              right: 16,
-              width: 38,
-              height: 38,
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: 'rgba(0,0,0,0.55)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              display: 'grid',
-              placeItems: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <X size={18} color="#fff" />
-          </motion.button>
-        </motion.div>
-
-        {/* Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.5, ease: EASE } }}
-          exit={{ opacity: 0, transition: { duration: 0.12 } }}
-          style={{ padding: '1.75rem 1.5rem calc(7rem + env(safe-area-inset-bottom))', color: c.text }}
+        {/* Scrollable middle */}
+        <div
+          ref={scrollRef}
+          data-lenis-prevent
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+          }}
         >
-          <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.14em', color: c.accent }}>
-            {project.number} · {project.tag}
-          </span>
-
-          <h3
+          {/* Hero media: drag down from here to close */}
+          <motion.div
+            layoutId={`media-${id}`}
+            onPointerDown={(e) => dragControls.start(e)}
             style={{
-              fontSize: 'clamp(1.8rem, 8vw, 2.4rem)',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.08,
-              margin: '10px 0 1.5rem',
+              position: 'relative',
+              height: '36svh',
+              minHeight: 200,
+              backgroundColor: project.bgColor || '#000',
+              overflow: 'hidden',
+              borderRadius: 0,
+              touchAction: 'none',
             }}
           >
-            {project.title}
-          </h3>
+            <motion.img
+              src={project.image}
+              alt={project.title}
+              initial={{ scale: 1.08 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.8, ease: EASE }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '3rem 2rem 1.5rem' }}
+            />
 
-          <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: c.muted, display: 'block', marginBottom: 10 }}>
-            OVERVIEW
-          </span>
-          <motion.p
-            initial="hidden"
-            animate="show"
-            variants={{ show: { transition: { staggerChildren: 0.018, delayChildren: 0.35 } } }}
-            style={{ fontSize: '1rem', lineHeight: 1.75, margin: '0 0 2rem', display: 'flex', flexWrap: 'wrap', columnGap: '0.3em' }}
-          >
-            {words.map((w, i) => (
-              <motion.span
-                key={i}
-                variants={{
-                  hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
-                  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE } },
-                }}
-                style={{
-                  display: 'inline-block',
-                  color: isMetric(w) ? c.accent : 'inherit',
-                  fontWeight: isMetric(w) ? 700 : 400,
-                }}
-              >
-                {w}
-              </motion.span>
-            ))}
-          </motion.p>
-
-          <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: c.muted, display: 'block', marginBottom: 12 }}>
-            TECH STACK
-          </span>
-          <motion.div
-            initial="hidden"
-            animate="show"
-            variants={{ show: { transition: { staggerChildren: 0.07, delayChildren: 0.6 } } }}
-            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: '2.25rem' }}
-          >
-            {project.stack.map((s) => (
-              <motion.span
-                key={s}
-                className="mono"
-                variants={{
-                  hidden: { opacity: 0, scale: 0.7, y: 10 },
-                  show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 18 } },
-                }}
-                style={{
-                  fontSize: '0.72rem',
-                  padding: '8px 14px',
-                  borderRadius: 999,
-                  border: `1px solid ${c.accent}`,
-                  color: c.text,
-                }}
-              >
-                {s}
-              </motion.span>
-            ))}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { delay: 0.25 } }}
+              exit={{ opacity: 0, transition: { duration: 0.1 } }}
+              style={{
+                position: 'absolute',
+                top: 10,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 40,
+                height: 5,
+                borderRadius: 999,
+                backgroundColor: 'rgba(0,0,0,0.35)',
+              }}
+            />
           </motion.div>
 
+          {/* Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.5, ease: EASE } }}
+            exit={{ opacity: 0, transition: { duration: 0.12 } }}
+            style={{ padding: '1.5rem 1.5rem 1.5rem', color: c.text }}
+          >
+            <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.14em', color: c.accent }}>
+              {project.number} · {project.tag}
+            </span>
+
+            <h3
+              style={{
+                fontSize: 'clamp(1.6rem, 7.5vw, 2.4rem)',
+                fontWeight: 700,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.08,
+                margin: '10px 0 1.25rem',
+              }}
+            >
+              {project.title}
+            </h3>
+
+            <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: c.muted, display: 'block', marginBottom: 10 }}>
+              OVERVIEW
+            </span>
+            <motion.p
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.018, delayChildren: 0.35 } } }}
+              style={{ fontSize: '1rem', lineHeight: 1.7, margin: '0 0 1.75rem', display: 'flex', flexWrap: 'wrap', columnGap: '0.3em' }}
+            >
+              {words.map((w, i) => (
+                <motion.span
+                  key={i}
+                  variants={{
+                    hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
+                    show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE } },
+                  }}
+                  style={{
+                    display: 'inline-block',
+                    color: isMetric(w) ? c.accent : 'inherit',
+                    fontWeight: isMetric(w) ? 700 : 400,
+                  }}
+                >
+                  {w}
+                </motion.span>
+              ))}
+            </motion.p>
+
+            <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: c.muted, display: 'block', marginBottom: 12 }}>
+              TECH STACK
+            </span>
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.07, delayChildren: 0.6 } } }}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+            >
+              {project.stack.map((s) => (
+                <motion.span
+                  key={s}
+                  className="mono"
+                  variants={{
+                    hidden: { opacity: 0, scale: 0.7, y: 10 },
+                    show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 18 } },
+                  }}
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '8px 14px',
+                    borderRadius: 999,
+                    border: `1px solid ${c.accent}`,
+                    color: c.text,
+                  }}
+                >
+                  {s}
+                </motion.span>
+              ))}
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Footer: pinned to the bottom, always visible */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: 0.4, ease: EASE } }}
+          exit={{ opacity: 0, transition: { duration: 0.1 } }}
+          style={{
+            flexShrink: 0,
+            padding: '12px 1.5rem calc(16px + env(safe-area-inset-bottom))',
+            borderTop: `1px solid ${c.border}`,
+            backgroundColor: c.sheetBg,
+          }}
+        >
           {project.link ? (
             <motion.a
               href={project.link}
@@ -463,7 +491,7 @@ function ProjectDetail({ project, onClose, c }) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '16px 20px',
+                padding: '15px 20px',
                 borderRadius: 999,
                 backgroundColor: c.accent,
                 color: c.accentText,
@@ -496,7 +524,6 @@ function ProjectDetail({ project, onClose, c }) {
     </>
   );
 }
-
 /* ------------------------------------------------------------------ */
 /* Section                                                             */
 /* ------------------------------------------------------------------ */
