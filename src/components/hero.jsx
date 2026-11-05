@@ -317,7 +317,7 @@ export default function Hero() {
                       maskImage: `radial-gradient(circle 140px at ${spot.x}px ${spot.y}px, black 0%, transparent 100%)`,
                     }}
                   >
-                    <div style={{ ...nameStyle, fontWeight: 800, color: t.fill }}>
+                    <div style={{ ...nameStyle, color: t.fill, WebkitTextStroke: `1.5px ${t.fill}` }}>
                       <NameLines delay={D} style={{}} />
                     </div>
                   </div>
