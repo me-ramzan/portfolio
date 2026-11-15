@@ -188,28 +188,25 @@ export default function Hero() {
     };
     const clamp01 = (x) => Math.min(1, Math.max(0, x));
 
-    /* ---------- MOBILE: smooth timed flight ----------
-       Touch scrolling moves the page in small jumps, so a flight tied to the
-       scroll position looks step-by-step. On phones the portrait takes off once
-       you scroll a little and flies to the navbar on its own smooth timer,
-       using only transform + clip-path (GPU-friendly, no layout per frame). */
+    /* ---------- MOBILE: smooth flight that always lands exactly ----------
+       Time-based (not tied to finger steps), but every frame it re-aims at
+       where the photo is right now, so it lands perfectly in both directions
+       even if you are still scrolling. Only transform + clip-path change per
+       frame, and nothing is measured per frame (just scrollY). */
     if (isMobile) {
       const DOCK_AT = 80; // px scrolled before it takes off
       const HOME_AT = 30; // px from the top before it flies back
-      const DURATION = reduce ? 0 : 650;
-      const EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
+      const DURATION = 650; // ms for a full flight
       const s = clone.style;
-      let state = 'home'; // home | toNav | docked | toHome
-      let anims = [];
+      let p = 0; // 0 = on the photo, 1 = in the navbar
+      let target = 0;
+      let raf = 0;
+      let last = 0;
+      let g = null; // geometry, measured once per flight
 
-      const stop = () => {
-        anims.forEach((an) => an.cancel());
-        anims = [];
-      };
-
-      const fly = (to) => {
+      const measure = () => {
         const slot = document.querySelector('[data-nav-avatar]');
-        if (!slot) return;
+        if (!slot) return null;
         const r = card.getBoundingClientRect();
         const b = slot.getBoundingClientRect();
         let fade = 100;
@@ -217,86 +214,98 @@ export default function Hero() {
           const cr = cover.getBoundingClientRect();
           fade = clamp01((cr.bottom - cr.height * 0.32 - r.top) / r.height) * 100;
         }
-        const w = r.width;
-        const h = r.height;
-        const m = Math.min(w, h);
-        const k = b.width / m;
-        const ix = (w - m) / 2;
-        const ib = h - m;
-        const atPhoto = { transform: `translate3d(${r.left}px, ${r.top}px, 0) scale(1)`, clipPath: 'inset(0px 0px 0px 0px round 0px)' };
-        const atNav = { transform: `translate3d(${b.left - ix * k}px, ${b.top}px, 0) scale(${k})`, clipPath: `inset(0px ${ix}px ${ib}px ${ix}px round ${m / 2}px)` };
+        const m = Math.min(r.width, r.height);
+        return { left: r.left, pageTop: r.top + window.scrollY, w: r.width, h: r.height, m, b, fade };
+      };
 
-        // If it is already mid-flight, continue from exactly where it is now
-        let from = to === 'nav' ? atPhoto : atNav;
-        let bgFrom = to === 'nav' ? 0 : 1;
-        if (anims.length) {
-          const cs = getComputedStyle(clone);
-          from = { transform: cs.transform, clipPath: cs.clipPath };
-          bgFrom = Number(getComputedStyle(cloneBg).opacity);
-        }
-        stop();
+      const apply = () => {
+        const e = reduce ? p : flyEase(p);
+        const { left, pageTop, w, h, m, b } = g;
+        const photoTop = pageTop - window.scrollY; // where the photo is right now
+        const k = 1 + (b.width / m - 1) * e;
+        const cx = ((w - m) / 2) * e;
+        const cb = (h - m) * e;
+        const tx = left + (b.left - left) * e - cx * k;
+        const ty = photoTop + (b.top - photoTop) * e;
+        s.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${k})`;
+        const clip = `inset(0px ${cx}px ${cb}px ${cx}px round ${(m / 2) * e}px)`;
+        s.clipPath = clip;
+        s.webkitClipPath = clip;
+        cloneBg.style.opacity = String(Math.min(1, e * 1.6));
+      };
 
-        // Size is set once per flight; after this only transform/clip change
+      const finish = () => {
+        s.opacity = '0';
+        if (p >= 1) setDock(true);
+        else wrap.style.visibility = '';
+      };
+
+      const tick = (now) => {
+        const dt = last ? Math.min(64, now - last) : 16.7;
+        last = now;
+        const step = reduce ? 1 : dt / DURATION;
+        p = target > p ? Math.min(target, p + step) : Math.max(target, p - step);
+        apply();
+        if (p === target) {
+          raf = 0;
+          last = 0;
+          finish();
+        } else raf = requestAnimationFrame(tick);
+      };
+
+      const go = (t) => {
+        target = t;
+        if (raf) return; // already flying: just turn around smoothly
+        g = measure();
+        if (!g) return;
         s.left = '0px';
         s.top = '0px';
-        s.width = `${w}px`;
-        s.height = `${h}px`;
+        s.width = `${g.w}px`;
+        s.height = `${g.h}px`;
         s.borderRadius = '0px';
         s.boxShadow = 'none';
         s.transformOrigin = '0 0';
-        const mask = `linear-gradient(to bottom, #000 ${fade.toFixed(1)}%, rgba(0,0,0,0.1) 100%)`;
+        s.willChange = 'transform, clip-path';
+        const mask = `linear-gradient(to bottom, #000 ${g.fade.toFixed(1)}%, rgba(0,0,0,0.1) 100%)`;
         s.webkitMaskImage = mask;
         s.maskImage = mask;
         cloneImg.style.filter = 'drop-shadow(0 20px 30px rgba(0,0,0,0.35))';
         cloneImg.style.willChange = 'transform';
-
+        apply();
         wrap.style.visibility = 'hidden';
         setDock(false);
         s.opacity = '1';
-        const opts = { duration: DURATION, easing: EASING, fill: 'forwards' };
-        const a1 = clone.animate([from, to === 'nav' ? atNav : atPhoto], opts);
-        const a2 = cloneBg.animate([{ opacity: bgFrom }, { opacity: to === 'nav' ? 1 : 0 }], opts);
-        anims = [a1, a2];
-        state = to === 'nav' ? 'toNav' : 'toHome';
-        a1.onfinish = () => {
-          if (anims[0] !== a1) return;
-          s.opacity = '0';
-          if (to === 'nav') {
-            state = 'docked';
-            setDock(true);
-          } else {
-            state = 'home';
-            wrap.style.visibility = '';
-          }
-          stop();
-        };
+        raf = requestAnimationFrame(tick);
       };
 
       const onScroll = () => {
         const y = window.scrollY;
-        if (y > DOCK_AT && (state === 'home' || state === 'toHome')) fly('nav');
-        else if (y < HOME_AT && (state === 'docked' || state === 'toNav')) fly('home');
+        if (y > DOCK_AT && target !== 1) go(1);
+        else if (y < HOME_AT && target !== 0) go(0);
       };
 
       // Page opened already scrolled down: start docked, no animation
+      s.opacity = '0';
       if (window.scrollY > DOCK_AT) {
-        state = 'docked';
+        p = 1;
+        target = 1;
         wrap.style.visibility = 'hidden';
-        s.opacity = '0';
         setDock(true);
-      } else {
-        s.opacity = '0';
-        setDock(false);
-      }
+      } else setDock(false);
+
       window.addEventListener('scroll', onScroll, { passive: true });
       return () => {
         window.removeEventListener('scroll', onScroll);
-        stop();
+        cancelAnimationFrame(raf);
         wrap.style.visibility = '';
         s.opacity = '0';
+        s.transform = 'translateZ(0)';
+        s.clipPath = 'none';
+        s.webkitClipPath = 'none';
         s.webkitMaskImage = 'none';
         s.maskImage = 'none';
         s.transformOrigin = '';
+        s.willChange = 'left, top, width, height';
         cloneImg.style.filter = '';
         cloneImg.style.willChange = '';
         setDock(false);
