@@ -188,6 +188,121 @@ export default function Hero() {
     };
     const clamp01 = (x) => Math.min(1, Math.max(0, x));
 
+    /* ---------- MOBILE: smooth timed flight ----------
+       Touch scrolling moves the page in small jumps, so a flight tied to the
+       scroll position looks step-by-step. On phones the portrait takes off once
+       you scroll a little and flies to the navbar on its own smooth timer,
+       using only transform + clip-path (GPU-friendly, no layout per frame). */
+    if (isMobile) {
+      const DOCK_AT = 80; // px scrolled before it takes off
+      const HOME_AT = 30; // px from the top before it flies back
+      const DURATION = reduce ? 0 : 650;
+      const EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
+      const s = clone.style;
+      let state = 'home'; // home | toNav | docked | toHome
+      let anims = [];
+
+      const stop = () => {
+        anims.forEach((an) => an.cancel());
+        anims = [];
+      };
+
+      const fly = (to) => {
+        const slot = document.querySelector('[data-nav-avatar]');
+        if (!slot) return;
+        const r = card.getBoundingClientRect();
+        const b = slot.getBoundingClientRect();
+        let fade = 100;
+        if (cover) {
+          const cr = cover.getBoundingClientRect();
+          fade = clamp01((cr.bottom - cr.height * 0.32 - r.top) / r.height) * 100;
+        }
+        const w = r.width;
+        const h = r.height;
+        const m = Math.min(w, h);
+        const k = b.width / m;
+        const ix = (w - m) / 2;
+        const ib = h - m;
+        const atPhoto = { transform: `translate3d(${r.left}px, ${r.top}px, 0) scale(1)`, clipPath: 'inset(0px 0px 0px 0px round 0px)' };
+        const atNav = { transform: `translate3d(${b.left - ix * k}px, ${b.top}px, 0) scale(${k})`, clipPath: `inset(0px ${ix}px ${ib}px ${ix}px round ${m / 2}px)` };
+
+        // If it is already mid-flight, continue from exactly where it is now
+        let from = to === 'nav' ? atPhoto : atNav;
+        let bgFrom = to === 'nav' ? 0 : 1;
+        if (anims.length) {
+          const cs = getComputedStyle(clone);
+          from = { transform: cs.transform, clipPath: cs.clipPath };
+          bgFrom = Number(getComputedStyle(cloneBg).opacity);
+        }
+        stop();
+
+        // Size is set once per flight; after this only transform/clip change
+        s.left = '0px';
+        s.top = '0px';
+        s.width = `${w}px`;
+        s.height = `${h}px`;
+        s.borderRadius = '0px';
+        s.boxShadow = 'none';
+        s.transformOrigin = '0 0';
+        const mask = `linear-gradient(to bottom, #000 ${fade.toFixed(1)}%, rgba(0,0,0,0.1) 100%)`;
+        s.webkitMaskImage = mask;
+        s.maskImage = mask;
+        cloneImg.style.filter = 'drop-shadow(0 20px 30px rgba(0,0,0,0.35))';
+        cloneImg.style.willChange = 'transform';
+
+        wrap.style.visibility = 'hidden';
+        setDock(false);
+        s.opacity = '1';
+        const opts = { duration: DURATION, easing: EASING, fill: 'forwards' };
+        const a1 = clone.animate([from, to === 'nav' ? atNav : atPhoto], opts);
+        const a2 = cloneBg.animate([{ opacity: bgFrom }, { opacity: to === 'nav' ? 1 : 0 }], opts);
+        anims = [a1, a2];
+        state = to === 'nav' ? 'toNav' : 'toHome';
+        a1.onfinish = () => {
+          if (anims[0] !== a1) return;
+          s.opacity = '0';
+          if (to === 'nav') {
+            state = 'docked';
+            setDock(true);
+          } else {
+            state = 'home';
+            wrap.style.visibility = '';
+          }
+          stop();
+        };
+      };
+
+      const onScroll = () => {
+        const y = window.scrollY;
+        if (y > DOCK_AT && (state === 'home' || state === 'toHome')) fly('nav');
+        else if (y < HOME_AT && (state === 'docked' || state === 'toNav')) fly('home');
+      };
+
+      // Page opened already scrolled down: start docked, no animation
+      if (window.scrollY > DOCK_AT) {
+        state = 'docked';
+        wrap.style.visibility = 'hidden';
+        s.opacity = '0';
+        setDock(true);
+      } else {
+        s.opacity = '0';
+        setDock(false);
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      return () => {
+        window.removeEventListener('scroll', onScroll);
+        stop();
+        wrap.style.visibility = '';
+        s.opacity = '0';
+        s.webkitMaskImage = 'none';
+        s.maskImage = 'none';
+        s.transformOrigin = '';
+        cloneImg.style.filter = '';
+        cloneImg.style.willChange = '';
+        setDock(false);
+      };
+    }
+
     // Static per-mode styles
     cloneBg.style.opacity = isMobile ? '0' : '1';
     clone.style.boxShadow = isMobile ? 'none' : '0 20px 50px rgba(0,0,0,0.3)';
