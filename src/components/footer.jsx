@@ -162,7 +162,7 @@ export default function Footer() {
 
   if (isMobile) {
     return (
-      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, padding: '2.5rem 6vw 2.25rem' }}>
+      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, padding: '2.5rem 6vw max(2.25rem, calc(env(safe-area-inset-bottom) + 1rem))' }}>
         <motion.div
           {...reveal}
           transition={{ duration: 0.7, ease: EASE }}
@@ -177,7 +177,7 @@ export default function Footer() {
   }
 
   return (
-    <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, padding: '2.25rem 6vw' }}>
+    <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}`, padding: '2.25rem var(--gutter, 6vw)' }}>
       <motion.div
         {...reveal}
         transition={{ duration: 0.8, ease: EASE }}

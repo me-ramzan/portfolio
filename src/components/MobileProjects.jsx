@@ -1,12 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   motion,
   AnimatePresence,
-  LayoutGroup,
-  useInView,
   useDragControls,
-  animate,
 } from 'framer-motion';
 import { ArrowUpRight, X } from 'lucide-react';
 
@@ -20,7 +17,6 @@ const FILTERS = [
 ];
 
 const categoryOf = (p) => p.tag.split('/')[0].trim();
-const INITIAL_COUNT = 5;
 
 function getColors(isDark) {
   return isDark
@@ -52,188 +48,194 @@ function getColors(isDark) {
 const isMetric = (w) => /\d/.test(w);
 
 /* ------------------------------------------------------------------ */
-/* Card in the list                                                    */
+/* Hairline row: tap to open; the open row shows image + details        */
 /* ------------------------------------------------------------------ */
-function ProjectCard({ project, onOpen, c, animateIn = true }) {
-  const ref = useRef(null);
+function ProjectRow({ project, index, open, onToggle, onOpen, c, isDark }) {
   const id = project.number;
-
-  // Plays the reveal as soon as the card is on screen — instant after a filter tap,
-  // and still triggers on scroll for cards further down.
-  const inView = useInView(ref, { once: true, amount: 0.2 });
-  const CLIP_HIDDEN = 'inset(16% 9.6% 16% 9.6% round 16px)';
-  const CLIP_SHOWN = 'inset(0% 0% 0% 0% round 0px)';
-
-  const open = () => onOpen(project);
+  const line = isDark ? 'rgba(244,241,234,0.14)' : 'rgba(255,255,255,0.18)';
+  const words = project.description.split(' ');
 
   return (
     <motion.div
-      ref={ref}
-      layout={animateIn}
-      initial={animateIn ? { opacity: 0, scale: 0.96 } : false}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.2 } }}
-      transition={{ duration: 0.45, ease: EASE }}
-      whileTap={{ scale: 0.97 }}
+      layout="position"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.45, delay: Math.min(index, 6) * 0.04, ease: EASE }}
+      style={{ borderTop: `1px solid ${line}` }}
     >
-      <motion.div
-        layoutId={`card-${id}`}
-        role="button"
-        tabIndex={0}
-        aria-label={`Open ${project.title}`}
-        onClick={open}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && open()}
+      {/* Title line */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={`proj-panel-${id}`}
         style={{
-          borderRadius: 22,
-          overflow: 'hidden',
-          backgroundColor: c.cardBg,
-          border: `1px solid ${c.border}`,
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: '2rem 1fr auto',
+          alignItems: 'baseline',
+          gap: 8,
+          padding: '1.05rem 0',
+          background: 'none',
+          border: 'none',
           cursor: 'pointer',
-          boxShadow: '0 18px 40px rgba(0,0,0,0.25)',
+          textAlign: 'left',
+          font: 'inherit',
+          color: c.text,
+          WebkitTapHighlightColor: 'transparent',
         }}
       >
-        {/* Media */}
-        <motion.div
-          layoutId={`media-${id}`}
-          style={{ position: 'relative', height: 220, overflow: 'hidden', borderRadius: 0 }}
+        <span className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.1em', color: open ? c.accent : c.muted, transition: 'color 0.3s' }}>
+          {String(index + 1).padStart(2, '0')}
+        </span>
+        <span
+          style={{
+            fontSize: 'clamp(1.05rem, 4.8vw, 1.3rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.025em',
+            lineHeight: 1.2,
+            opacity: open ? 1 : 0.62,
+            transition: 'opacity 0.3s',
+            minWidth: 0,
+          }}
         >
-          <motion.div
-            initial={{ clipPath: CLIP_HIDDEN }}
-            animate={{ clipPath: inView ? CLIP_SHOWN : CLIP_HIDDEN }}
-            transition={{ duration: 0.9, ease: EASE }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: project.bgColor || '#000',
-              overflow: 'hidden',
-            }}
-          >
-            <motion.img
-              src={project.image}
-              alt={project.title}
-              initial={{ scale: 1.3 }}
-              animate={{ scale: inView ? 1 : 1.3 }}
-              transition={{ duration: 1.1, ease: EASE }}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 24 }}
-            />
-          </motion.div>
-
-          <span
-            className="mono"
-            style={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              fontSize: '0.62rem',
-              letterSpacing: '0.12em',
-              padding: '5px 10px',
-              borderRadius: 999,
-              backgroundColor: 'rgba(0,0,0,0.55)',
-              color: '#fff',
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
-            }}
-          >
-            {project.number}
-          </span>
-
+          {project.title}
           {project.link && (
             <span
-              className="mono"
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: '0.6rem',
-                letterSpacing: '0.12em',
-                padding: '5px 10px',
-                borderRadius: 999,
-                backgroundColor: 'rgba(0,0,0,0.55)',
-                color: '#fff',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-              }}
-            >
-              <motion.span
-                animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
-                transition={{ duration: 1.6, repeat: Infinity }}
-                style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#3ddc84', display: 'block' }}
-              />
-              LIVE
-            </span>
+              aria-label="Live"
+              style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', backgroundColor: '#3ddc84', marginLeft: 8, verticalAlign: '0.25em' }}
+            />
           )}
-        </motion.div>
-
-        {/* Meta */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
-          style={{ padding: '1.1rem 1.2rem 1.25rem' }}
+        </span>
+        <motion.span
+          aria-hidden="true"
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          style={{ fontSize: '1.25rem', fontWeight: 300, lineHeight: 1, color: open ? c.accent : c.text, display: 'inline-block' }}
         >
-          <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.12em', color: c.accent }}>
-            {project.tag}
-          </span>
-          <h3
-            style={{
-              fontSize: '1.3rem',
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2,
-              color: c.text,
-              margin: '6px 0 12px',
-            }}
-          >
-            {project.title}
-          </h3>
+          +
+        </motion.span>
+      </button>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-            {project.stack.slice(0, 3).map((s) => (
-              <span
-                key={s}
-                className="mono"
-                style={{ fontSize: '0.6rem', padding: '4px 9px', borderRadius: 4, backgroundColor: c.chipBg, color: c.text }}
+      {/* Panel */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="panel"
+            id={`proj-panel-${id}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1, transition: { height: { duration: 0.55, ease: EASE }, opacity: { duration: 0.35, delay: 0.1 } } }}
+            exit={{ height: 0, opacity: 0, transition: { height: { duration: 0.45, ease: EASE }, opacity: { duration: 0.2 } } }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ paddingBottom: '1.35rem' }}>
+              {/* Image: morphs into the full case study when tapped */}
+              <motion.div
+                layoutId={`card-${id}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open ${project.title}`}
+                onClick={() => onOpen(project)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(project)}
+                whileTap={{ scale: 0.98 }}
+                style={{ borderRadius: 14, overflow: 'hidden', cursor: 'pointer' }}
               >
-                {s}
-              </span>
-            ))}
-            {project.stack.length > 3 && (
-              <span className="mono" style={{ fontSize: '0.6rem', padding: '4px 9px', color: c.muted }}>
-                +{project.stack.length - 3}
-              </span>
-            )}
-          </div>
+                <motion.div
+                  layoutId={`media-${id}`}
+                  style={{ position: 'relative', aspectRatio: '16 / 10', maxHeight: '42svh', width: '100%', backgroundColor: project.bgColor || '#000', overflow: 'hidden' }}
+                >
+                  <motion.img
+                    src={project.image}
+                    alt={project.title}
+                    initial={{ scale: 1.12 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.9, ease: EASE }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: project.fill ? 'cover' : 'contain',
+                      padding: project.fill ? 0 : 20,
+                      display: 'block',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <span
+                    className="mono"
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: 10,
+                      fontSize: '0.58rem',
+                      letterSpacing: '0.12em',
+                      padding: '5px 9px',
+                      borderRadius: 999,
+                      backgroundColor: 'rgba(0,0,0,0.55)',
+                      color: '#fff',
+                    }}
+                  >
+                    OPEN ↗
+                  </span>
+                </motion.div>
+              </motion.div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingTop: 12,
-              borderTop: `1px solid ${c.border}`,
-            }}
-          >
-            <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', color: c.muted }}>
-              TAP TO EXPLORE
-            </span>
-            <span
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                backgroundColor: c.accent,
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <ArrowUpRight size={16} color={c.accentText} />
-            </span>
-          </div>
-        </motion.div>
-      </motion.div>
+              {/* Meta */}
+              <div className="mono" style={{ marginTop: 14, fontSize: '0.6rem', letterSpacing: '0.12em', color: c.accent }}>
+                {project.tag}
+              </div>
+              <p
+                style={{
+                  margin: '8px 0 12px',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.6,
+                  color: c.muted,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {words.map((w, i) => (
+                  <span key={i} style={isMetric(w) ? { color: c.accent, fontWeight: 700 } : undefined}>
+                    {w}{' '}
+                  </span>
+                ))}
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 0 }}>
+                  {project.stack.slice(0, 3).map((s) => (
+                    <span key={s} className="mono" style={{ fontSize: '0.58rem', padding: '4px 9px', borderRadius: 999, border: `1px solid ${line}`, color: c.text, whiteSpace: 'nowrap' }}>
+                      {s}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onOpen(project)}
+                  className="mono"
+                  style={{
+                    flexShrink: 0,
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: `1px solid ${c.text}`,
+                    padding: '2px 0',
+                    color: c.text,
+                    fontSize: '0.62rem',
+                    letterSpacing: '0.12em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  CASE STUDY <ArrowUpRight size={12} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -297,6 +299,8 @@ function ProjectDetail({ project, onClose, c }) {
           left: 0,
           right: 0,
           height: '100dvh',
+          maxWidth: 720,
+          margin: '0 auto',
           zIndex: 9999,
           backgroundColor: c.sheetBg,
           borderRadius: 0,
@@ -525,6 +529,183 @@ function ProjectDetail({ project, onClose, c }) {
   );
 }
 /* ------------------------------------------------------------------ */
+/* Draggable filter switch (iPhone segmented-control style)            */
+/* ------------------------------------------------------------------ */
+function FilterSwitch({ value, onChange, countFor, c }) {
+  const wrapRef = useRef(null);
+  const btnRefs = useRef([]);
+  const dragRef = useRef(null);
+  const suppressClickUntil = useRef(0);
+  const [segs, setSegs] = useState([]);
+  const [drag, setDrag] = useState(null); // { left, width, idx }
+
+  const activeIdx = Math.max(0, FILTERS.findIndex((f) => f.key === value));
+
+  // Measure each button so the pill knows where to sit
+  useLayoutEffect(() => {
+    const measure = () =>
+      setSegs(btnRefs.current.map((b) => (b ? { left: b.offsetLeft, width: b.offsetWidth } : { left: 0, width: 0 })));
+    measure();
+    document.fonts?.ready?.then(measure);
+    const ro = new ResizeObserver(measure);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const localX = (e) => {
+    const n = wrapRef.current;
+    return e.clientX - n.getBoundingClientRect().left - n.clientLeft;
+  };
+  const indexAt = (x) => {
+    let best = 0;
+    let bestD = Infinity;
+    segs.forEach((s, i) => {
+      const d = Math.abs(s.left + s.width / 2 - x);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    return best;
+  };
+
+  const onPointerDown = (e) => {
+    if (e.button !== 0 || !segs.length) return;
+    const x = localX(e);
+    const s = segs[activeIdx];
+    if (!s || x < s.left || x > s.left + s.width) return; // only the gold pill is draggable
+    dragRef.current = { id: e.pointerId, startX: x, offset: x - s.left, w0: s.width, moved: false, idx: activeIdx };
+  };
+
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    const x = localX(e);
+    if (!d.moved) {
+      if (Math.abs(x - d.startX) < 4) return; // small movement = tap
+      d.moved = true;
+      wrapRef.current.setPointerCapture(e.pointerId);
+    }
+    const center = x - d.offset + d.w0 / 2;
+    const idx = indexAt(center);
+    const w = segs[idx].width;
+    const first = segs[0];
+    const last = segs[segs.length - 1];
+    const left = Math.max(first.left, Math.min(last.left + last.width - w, center - w / 2));
+    if (idx !== d.idx) navigator.vibrate?.(8); // tiny tick when crossing a segment (Android)
+    d.idx = idx;
+    setDrag({ left, width: w, idx });
+  };
+
+  const onPointerUp = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    dragRef.current = null;
+    if (!d.moved) return; // plain tap: button onClick handles it
+    suppressClickUntil.current = performance.now() + 300;
+    setDrag(null);
+    if (d.idx !== activeIdx) onChange(FILTERS[d.idx].key);
+  };
+
+  const pill = drag || segs[activeIdx];
+  const shown = drag ? drag.idx : activeIdx;
+
+  return (
+    <div
+      ref={wrapRef}
+      role="tablist"
+      aria-label="Filter projects"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        gap: 6,
+        padding: 5,
+        borderRadius: 999,
+        backgroundColor: c.chipBg,
+        border: `1px solid ${c.border}`,
+        marginBottom: '1.75rem',
+        // vertical swipes still scroll the page; sideways drags move the pill
+        touchAction: 'pan-y',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      {/* Gold pill: follows the finger while dragging, springs into place otherwise */}
+      {pill && (
+        <motion.span
+          aria-hidden="true"
+          initial={false}
+          animate={{ x: pill.left, width: pill.width, scale: drag ? 1.06 : 1 }}
+          transition={
+            drag
+              ? {
+                  x: { type: 'spring', stiffness: 1400, damping: 70 },
+                  width: { type: 'spring', stiffness: 700, damping: 45 },
+                  scale: { duration: 0.2 },
+                }
+              : { type: 'spring', stiffness: 420, damping: 34 }
+          }
+          style={{
+            position: 'absolute',
+            top: 5,
+            bottom: 5,
+            left: 0,
+            borderRadius: 999,
+            backgroundColor: c.accent,
+            boxShadow:'none',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
+      )}
+
+      {FILTERS.map((f, i) => {
+        const on = i === shown;
+        return (
+          <button
+            key={f.key}
+            ref={(el) => (btnRefs.current[i] = el)}
+            type="button"
+            role="tab"
+            aria-selected={i === activeIdx}
+            onClick={() => {
+              if (performance.now() < suppressClickUntil.current) return;
+              onChange(f.key);
+            }}
+            style={{
+              position: 'relative',
+              flex: 1,
+              padding: '9px 0',
+              border: 'none',
+              background: 'transparent',
+              borderRadius: 999,
+              cursor: 'pointer',
+              color: on ? c.accentText : c.text,
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              transition: 'color 0.2s',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <span style={{ position: 'relative', zIndex: 1 }}>
+              {f.label}
+              <sup className="mono" style={{ fontSize: '0.55rem', marginLeft: 2, opacity: 0.7 }}>
+                {countFor(f.key)}
+              </sup>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Section                                                             */
 /* ------------------------------------------------------------------ */
 export default function MobileProjects({ projects, isDark, sectionRef }) {
@@ -538,54 +719,23 @@ export default function MobileProjects({ projects, isDark, sectionRef }) {
   const filtered = filter === 'ALL' ? projects : projects.filter((p) => categoryOf(p) === filter);
   const countFor = (key) => (key === 'ALL' ? projects.length : projects.filter((p) => categoryOf(p) === key).length);
 
-const [showAll, setShowAll] = useState(false);
-const extraRef = useRef(null);
+  // The first project starts open, so the list never looks empty
+  const [openId, setOpenId] = useState(() => (filtered[0] ? filtered[0].number : null));
 
-const firstCards = filtered.slice(0, INITIAL_COUNT);
-const extraCards = filtered.slice(INITIAL_COUNT);
-const hiddenCount = extraCards.length;
+  const changeFilter = (key) => {
+    setFilter(key);
+    const first = key === 'ALL' ? projects[0] : projects.find((p) => categoryOf(p) === key);
+    setOpenId(first ? first.number : null);
+  };
 
-const changeFilter = (key) => {
-  setFilter(key);
-  setShowAll(false);
-};
-
-const toggleShowAll = () => {
-  if (!showAll) {
-    setShowAll(true);
-    return;
-  }
-  // Collapsing: glide back to project 5 at the same speed the list folds away
-  const marker = extraRef.current;
-  if (marker) {
-    const top = marker.getBoundingClientRect().top;
-    if (top < window.innerHeight * 0.6) {
-      const from = window.scrollY;
-      const to = top + from - window.innerHeight * 0.6;
-      if (window.lenis?.scrollTo) {
-        window.lenis.scrollTo(to, {
-          duration: 0.7,
-          easing: (t) => 1 - Math.pow(1 - t, 3),
-          lock: true,
-        });
-      } else {
-        animate(from, to, {
-          duration: 0.7,
-          ease: [0.33, 1, 0.68, 1],
-          onUpdate: (v) => window.scrollTo(0, v),
-        });
-      }
-    }
-  }
-  setShowAll(false);
-};
+  const toggleRow = (id) => setOpenId((cur) => (cur === id ? null : id));
 
   return (
     <div style={{ backgroundColor: c.bg }}>
       <section
         id="projects"
         ref={sectionRef}
-        style={{ padding: '4rem 5vw 4.5rem', backgroundColor: c.bg, borderTop: `1px solid ${c.border}`, position: 'relative' }}
+        style={{ padding: '4rem max(5vw, calc((100vw - 980px) / 2)) 4.5rem', backgroundColor: c.bg, borderTop: `1px solid ${c.border}`, position: 'relative' }}
       >
         {/* Header */}
         <div style={{ marginBottom: '1.75rem' }}>
@@ -629,146 +779,27 @@ const toggleShowAll = () => {
           </motion.div>
         </div>
 
-        {/* Filters */}
-        <LayoutGroup id="project-filters">
-          <div
-            style={{
-              display: 'flex',
-              gap: 6,
-              padding: 5,
-              borderRadius: 999,
-              backgroundColor: c.chipBg,
-              border: `1px solid ${c.border}`,
-              marginBottom: '1.75rem',
-            }}
-          >
-            {FILTERS.map((f) => {
-              const active = filter === f.key;
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => changeFilter(f.key)}
-                  style={{
-                    position: 'relative',
-                    flex: 1,
-                    padding: '9px 0',
-                    border: 'none',
-                    background: 'transparent',
-                    borderRadius: 999,
-                    cursor: 'pointer',
-                    color: active ? c.accentText : c.text,
-                    fontWeight: 600,
-                    fontSize: '0.8rem',
-                    transition: 'color 0.3s',
-                  }}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="filter-pill"
-                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                      style={{ position: 'absolute', inset: 0, borderRadius: 999, backgroundColor: c.accent }}
-                    />
-                  )}
-                  <span style={{ position: 'relative' }}>
-                    {f.label}
-                    <sup className="mono" style={{ fontSize: '0.55rem', marginLeft: 2, opacity: 0.7 }}>
-                      {countFor(f.key)}
-                    </sup>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </LayoutGroup>
+        {/* Filters (drag the gold pill, or tap) */}
+        <FilterSwitch value={filter} onChange={changeFilter} countFor={countFor} c={c} />
 
-{/* Cards: first 5 */}
-<motion.div layout style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-  <AnimatePresence initial={false}>
-    {firstCards.map((p) => (
-      <ProjectCard key={p.number} project={p} onOpen={setSelected} c={c} />
-    ))}
-  </AnimatePresence>
-</motion.div>
-
-{/* Marker: where the extra cards begin */}
-<div ref={extraRef} />
-
-{/* Extra cards: slide open smoothly */}
-<AnimatePresence initial={false}>
-  {showAll && hiddenCount > 0 && (
-    <motion.div
-      key="extra-cards"
-      initial={{ height: 0, opacity: 0 }}
-      animate={{
-        height: 'auto',
-        opacity: 1,
-        transition: { height: { duration: 1, ease: [0.65, 0, 0.35, 1] }, opacity: { duration: 0.4 } },
-      }}
-      exit={{
-        height: 0,
-        opacity: 0,
-        transition: { height: { duration: 0.7, ease: [0.33, 1, 0.68, 1] }, opacity: { duration: 0.4 } },
-      }}
-      style={{ overflow: 'hidden', margin: '0 -24px' }}
-    >
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 18, padding: '18px 24px 24px' }}
-      >
-        {extraCards.map((p) => (
-          <motion.div
-            key={p.number}
-            variants={{
-              hidden: { opacity: 0, y: 40 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
-            }}
-          >
-            <ProjectCard project={p} onOpen={setSelected} c={c} animateIn={false} />
-          </motion.div>
-        ))}
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
-
-{/* Show all / Show less */}
-{hiddenCount > 0 && (
-  <motion.button
-
-    type="button"
-    onClick={toggleShowAll}
-    whileTap={{ scale: 0.97 }}
-    style={{
-      width: '100%',
-      marginTop: 22,
-      padding: '15px 20px',
-      borderRadius: 999,
-      border: `1px solid ${c.accent}`,
-      background: showAll ? 'transparent' : c.accent,
-      color: showAll ? c.accent : c.accentText,
-      fontWeight: 700,
-      fontSize: '0.9rem',
-      cursor: 'pointer',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 8,
-      transition: 'background-color 0.3s, color 0.3s',
-    }}
-  >
-    {showAll ? 'Show less' : `Show all ${filtered.length} projects`}
-    <motion.span
-      animate={{ rotate: showAll ? -90 : 90 }}
-      transition={{ duration: 0.3, ease: EASE }}
-      style={{ display: 'inline-flex' }}
-    >
-      <ArrowUpRight size={16} style={{ transform: 'rotate(-45deg)' }} />
-    </motion.span>
-  </motion.button>
-)}
+{/* Hairline list */}
+        <div>
+          <AnimatePresence mode="popLayout" initial={false}>
+            {filtered.map((p, i) => (
+              <ProjectRow
+                key={p.number}
+                project={p}
+                index={i}
+                open={openId === p.number}
+                onToggle={() => toggleRow(p.number)}
+                onOpen={setSelected}
+                c={c}
+                isDark={isDark}
+              />
+            ))}
+          </AnimatePresence>
+          <div style={{ borderTop: `1px solid ${isDark ? 'rgba(244,241,234,0.14)' : 'rgba(255,255,255,0.18)'}` }} />
+        </div>
       </section>
 
       {/* Expanded case study (portal so no parent transform can break position: fixed) */}

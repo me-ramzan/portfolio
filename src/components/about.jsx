@@ -6,9 +6,31 @@ import duofankaarLogo from '../assets/images/duofankaar.png';
 import samsungLogo from '../assets/images/samsung.png';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useIsMobile, useIsDark, SectionLabel } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, SectionLabel } from '../lib/ui';
 
 gsap.registerPlugin(ScrollTrigger);
+
+/* About paragraph for the word-by-word reveal.
+   Wrap words in **double stars** to make them bold. */
+const ABOUT_TEXT =
+  'Automation and Software Engineer with **~3 years** of experience building React-based frontends and n8n-driven backends using JavaScript, React.js, Node.js, Python, and PHP/Laravel. Strong RPA background with UiPath and Power Automate, plus deep CRM, Mailchimp, and enterprise integrations. Skilled in AI and ML workflows for automating complex, unstructured processes.';
+
+// Split into words, remembering which ones are bold
+const ABOUT_WORDS = (() => {
+  const out = [];
+  ABOUT_TEXT.split(/(\*\*[^*]+\*\*)/).forEach((part) => {
+    const bold = part.startsWith('**');
+    part
+      .replace(/\*\*/g, '')
+      .split(' ')
+      .filter(Boolean)
+      .forEach((w) => out.push({ w, bold }));
+  });
+  return out;
+})();
+
+// How much scrolling the word reveal takes while About is locked (1 = one screen height)
+const REVEAL_SCREENS = 1.2;
 
 const companies = [
   { name: 'Sybros', logo: sybrosLogo },
@@ -25,7 +47,10 @@ export default function About() {
   const speedRef = useRef(0.5);
   const targetSpeedRef = useRef(0.5);
   const isHoveredRef = useRef(false);
+  const wordsRef = useRef([]);
+  const paraRef = useRef(null);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const isDark = useIsDark();
   const t = isDark
     ? { bg: '#121018', border: '#343148', text: '#F4F1EA', accent: '#D7C49E', stroke: '#F4F1EA' }
@@ -40,22 +65,70 @@ export default function About() {
     return () => observer.disconnect();
   }, []);
 
+  /* Desktop: About locks in place, the words light up one by one as you scroll,
+     and only once the whole paragraph is lit does Experience slide up over it.
+     Phones: no lock (it fights touch scrolling), words light up as the paragraph scrolls by. */
   useEffect(() => {
-    // Pin on desktop only — on phones it fights touch scrolling
-    if (isMobile) return;
-    // If the section is taller than the screen, pin it when its BOTTOM reaches the
-    // bottom of the screen (so the logo strip is fully visible before Experience slides over).
-    const tall = () => ref.current && ref.current.offsetHeight > window.innerHeight;
-    const trigger = ScrollTrigger.create({
-      trigger: ref.current,
-      start: () => (tall() ? 'bottom bottom' : 'top top'),
-      // Hold until the next section has fully covered About, so the release is never visible
-      end: () => `+=${tall() ? window.innerHeight : ref.current.offsetHeight}`,
-      pin: true,
-      pinSpacing: false,
-      pinType: 'fixed',
-      invalidateOnRefresh: true,
-    });
+    const words = wordsRef.current.filter(Boolean);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const DIM = 0.16;
+    const setReveal = (p) => {
+      const n = words.length;
+      words.forEach((el, i) => {
+        const v = Math.min(1, Math.max(0, (p * (n + 6) - i) / 6)); // soft edge, ~6 words wide
+        el.style.opacity = DIM + (1 - DIM) * v;
+      });
+    };
+    setReveal(reduce ? 1 : 0);
+
+    const triggers = [];
+
+    if (!isMobile) {
+      // If the section is taller than the screen, lock it when its BOTTOM reaches the
+      // bottom of the screen (so the logo strip is fully visible); otherwise at the top.
+      const tall = () => ref.current && ref.current.offsetHeight > window.innerHeight;
+      const start = () => (tall() ? 'bottom bottom' : 'top top');
+      const revealLength = () => window.innerHeight * REVEAL_SCREENS;
+      const coverLength = () => (tall() ? window.innerHeight : ref.current.offsetHeight);
+
+      // 1. Lock: stays for the reveal, then while Experience slides over it
+      triggers.push(
+        ScrollTrigger.create({
+          trigger: ref.current,
+          start,
+          end: () => `+=${revealLength() + coverLength()}`,
+          pin: true,
+          pinSpacing: false,
+          pinType: 'fixed',
+          invalidateOnRefresh: true,
+        })
+      );
+
+      // 2. Reveal: runs during the first part of the lock
+      if (!reduce) {
+        triggers.push(
+          ScrollTrigger.create({
+            trigger: ref.current,
+            start,
+            end: () => `+=${revealLength() * 0.9}`, // finish just before the lock releases
+            scrub: 0.3,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => setReveal(self.progress),
+          })
+        );
+      }
+    } else if (!reduce) {
+      triggers.push(
+        ScrollTrigger.create({
+          trigger: paraRef.current,
+          start: 'top 85%',
+          end: 'bottom 55%',
+          scrub: 0.3,
+          onUpdate: (self) => setReveal(self.progress),
+        })
+      );
+    }
+
     // Re-measure once images (logos) and fonts have loaded
     const refresh = () => ScrollTrigger.refresh();
     window.addEventListener('load', refresh);
@@ -63,9 +136,10 @@ export default function About() {
     return () => {
       window.removeEventListener('load', refresh);
       clearTimeout(late);
-      trigger.kill(true);
+      triggers.forEach((t) => t.kill(true));
     };
   }, [isMobile]);
+
   useEffect(() => {
     let animationFrame;
 
@@ -106,7 +180,7 @@ export default function About() {
       id="about"
       ref={ref}
       style={{
-        padding: isMobile ? '4rem 5vw 3rem' : 'min(10vw, 16vh) 6vw min(4vw, 6vh)',
+        padding: isMobile ? '4rem 5vw 3rem' : 'min(10vw, 16vh) var(--gutter, 6vw) min(4vw, 6vh)',
         backgroundColor: t.bg,
         borderTop: `1px solid ${t.border}`,
         position: 'relative',
@@ -116,8 +190,8 @@ export default function About() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 3fr',
-          gap: isMobile ? '1.5rem' : '4rem',
+          gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 3fr',
+          gap: isMobile ? '1.5rem' : isTablet ? '2rem' : '4rem',
           alignItems: 'start',
         }}
       >
@@ -148,20 +222,34 @@ export default function About() {
             <span style={{ WebkitTextStroke: `1.5px ${t.stroke}`, color: 'transparent' }}>at Every Layer</span>
           </motion.h2>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={visible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.2 }}
+          {/* Word reveal: words start faint and light up as you scroll */}
+          <p
+            ref={paraRef}
             style={{
-              fontSize: '1.1rem',
+              fontSize: isMobile ? '1.1rem' : isTablet ? 'clamp(1.1rem, 2.2vw, 1.3rem)' : 'clamp(1.1rem, 1.5vw, 1.4rem)',
               color: t.text,
-              lineHeight: 1.7,
-              maxWidth: '640px',
+              lineHeight: 1.6,
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
+              maxWidth: '760px',
               marginBottom: isMobile ? '1.5rem' : '3rem',
             }}
           >
-            Automation and Software Engineer with <strong>~3 years</strong> of experience building React-based frontends and n8n-driven backends using JavaScript, React.js, Node.js, Python, and PHP/Laravel. Strong RPA background with UiPath and Power Automate, plus deep CRM, Mailchimp, and enterprise integrations. Skilled in AI and ML workflows for automating complex, unstructured processes.
-          </motion.p>
+            {ABOUT_WORDS.map(({ w, bold }, i) => (
+              <span
+                key={i}
+                ref={(el) => (wordsRef.current[i] = el)}
+                style={{
+                  opacity: 0.16,
+                  transition: 'opacity 0.15s linear',
+                  fontWeight: bold ? 700 : 'inherit',
+                  color: bold ? t.accent : 'inherit',
+                }}
+              >
+                {w}{' '}
+              </span>
+            ))}
+          </p>
         </div>
       </div>
 
@@ -180,9 +268,9 @@ export default function About() {
           overflow: 'hidden',
           position: 'relative',
           backgroundColor: t.bg,
-          marginLeft: isMobile ? '-5vw' : '-6vw',
-          marginRight: isMobile ? '-5vw' : '-6vw',
-          width: isMobile ? 'calc(100% + 10vw)' : 'calc(100% + 12vw)',
+          marginLeft: isMobile ? '-5vw' : 'calc(-1 * var(--gutter, 6vw))',
+          marginRight: isMobile ? '-5vw' : 'calc(-1 * var(--gutter, 6vw))',
+          width: isMobile ? 'calc(100% + 10vw)' : 'calc(100% + 2 * var(--gutter, 6vw))',
         }}
       >
           <style>{`
@@ -209,7 +297,7 @@ export default function About() {
               key={i}
               style={{
                 flexShrink: 0,
-                width: isMobile ? '160px' : '250px',
+                width: isMobile ? '160px' : isTablet ? '200px' : '250px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -221,8 +309,8 @@ export default function About() {
                 alt={company.name}
                 className="company-logo"
                 style={{
-                  maxHeight: isMobile ? '60px' : '100px',
-                  maxWidth: isMobile ? '110px' : '180px',
+                  maxHeight: isMobile ? '60px' : isTablet ? '80px' : '100px',
+                  maxWidth: isMobile ? '110px' : isTablet ? '140px' : '180px',
                   objectFit: 'contain',
                 }}
               />
@@ -231,6 +319,10 @@ export default function About() {
         </div>
       </motion.div>
     </section>
+    {/* Scroll room for the word reveal: keeps Experience waiting below while About is locked */}
+    {!isMobile && (
+      <div aria-hidden="true" style={{ height: `${REVEAL_SCREENS * 100}vh`, backgroundColor: t.bg }} />
+    )}
     </div>
   );
 }

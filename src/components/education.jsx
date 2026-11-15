@@ -1,8 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { Award, GraduationCap, BadgeCheck } from 'lucide-react';
+import ucpPhoto from '../assets/images/ucp.jpg';
+import punjabPhoto from '../assets/images/punjab.jpeg';
+import sybrosAwardPhoto from '../assets/images/sb-bgg.png';
+import umtPhoto from '../assets/images/umt.jpg';
+import bbdoAwardPhoto from '../assets/images/bbdo-bgg.jpg';
 import MobileEducation from './MobileEducation';
-import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, useIsTouch, SectionLabel, EASE } from '../lib/ui';
 
 const education = [
   {
@@ -12,6 +17,7 @@ const education = [
     period: 'June 2021 – July 2025',
     details: 'Major: Data Science, Artificial Intelligence, Data Structures, LLMs',
     subjects: ['DSA', 'DAA', 'Artificial Intelligence', 'LLMs', 'Data Science'],
+    image: ucpPhoto,
   },
   {
     degree: 'Intermediate of Computer Science — ICS',
@@ -20,6 +26,8 @@ const education = [
     period: 'May 2019 – March 2021',
     details: 'Subjects: Computer Science, Maths, Physics',
     subjects: ['Computer Science', 'Mathematics', 'Physics'],
+    image: punjabPhoto,
+    pos: 'center 65%',
   },
 ];
 
@@ -27,16 +35,22 @@ const achievements = [
   {
     title: 'Team Leadership Award',
     org: 'Sybros Tech',
+    image: sybrosAwardPhoto,
+     pos: 'center 45%',
     desc: 'Led the RPA team to deliver enterprise automations. Earned a LinkedIn recommendation from the CEO for leadership and technical excellence.',
   },
   {
     title: 'RPA Workshop Speaker',
     org: 'UMT × Sybros Tech',
+    image: umtPhoto,
+    pos: 'center 60%',
     desc: 'Conducted RPA workshop hosted by UMT\'s Department of AI. Contributed to signing of MoU offering internship opportunities for students.',
   },
   {
     title: 'UAE Enterprise Projects',
     org: 'Impact BBDO',
+    image: bbdoAwardPhoto,
+    pos: 'center 6%',
     desc: 'Led AI-driven automation and software projects across the UAE using RPA, n8n, Python, React.js, Node.js, and Docker in multiple sectors.',
   },
 ];
@@ -62,6 +76,8 @@ const PASSES = [
       year: y[1] || y[0] || '',
       span: y.length > 1 ? `${y[0]} — ${y[1]}` : y[0] || '',
       chips: e.subjects,
+      image: e.image,
+      pos: e.pos,
     };
   }),
   ...achievements.map((a) => ({
@@ -70,6 +86,8 @@ const PASSES = [
     title: a.title,
     issuer: a.org,
     desc: a.desc,
+    image: a.image,
+    pos: a.pos,
   })),
 ];
 
@@ -193,7 +211,11 @@ function PassShell({ pass, children }) {
         padding: '1.8rem 2rem 1.7rem',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        background: isDegree
+        background: pass.image
+          ? (isDegree
+              ? `linear-gradient(135deg, rgba(38,35,58,0.85) 0%, rgba(52,49,72,0.6) 50%, rgba(38,35,58,0.9) 100%), url(${pass.image}) ${pass.pos || 'center 1%'} / cover no-repeat`
+              : `linear-gradient(135deg, rgba(230,214,180,0.88) 0%, rgba(215,196,158,0.7) 50%, rgba(196,174,128,0.9) 100%), url(${pass.image}) ${pass.pos || 'center 1%'} / cover no-repeat`)
+          : isDegree
           ? `linear-gradient(135deg, #3d3954 0%, ${NAVY} 45%, #26233a 100%)`
           : `linear-gradient(135deg, #e6d6b4 0%, ${GOLD} 50%, #c4ae80 100%)`,
         border: isDegree ? '1px solid rgba(215,196,158,0.28)' : '1px solid rgba(255,255,255,0.35)',
@@ -266,6 +288,8 @@ export default function Education() {
   const sectionRef = useRef(null);
   const stackRef = useRef(null);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isTouch = useIsTouch();
   const isDark = useIsDark();
   const t = getTheme(isDark);
   const [active, setActive] = useState(0);
@@ -297,7 +321,7 @@ export default function Education() {
     <section
       id="education"
       ref={sectionRef}
-      style={{ padding: '9vw 6vw 9vw', backgroundColor: t.bg, borderTop: `1px solid ${t.sectionBorder}` }}
+      style={{ padding: '9vw var(--gutter, 6vw) max(9vw, 110px)', backgroundColor: t.bg, borderTop: `1px solid ${t.sectionBorder}` }}
     >
       <SectionLabel
         index="05"
@@ -307,7 +331,7 @@ export default function Education() {
         aside={`${String(education.length).padStart(2, '0')} DEGREES · ${String(achievements.length).padStart(2, '0')} AWARDS`}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 0.85fr) 1.15fr', gap: '6vw', alignItems: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : 'minmax(300px, 0.85fr) 1.15fr', gap: isTablet ? '3rem' : '6vw', alignItems: 'center' }}>
         {/* Left: heading + index */}
         <div>
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
@@ -315,7 +339,7 @@ export default function Education() {
               variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
               transition={{ duration: 1, ease: EASE }}
               style={{
-                fontSize: 'clamp(3rem, 6.2vw, 6rem)',
+                fontSize: isTablet ? 'clamp(2.8rem, 8vw, 4.6rem)' : 'clamp(3rem, 6.2vw, 6rem)',
                 fontWeight: 700,
                 letterSpacing: '-0.045em',
                 lineHeight: 0.95,
@@ -343,7 +367,7 @@ export default function Education() {
                   role="tab"
                   aria-selected={on}
                   onClick={() => pick(i)}
-                  onMouseEnter={() => pick(i)}
+                  onMouseEnter={isTouch ? undefined : () => pick(i)}
                   onFocus={() => pick(i)}
                   style={{
                     position: 'relative',
@@ -392,9 +416,17 @@ export default function Education() {
         {/* Right: the wallet stack */}
         <div
           ref={stackRef}
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
-          style={{ position: 'relative', height: 'clamp(430px, 34vw, 480px)', paddingTop: 96, boxSizing: 'border-box' }}
+          onMouseEnter={isTouch ? undefined : () => setHovering(true)}
+          onMouseLeave={isTouch ? undefined : () => setHovering(false)}
+          style={{
+            position: 'relative',
+            height: isTablet ? 'clamp(420px, 56vw, 480px)' : 'clamp(430px, 34vw, 480px)',
+            paddingTop: 96,
+            boxSizing: 'border-box',
+            width: '100%',
+            maxWidth: isTablet ? 640 : 'none',
+            justifySelf: 'center',
+          }}
         >
           <div style={{ position: 'relative', height: '100%' }}>
             {PASSES.map((p, i) => {

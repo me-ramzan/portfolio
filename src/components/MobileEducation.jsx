@@ -296,7 +296,7 @@ function AchievementDeck({ achievements, c }) {
         whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.9, ease: EASE }}
-        style={{ position: 'relative', height: 360, transformPerspective: 900 }}
+        style={{ position: 'relative', height: 'clamp(320px, 92vw, 380px)', transformPerspective: 900 }}
       >
         <div style={{ position: 'absolute', inset: '0 0 36px 0' }}>
           {order.map((idx, depth) => (
@@ -349,7 +349,8 @@ export default function MobileEducation({ education, achievements, isDark, secti
       ref={sectionRef}
       style={{
         position: 'relative',
-        padding: '4.5rem 6vw 4rem',
+        // stays phone-width (max 640px) and centred on wider screens / landscape
+        padding: '4.5rem max(6vw, calc((100vw - 640px) / 2)) 4rem',
         backgroundColor: c.bg,
         borderTop: `1px solid ${c.line}`,
         overflow: 'hidden',

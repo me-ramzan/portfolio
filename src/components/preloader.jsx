@@ -27,7 +27,8 @@ const readFirstVisit = () => {
 };
 
 const FIRST_VISIT = typeof window !== 'undefined' ? readFirstVisit() : true;
-const NARROW = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+// phones in portrait AND landscape get the compact layout
+const NARROW = typeof window !== 'undefined' ? window.innerWidth <= 768 || window.innerHeight <= 520 : false;
 
 const FILL_MS = 1650; // counter 0 → 100 while the name decodes
 const HOLD_MS = 220; // beat at 100
@@ -177,7 +178,7 @@ export default function Preloader({ onComplete }) {
   const nameStyle = {
     fontFamily: "'Space Grotesk', sans-serif",
     fontWeight: 700,
-    fontSize: NARROW ? 'clamp(2.6rem, 13.5vw, 4.5rem)' : 'clamp(3.2rem, 8.4vw, 8.5rem)',
+    fontSize: NARROW ? 'clamp(2.2rem, min(13.5vw, 17vh), 4.5rem)' : 'clamp(3.2rem, min(8.4vw, 15vh), 8.5rem)',
     letterSpacing: '-0.045em',
     lineHeight: 0.92,
   };
@@ -295,7 +296,7 @@ export default function Preloader({ onComplete }) {
               style={{
                 fontFamily: "'Space Grotesk', sans-serif",
                 fontWeight: 700,
-                fontSize: NARROW ? '4.5rem' : 'clamp(5rem, 12vw, 11rem)',
+                fontSize: NARROW ? 'clamp(3rem, min(20vw, 15vh), 4.5rem)' : 'clamp(5rem, min(12vw, 20vh), 11rem)',
                 lineHeight: 0.8,
                 letterSpacing: '-0.06em',
                 color: 'transparent',

@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, LayoutGroup, useScroll, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowUpRight, Lock } from 'lucide-react';
 import MobileProjects from './MobileProjects';
 
@@ -16,7 +18,9 @@ import machShip from '../assets/images/machShip.jpg';
 import powerBI from '../assets/images/powerBI.png';
 import pulse from '../assets/images/pulse-logo-for-dark-backgrounds.svg';
 import edb from '../assets/images/edb.png';
-import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, useIsShort, SectionLabel, EASE } from '../lib/ui';
+
+gsap.registerPlugin(ScrollTrigger);
 
 
 /*   CHANGE THE ORDER OF YOUR PROJECTS HERE                         */
@@ -73,7 +77,7 @@ const projectData = [
     description: 'Built and maintained a responsive front-end website including reusable UI components. Diagnosed and resolved cross-device UI/UX inconsistencies based on visual QA review and feedback.',
     tag: 'FRONTEND / WEB',
     image: futureMineralForum,
-    bgColor: '#000000',
+    bgColor: '#ffffff',
     link: 'https://www.futuremineralsforum.com/',
   },
   {
@@ -152,6 +156,7 @@ const projectData = [
   },
   {
     id: 'edb',
+    fill: true,
     title: 'EDB Bahrain',
     stack: ['WordPress', 'QA Testing', 'Cross-Browser Testing', 'Responsive Testing'],
     description: 'Independently managed all website content on WordPress and performed QA testing across devices and browsers for the Bahrain Economic Development Board. ',
@@ -206,146 +211,223 @@ function getTheme(isDark) {
 }
 
 /* ------------------------------------------------------------------ */
-/* List row                                                            */
+/* Draggable filter switch (iPhone segmented-control style)            */
 /* ------------------------------------------------------------------ */
-function ProjectRow({ project, active, onActivate, registerRef, t }) {
+function FilterSwitch({ value, onChange, countFor, t }) {
+  const wrapRef = useRef(null);
+  const btnRefs = useRef([]);
+  const dragRef = useRef(null);
+  const suppressClickUntil = useRef(0);
+  const [segs, setSegs] = useState([]);
+  const [drag, setDrag] = useState(null); // { left, width, idx }
+
+  const activeIdx = Math.max(0, FILTERS.findIndex((f) => f.key === value));
+
+  // Measure each button so the pill knows where to sit
+  useLayoutEffect(() => {
+    const measure = () =>
+      setSegs(btnRefs.current.map((b) => (b ? { left: b.offsetLeft, width: b.offsetWidth } : { left: 0, width: 0 })));
+    measure();
+    document.fonts?.ready?.then(measure);
+    const ro = new ResizeObserver(measure);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const localX = (e) => {
+    const n = wrapRef.current;
+    return e.clientX - n.getBoundingClientRect().left - n.clientLeft;
+  };
+  const indexAt = (x) => {
+    let best = 0;
+    let bestD = Infinity;
+    segs.forEach((s, i) => {
+      const d = Math.abs(s.left + s.width / 2 - x);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    return best;
+  };
+
+  const onPointerDown = (e) => {
+    if (e.button !== 0 || !segs.length) return;
+    const x = localX(e);
+    const s = segs[activeIdx];
+    if (!s || x < s.left || x > s.left + s.width) return; // only the gold pill is draggable
+    dragRef.current = { id: e.pointerId, startX: x, offset: x - s.left, w0: s.width, moved: false, idx: activeIdx };
+  };
+
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    const x = localX(e);
+    if (!d.moved) {
+      if (Math.abs(x - d.startX) < 4) return; // small movement = tap
+      d.moved = true;
+      wrapRef.current.setPointerCapture(e.pointerId);
+    }
+    const center = x - d.offset + d.w0 / 2;
+    const idx = indexAt(center);
+    const w = segs[idx].width;
+    const first = segs[0];
+    const last = segs[segs.length - 1];
+    const left = Math.max(first.left, Math.min(last.left + last.width - w, center - w / 2));
+    d.idx = idx;
+    setDrag({ left, width: w, idx });
+  };
+
+  const onPointerUp = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    dragRef.current = null;
+    if (!d.moved) return; // plain tap: button onClick handles it
+    suppressClickUntil.current = performance.now() + 300;
+    setDrag(null);
+    if (d.idx !== activeIdx) onChange(FILTERS[d.idx].key);
+  };
+
+  const pill = drag || segs[activeIdx];
+  const shown = drag ? drag.idx : activeIdx;
+
   return (
-    <motion.button
-      type="button"
-      ref={registerRef}
-      layout
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.4 }}
-      exit={{ opacity: 0, transition: { duration: 0.15 } }}
-      transition={{ duration: 0.6, ease: EASE }}
-      onMouseEnter={onActivate}
-      onFocus={onActivate}
-      onClick={onActivate}
-      aria-current={active ? 'true' : undefined}
+    <div
+      ref={wrapRef}
+      role="tablist"
+      aria-label="Filter projects"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
       style={{
         position: 'relative',
-        display: 'grid',
-        gridTemplateColumns: '3.2rem 1fr auto',
-        alignItems: 'start',
-        gap: '1rem',
-        width: '100%',
-        textAlign: 'left',
-        padding: '2.1rem 0 2.1rem 1.25rem',
-        background: 'none',
-        border: 'none',
-        borderTop: `1px solid ${t.line}`,
-        color: t.text,
-        cursor: 'pointer',
-        font: 'inherit',
+        display: 'flex',
+        gap: 4,
+        padding: 5,
+        borderRadius: 999,
+        backgroundColor: t.chip,
+        border: `1px solid ${t.line}`,
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
       }}
     >
-      {/* Active indicator */}
-      <motion.span
-        aria-hidden
-        animate={{ scaleY: active ? 1 : 0, opacity: active ? 1 : 0 }}
-        transition={{ duration: 0.45, ease: EASE }}
-        style={{ position: 'absolute', left: 0, top: '1.9rem', bottom: '1.9rem', width: 3, borderRadius: 3, backgroundColor: t.accent, transformOrigin: 'top' }}
-      />
-
-      <span className="mono" style={{ fontSize: '0.75rem', color: active ? t.accent : t.faint, paddingTop: '0.55rem', transition: 'color 0.3s' }}>
-        {project.number}
-      </span>
-
-      <span style={{ minWidth: 0 }}>
-        <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.62rem', letterSpacing: '0.12em', color: active ? t.accent : t.muted, transition: 'color 0.3s' }}>
-          {project.tag}
-          {project.link && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: t.muted }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#3ddc84' }} />
-              LIVE
-            </span>
-          )}
-        </span>
+      {/* Gold pill: follows the pointer while dragging, springs into place otherwise */}
+      {pill && (
         <motion.span
-          animate={{ opacity: active ? 1 : 0.45, x: active ? 6 : 0 }}
-          transition={{ duration: 0.45, ease: EASE }}
-          style={{ display: 'block', fontSize: 'clamp(1.35rem, 2.1vw, 2rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.15, margin: '0.5rem 0 0.75rem' }}
-        >
-          {project.title}
-        </motion.span>
-        <span className="mono" style={{ fontSize: '0.66rem', letterSpacing: '0.04em', color: active ? t.muted : t.faint, transition: 'color 0.3s' }}>
-          {project.stack.join('  ·  ')}
-        </span>
-      </span>
+          aria-hidden="true"
+          initial={false}
+          animate={{ x: pill.left, width: pill.width, scale: drag ? 1.06 : 1 }}
+          transition={
+            drag
+              ? {
+                  x: { type: 'spring', stiffness: 1400, damping: 70 },
+                  width: { type: 'spring', stiffness: 700, damping: 45 },
+                  scale: { duration: 0.2 },
+                }
+              : { type: 'spring', stiffness: 420, damping: 34 }
+          }
+          style={{
+            position: 'absolute',
+            top: 5,
+            bottom: 5,
+            left: 0,
+            borderRadius: 999,
+            backgroundColor: t.accent,
+            boxShadow: 'none',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
+      )}
 
-      <motion.span
-        aria-hidden
-        animate={{ opacity: active ? 1 : 0.25, rotate: active ? 0 : -45, x: active ? 0 : -6 }}
-        transition={{ duration: 0.45, ease: EASE }}
-        style={{
-          width: 42,
-          height: 42,
-          borderRadius: '50%',
-          border: `1px solid ${active ? t.accent : t.line}`,
-          display: 'grid',
-          placeItems: 'center',
-          marginTop: '0.4rem',
-          color: active ? t.accent : t.text,
-        }}
-      >
-        <ArrowUpRight size={18} />
-      </motion.span>
-    </motion.button>
+      {FILTERS.map((f, i) => {
+        const on = i === shown;
+        return (
+          <button
+            key={f.key}
+            ref={(el) => (btnRefs.current[i] = el)}
+            type="button"
+            role="tab"
+            aria-selected={i === activeIdx}
+            onClick={() => {
+              if (performance.now() < suppressClickUntil.current) return;
+              onChange(f.key);
+            }}
+            style={{
+              position: 'relative',
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: 999,
+              background: 'transparent',
+              color: on ? t.accentText : t.text,
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: i === activeIdx ? (drag ? 'grabbing' : 'grab') : 'pointer',
+              transition: 'color 0.2s',
+            }}
+          >
+            <span style={{ position: 'relative', zIndex: 1 }}>
+              {f.label}
+              <sup className="mono" style={{ fontSize: '0.58rem', marginLeft: 3, opacity: 0.7 }}>{countFor(f.key)}</sup>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Sticky preview panel                                                */
+/* One project card in the horizontal gallery                          */
 /* ------------------------------------------------------------------ */
-function PreviewPanel({ project, index, total, t }) {
+function ProjectCard({ project, total, t, index, isTablet, isShort }) {
   return (
-    <div
+    <motion.article
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: Math.min(index, 4) * 0.07, ease: EASE }}
+      whileHover="hover"
       style={{
-        // fits below the navbar on any screen height
-        height: 'min(74vh, calc(100vh - 190px))',
-        minHeight: 420,
+        flex: '0 0 auto',
+        // width follows the screen height too, so cards keep their shape on short laptops
+        width: isTablet ? 'clamp(260px, min(42vw, 58vh), 380px)' : 'clamp(270px, min(30vw, 62vh), 460px)',
+        height: '100%',
+        maxHeight: isShort ? 500 : 580,
         borderRadius: 24,
         overflow: 'hidden',
         backgroundColor: t.panel,
         border: `1px solid ${t.line}`,
-        boxShadow: '0 40px 80px rgba(0,0,0,0.3)',
+        boxShadow: '0 30px 60px rgba(0,0,0,0.25)',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
       {/* Image */}
-      <div style={{ position: 'relative', flex: '0 0 50%', overflow: 'hidden' }}>
-        <AnimatePresence initial={false} mode="popLayout">
-          <motion.div
-            key={project.number}
-            initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
-            animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
-            exit={{ opacity: 0.6, transition: { duration: 0.6 } }}
-            transition={{ duration: 0.75, ease: EASE }}
-            style={{ position: 'absolute', inset: 0, backgroundColor: project.bgColor || '#000' }}
-          >
-            <motion.img
-              src={project.image}
-              alt={project.title}
-              initial={{ scale: 1.15 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 1.1, ease: EASE }}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2.25rem' }}
-            />
-          </motion.div>
-        </AnimatePresence>
-
+      <div style={{ position: 'relative', flex: '0 0 52%', overflow: 'hidden', backgroundColor: project.bgColor || '#000' }}>
+        <motion.img
+          src={project.image}
+          alt={project.title}
+          variants={{ hover: { scale: 1.06 } }}
+          transition={{ duration: 0.8, ease: EASE }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: project.fill ? 'cover' : 'contain',
+            padding: project.fill ? 0 : '1.75rem',
+            display: 'block',
+          }}
+        />
         <span
           className="mono"
           style={{
             position: 'absolute',
-            top: 16,
-            left: 16,
-            zIndex: 2,
-            padding: '6px 12px',
+            top: 14,
+            left: 14,
+            padding: '5px 11px',
             borderRadius: 999,
-            fontSize: '0.62rem',
+            fontSize: '0.6rem',
             letterSpacing: '0.12em',
             color: '#fff',
             backgroundColor: 'rgba(0,0,0,0.55)',
@@ -355,173 +437,120 @@ function PreviewPanel({ project, index, total, t }) {
         >
           {project.number} / {String(total).padStart(2, '0')}
         </span>
-      </div>
-
-      {/* Progress */}
-      <div style={{ height: 2, backgroundColor: t.line }}>
-        <motion.div
-          animate={{ scaleX: (index + 1) / total }}
-          transition={{ duration: 0.6, ease: EASE }}
-          style={{ height: '100%', backgroundColor: t.accent, transformOrigin: 'left' }}
-        />
+        {project.link && (
+          <span
+            className="mono"
+            style={{
+              position: 'absolute',
+              top: 14,
+              right: 14,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 11px',
+              borderRadius: 999,
+              fontSize: '0.6rem',
+              letterSpacing: '0.12em',
+              color: '#fff',
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#3ddc84' }} />
+            LIVE
+          </span>
+        )}
       </div>
 
       {/* Details */}
-      <div style={{ position: 'relative', flex: 1, padding: '1.75rem 2rem 1.75rem', overflow: 'hidden' }}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={project.number}
-            initial="hidden"
-            animate="show"
-            exit={{ opacity: 0, y: -8, transition: { duration: 0.18 } }}
-            variants={{ show: { transition: { staggerChildren: 0.06 } } }}
-            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-          >
-            {[
-              <span key="tag" className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.14em', color: t.accent }}>
-                {project.tag}
-              </span>,
-              <h3 key="title" style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text, margin: '0.5rem 0 0.75rem' }}>
-                {project.title}
-              </h3>,
-              <p key="desc" style={{ fontSize: '0.92rem', lineHeight: 1.7, color: t.muted, margin: 0 }}>
-                {project.description.split(' ').map((w, i) => (
-                  <span key={i} style={isMetric(w) ? { color: t.accent, fontWeight: 700 } : undefined}>
-                    {w}{' '}
-                  </span>
-                ))}
-              </p>,
-            ].map((node, i) => (
-              <motion.div
-                key={i}
-                variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
-              >
-                {node}
-              </motion.div>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: isShort ? '0.9rem 1.1rem 1rem' : '1.25rem 1.4rem 1.3rem' }}>
+        <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.14em', color: t.accent }}>
+          {project.tag.toUpperCase()}
+        </span>
+        <h3 style={{ fontSize: 'clamp(1.15rem, 1.5vw, 1.4rem)', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2, color: t.text, margin: '0.45rem 0 0.5rem' }}>
+          {project.title}
+        </h3>
+        <p
+          style={{
+            fontSize: '0.85rem',
+            lineHeight: 1.6,
+            color: t.muted,
+            margin: 0,
+            display: '-webkit-box',
+            WebkitLineClamp: isShort ? 2 : 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {project.description.split(' ').map((w, i) => (
+            <span key={i} style={isMetric(w) ? { color: t.accent, fontWeight: 700 } : undefined}>
+              {w}{' '}
+            </span>
+          ))}
+        </p>
+
+        <div style={{ marginTop: 'auto', paddingTop: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, minWidth: 0 }}>
+            {project.stack.slice(0, 3).map((s) => (
+              <span key={s} className="mono" style={{ fontSize: '0.58rem', padding: '4px 9px', borderRadius: 999, backgroundColor: t.chip, color: t.text, whiteSpace: 'nowrap' }}>
+                {s}
+              </span>
             ))}
-
-            <motion.div
-              variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
-              style={{ marginTop: 'auto', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
+          </div>
+          {project.link ? (
+            <motion.a
+              href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit ${project.title}`}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.94 }}
+              style={{
+                flexShrink: 0,
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                backgroundColor: t.accent,
+                color: t.accentText,
+              }}
             >
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {project.stack.map((s) => (
-                  <span key={s} className="mono" style={{ fontSize: '0.62rem', padding: '5px 10px', borderRadius: 999, backgroundColor: t.chip, color: t.text }}>
-                    {s}
-                  </span>
-                ))}
-              </div>
-
-              {project.link ? (
-                <motion.a
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '11px 18px',
-                    borderRadius: 999,
-                    backgroundColor: t.accent,
-                    color: t.accentText,
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Visit live site <ArrowUpRight size={16} />
-                </motion.a>
-              ) : (
-                <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.6rem', letterSpacing: '0.1em', color: t.faint }}>
-                  <Lock size={12} /> PRIVATE CLIENT PROJECT
-                </span>
-              )}
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>
+              <ArrowUpRight size={18} />
+            </motion.a>
+          ) : (
+            <span title="Private client project" style={{ flexShrink: 0, color: t.faint, display: 'inline-flex' }}>
+              <Lock size={15} />
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.article>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Column that makes its child follow the scroll (JS, not CSS sticky)  */
-/* Works even when a parent has overflow set or a smooth-scroll lib.   */
-/* ------------------------------------------------------------------ */
-const FOLLOW_TOP = 0.12; // keep the panel 12% from the top of the screen…
-const FOLLOW_MIN_PX = 104; // …but never under the navbar
-
-function FollowColumn({ children }) {
-  const colRef = useRef(null);
-  const panelRef = useRef(null);
-  const { scrollY } = useScroll();
-  const y = useMotionValue(0);
-  const m = useRef({ top: 0, h: 0, ph: 0 });
-
-  const update = useCallback(
-    (sy) => {
-      const { top, h, ph } = m.current;
-      const target = sy + Math.max(window.innerHeight * FOLLOW_TOP, FOLLOW_MIN_PX) - top;
-      y.set(Math.min(Math.max(target, 0), Math.max(0, h - ph)));
-    },
-    [y]
-  );
-
-  const measure = useCallback(() => {
-    const col = colRef.current;
-    const panel = panelRef.current;
-    if (!col || !panel) return;
-    const r = col.getBoundingClientRect();
-    m.current = { top: r.top + window.scrollY, h: col.offsetHeight, ph: panel.offsetHeight };
-    update(window.scrollY);
-  }, [update]);
-
-  useMotionValueEvent(scrollY, 'change', update);
-
-  useEffect(() => {
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (colRef.current) ro.observe(colRef.current);
-    ro.observe(document.body); // content above may change height (images, fonts)
-    window.addEventListener('resize', measure);
-    const late = setTimeout(measure, 800);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', measure);
-      clearTimeout(late);
-    };
-  }, [measure]);
-
-  return (
-    <div ref={colRef} style={{ alignSelf: 'stretch', position: 'relative' }}>
-      <motion.div ref={panelRef} style={{ y, willChange: 'transform' }}>
-        {children}
-      </motion.div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Section                                                             */
+/* Section: desktop locks the screen and scrolling slides the cards    */
+/* sideways like a gallery. Mobile keeps its own card layout.          */
 /* ------------------------------------------------------------------ */
 export default function Projects() {
   const ref = useRef(null);
+  const pinRef = useRef(null);
+  const trackRef = useRef(null);
+  const barRef = useRef(null);
+  const countRef = useRef(null);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isShort = useIsShort();
   const isDark = useIsDark();
   const t = getTheme(isDark);
 
   const [filter, setFilter] = useState('ALL');
-  const [activeId, setActiveId] = useState(projects[0].number);
-  const rowRefs = useRef(new Map());
-
   const visible = filter === 'ALL' ? projects : projects.filter((p) => categoryOf(p) === filter);
   const countFor = (key) => (key === 'ALL' ? projects.length : projects.filter((p) => categoryOf(p) === key).length);
 
-  // Preload images so the preview never flashes empty
+  // Preload images so cards never flash empty
   useEffect(() => {
     projects.forEach((p) => {
       const img = new Image();
@@ -529,136 +558,123 @@ export default function Projects() {
     });
   }, []);
 
-  // Keep the active project valid after filtering
-  useEffect(() => {
-    if (!visible.some((p) => p.number === activeId)) setActiveId(visible[0]?.number);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  // Lock the section and turn vertical scrolling into sideways movement
+  useLayoutEffect(() => {
+    if (isMobile) return undefined;
+    const track = trackRef.current;
+    const total = visible.length;
+    const distance = () => Math.max(0, track.scrollWidth - track.clientWidth);
 
-  // Scroll-sync: whichever row crosses the middle of the screen becomes active
-  useEffect(() => {
-    if (isMobile) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setActiveId(e.target.dataset.id);
-        });
-      },
-      { rootMargin: '-48% 0px -48% 0px', threshold: 0 }
-    );
-    rowRefs.current.forEach((el) => el && io.observe(el));
-    return () => io.disconnect();
+    const ctx = gsap.context(() => {
+      gsap.to(track, {
+        x: () => -distance(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: pinRef.current,
+          start: 'top top',
+          end: () => `+=${distance()}`,
+          pin: true,
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            if (barRef.current) barRef.current.style.transform = `scaleX(${self.progress})`;
+            if (countRef.current) {
+              const i = Math.min(total, 1 + Math.round(self.progress * (total - 1)));
+              countRef.current.textContent = `${String(i).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+            }
+          },
+        },
+      });
+    }, pinRef);
+
+    // re-measure once images and fonts have loaded
+    const refresh = () => ScrollTrigger.refresh();
+    const late = setTimeout(refresh, 600);
+    window.addEventListener('load', refresh);
+    return () => {
+      clearTimeout(late);
+      window.removeEventListener('load', refresh);
+      ctx.revert();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, filter]);
 
-  const register = useCallback(
-    (id) => (el) => {
-      if (el) {
-        el.dataset.id = id;
-        rowRefs.current.set(id, el);
-      } else {
-        rowRefs.current.delete(id);
-      }
-    },
-    []
-  );
-
-  // Mobile: App Store–style expanding case-study cards
+  // Mobile: App Store-style expanding case-study cards
   if (isMobile) {
     return <MobileProjects projects={projects} isDark={isDark} sectionRef={ref} />;
   }
-
-  const activeIndex = Math.max(0, visible.findIndex((p) => p.number === activeId));
-  const activeProject = visible[activeIndex] || visible[0];
 
   return (
     <div style={{ backgroundColor: t.bg }}>
       <section
         id="projects"
-        ref={ref}
-        style={{ position: 'relative', padding: '9vw 6vw 8vw', backgroundColor: t.bg, borderTop: `1px solid ${t.sectionBorder}` }}
+        ref={(el) => {
+          ref.current = el;
+          pinRef.current = el;
+        }}
+        style={{
+          position: 'relative',
+          height: '100vh',
+          minHeight: isShort ? 500 : 600,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 'clamp(84px, 11vh, 104px) 0 clamp(20px, 4vh, 36px)',
+          boxSizing: 'border-box',
+          backgroundColor: t.bg,
+          borderTop: `1px solid ${t.sectionBorder}`,
+          overflow: 'hidden',
+        }}
       >
         {/* Header */}
-        <SectionLabel index="03" title="Projects" color={t.text} accent={t.accent} />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '2rem', flexWrap: 'wrap', marginBottom: '3.5rem' }}>
-          {/* The wrapper is observed (always on screen), so the heading reliably slides up out of its mask */}
-          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
-            <motion.h2
-              variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
-              transition={{ duration: 1, ease: EASE }}
-              style={{ fontSize: 'clamp(3.2rem, 7.5vw, 7rem)', fontWeight: 700, letterSpacing: '-0.045em', lineHeight: 0.95, color: t.text, margin: 0, paddingBottom: '0.1em' }}
-            >
-              Selected work<span style={{ color: t.accent }}>.</span>
-            </motion.h2>
-          </motion.div>
-
-          {/* Filters */}
-          <LayoutGroup id="projects-desktop-filters">
-            <div role="tablist" aria-label="Filter projects" style={{ display: 'flex', gap: 4, padding: 5, borderRadius: 999, backgroundColor: t.chip, border: `1px solid ${t.line}` }}>
-              {FILTERS.map((f) => {
-                const on = filter === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={on}
-                    onClick={() => setFilter(f.key)}
-                    style={{
-                      position: 'relative',
-                      padding: '10px 20px',
-                      border: 'none',
-                      borderRadius: 999,
-                      background: 'transparent',
-                      color: on ? t.accentText : t.text,
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'color 0.3s',
-                    }}
-                  >
-                    {on && (
-                      <motion.span
-                        layoutId="projects-desktop-pill"
-                        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                        style={{ position: 'absolute', inset: 0, borderRadius: 999, backgroundColor: t.accent }}
-                      />
-                    )}
-                    <span style={{ position: 'relative' }}>
-                      {f.label}
-                      <sup className="mono" style={{ fontSize: '0.58rem', marginLeft: 3, opacity: 0.7 }}>{countFor(f.key)}</sup>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </LayoutGroup>
+        <div style={{ padding: '0 var(--gutter, 6vw)' }}>
+          <SectionLabel index="03" title="Projects" color={t.text} accent={t.accent} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '2rem', flexWrap: 'wrap', marginBottom: 'clamp(1.25rem, 3.5vh, 2.5rem)' }}>
+            <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
+              <motion.h2
+                variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
+                transition={{ duration: 1, ease: EASE }}
+                style={{ fontSize: 'clamp(2.4rem, 5vw, 4.6rem)', fontWeight: 700, letterSpacing: '-0.045em', lineHeight: 0.95, color: t.text, margin: 0, paddingBottom: '0.1em' }}
+              >
+                Selected work<span style={{ color: t.accent }}>.</span>
+              </motion.h2>
+            </motion.div>
+            <FilterSwitch value={filter} onChange={setFilter} countFor={countFor} t={t} />
+          </div>
         </div>
 
-        {/* Showcase */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: '5vw', alignItems: 'start' }}>
-          <div>
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visible.map((p) => (
-                <ProjectRow
-                  key={p.number}
-                  project={p}
-                  active={p.number === activeProject?.number}
-                  onActivate={() => setActiveId(p.number)}
-                  registerRef={register(p.number)}
-                  t={t}
-                />
-              ))}
-            </AnimatePresence>
-            <div style={{ borderTop: `1px solid ${t.line}` }} />
-            {/* Runway: lets the last project reach the middle of the screen while the panel stays fully visible */}
-            <div aria-hidden="true" style={{ height: '32vh' }} />
+        {/* Horizontal track */}
+        <div style={{ flex: 1, minHeight: 0, overflow: 'visible' }}>
+          <div
+            ref={trackRef}
+            key={filter}
+            style={{
+              display: 'flex',
+              gap: 'clamp(16px, 1.8vw, 28px)',
+              height: '100%',
+              alignItems: 'center',
+              padding: '0 var(--gutter, 6vw)',
+              willChange: 'transform',
+            }}
+          >
+            {visible.map((p, i) => (
+              <ProjectCard key={p.number} project={p} total={projects.length} t={t} index={i} isTablet={isTablet} isShort={isShort} />
+            ))}
+            {/* end spacer so the last card can reach the right margin */}
+            <div aria-hidden="true" style={{ flex: '0 0 1px' }} />
           </div>
+        </div>
 
-          {/* Stretched column = room for the sticky panel to follow the whole list */}
-          <FollowColumn>
-            {activeProject && <PreviewPanel project={activeProject} index={activeIndex} total={visible.length} t={t} />}
-          </FollowColumn>
+        {/* Progress */}
+        <div style={{ padding: '0 var(--gutter, 6vw)', marginTop: 'clamp(0.75rem, 3vh, 2rem)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <span ref={countRef} className="mono" style={{ fontSize: '0.7rem', letterSpacing: '0.12em', color: t.text, minWidth: 56 }}>
+            01 / {String(visible.length).padStart(2, '0')}
+          </span>
+          <div style={{ flex: 1, height: 2, backgroundColor: t.line, borderRadius: 2, overflow: 'hidden' }}>
+            <div ref={barRef} style={{ height: '100%', backgroundColor: t.accent, transform: 'scaleX(0)', transformOrigin: 'left' }} />
+          </div>
+          <span className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.14em', color: t.muted }}>
+            SCROLL →
+          </span>
         </div>
       </section>
     </div>

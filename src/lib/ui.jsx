@@ -104,8 +104,25 @@ export function useMediaQuery(query, serverFallback = false) {
   );
 }
 
-/** Same behaviour as before (width <= breakpoint), without a resize listener per component. */
-export const useIsMobile = (breakpoint = 768) => useMediaQuery(`(max-width: ${breakpoint}px)`);
+/**
+ * Mobile layout: narrow screens (<= breakpoint), PLUS phones turned sideways
+ * (touch screen with a short height), which are wide but far too short for
+ * the desktop layout's locked, full-screen sections.
+ */
+export const useIsMobile = (breakpoint = 768) =>
+  useMediaQuery(`(max-width: ${breakpoint}px), (pointer: coarse) and (max-height: 520px)`);
+
+/** Tablets and small laptops: the desktop layout, tightened (single columns where two don't fit). */
+export const useIsTablet = () => useMediaQuery('(max-width: 1100px)');
+
+/** Short screens (13" laptops, browser with toolbars): sections trim spacing and text. */
+export const useIsShort = () => useMediaQuery('(max-height: 760px)');
+
+/** Touch screens (no hover): hover-only effects are skipped. */
+export const useIsTouch = () => useMediaQuery('(hover: none), (pointer: coarse)');
+
+/** Very small phones (iPhone SE / 320–360px wide). */
+export const useIsTiny = () => useMediaQuery('(max-width: 360px)');
 
 export const usePrefersReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)');
 

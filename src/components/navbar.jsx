@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import { INTRO_DELAY } from './preloader';
-import { useIsMobile, EASE } from '../lib/ui';
+import { useIsMobile, useIsTiny, useIsTouch, EASE } from '../lib/ui';
 
 /* ---- Edit here ---- */
 const SECTIONS = [
@@ -112,6 +112,8 @@ function MenuIcon({ open }) {
 
 export default function Navbar() {
   const isMobile = useIsMobile();
+  const isTiny = useIsTiny(); // 320–360px phones: drop the progress ring to save room
+  const isTouch = useIsTouch();
   const active = useActiveSection();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -151,7 +153,7 @@ export default function Navbar() {
   };
 
   const current = active >= 0 ? SECTIONS[active] : null;
-  const panelWidth = isMobile ? 'calc(100vw - 32px)' : 520;
+  const panelWidth = isMobile ? 'calc(100vw - 32px)' : 'min(520px, calc(100vw - 32px))';
 
   return (
     <>
@@ -177,11 +179,12 @@ export default function Navbar() {
         transition={{ duration: 0.9, ease: EASE, delay: INTRO_DELAY + 0.25 }}
         style={{
           position: 'fixed',
-          top: isMobile ? 12 : 18,
+          // stay clear of the notch / status bar on phones
+          top: isMobile ? 'max(12px, env(safe-area-inset-top))' : 18,
           left: 0,
           right: 0,
           zIndex: 1000,
-          padding: isMobile ? '0 16px' : '0 6vw',
+          padding: isMobile ? '0 16px' : '0 var(--gutter, 6vw)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'flex-start',
@@ -214,7 +217,7 @@ export default function Navbar() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1, transition: { delay: 0.12, duration: 0.25 } }}
                   exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                  style={{ display: 'flex', alignItems: 'center', height: 50, padding: '0 6px 0 18px', gap: 14 }}
+                  style={{ display: 'flex', alignItems: 'center', height: 50, padding: isTiny ? '0 6px 0 14px' : '0 6px 0 18px', gap: isTiny ? 10 : 14 }}
                 >
                   <button
                     type="button"
@@ -226,10 +229,10 @@ export default function Navbar() {
                     Mr.
                   </button>
 
-                  <span style={{ width: 1, height: 18, backgroundColor: LINE }} />
+                  {!isTiny && <span style={{ width: 1, height: 18, backgroundColor: LINE }} />}
 
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: isMobile ? 0 : 150 }}>
-                    <ProgressRing />
+                    {!isTiny && <ProgressRing />}
                     <Roll k={current ? current.id : 'top'} style={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.005em' }}>
                       {current ? (
                         <>
@@ -301,7 +304,8 @@ export default function Navbar() {
                   exit={{ opacity: 0, transition: { duration: 0.12 } }}
                   role="dialog"
                   aria-label="Site menu"
-                  style={{ padding: isMobile ? '14px 14px 16px' : '16px 18px 18px' }}
+                  data-lenis-prevent
+                  style={{ padding: isMobile ? '14px 14px 16px' : '16px 18px 18px', maxHeight: 'calc(100svh - 40px)', overflowY: 'auto', overscrollBehavior: 'contain' }}
                 >
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 14px' }}>
@@ -334,7 +338,7 @@ export default function Navbar() {
                       onClick={() => setOpen(false)}
                       aria-label="Close menu"
                       autoFocus
-                      whileHover={!isMobile ? { rotate: 90 } : undefined}
+                      whileHover={!isTouch ? { rotate: 90 } : undefined}
                       transition={{ duration: 0.45, ease: EASE }}
                       style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: 'pointer', backgroundColor: 'rgba(244,241,234,0.08)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >

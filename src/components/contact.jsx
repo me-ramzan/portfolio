@@ -1,9 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { Mail, Phone, MapPin, MessageCircle, Copy, Check, ArrowRight, ArrowUpRight, Clock } from 'lucide-react';
+import { Phone, MapPin, MessageCircle, Copy, Check, ArrowRight, ArrowUpRight, Clock } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import MobileContact from './MobileContact';
-import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, SectionLabel, EASE } from '../lib/ui';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const EMAILJS_SERVICE_ID = 'service_bcyigug';
 const EMAILJS_TEMPLATE_ID = 'template_pta6w9h';
@@ -18,6 +22,21 @@ const TIMEZONE = 'Asia/Dubai';
 const TZ_OFFSET_HOURS = 4;
 const RESPONSE_TIME = 'Replies within 24 hours';
 const WHATSAPP_TEXT = 'Hi! I came across your portfolio and would like to connect.';
+
+const GmailIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="gmailGradMobile" gradientUnits="userSpaceOnUse" x1="2" y1="12" x2="22" y2="12">
+        <stop offset="0" stopColor="#EA4335" />
+        <stop offset="0.35" stopColor="#FBBC04" />
+        <stop offset="0.65" stopColor="#34A853" />
+        <stop offset="1" stopColor="#4285F4" />
+      </linearGradient>
+    </defs>
+    <rect x="2" y="4" width="20" height="16" rx="2" stroke="url(#gmailGradMobile)" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="url(#gmailGradMobile)" />
+  </svg>
+);
 const TOPICS = ['Full-time role', 'Freelance project', 'Collaboration', 'Just saying hi'];
 
 const PANEL = '#1d1a28';
@@ -127,7 +146,7 @@ function Field({ label, value, onChange, type = 'text', multiline, error, autoCo
 }
 
 /* Quick action row (left column) */
-function ActionRow({ href, icon, label, value, onClick, t, delay, inView, primary }) {
+function ActionRow({ href, icon, label, value, onClick, t, delay, inView, primary, light, blue }) {
   const external = href?.startsWith('http');
   return (
     <motion.a
@@ -159,8 +178,8 @@ function ActionRow({ href, icon, label, value, onClick, t, delay, inView, primar
           borderRadius: 12,
           display: 'grid',
           placeItems: 'center',
-          backgroundColor: primary ? t.accent : t.tile,
-          color: primary ? t.bg : t.tileText,
+          backgroundColor: primary ? '#25D366' : blue ? '#4285F4' : light ? '#FFFFFF' : t.tile,
+          color: primary ? '#FFFFFF' : blue ? '#FFFFFF' : light ? '#111111' : t.tileText,
         }}
       >
         {icon}
@@ -176,9 +195,116 @@ function ActionRow({ href, icon, label, value, onClick, t, delay, inView, primar
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Zoom-through intro (desktop)                                        */
+/* A giant "LET'S TALK" fills the screen. The screen locks, and as you */
+/* scroll the words grow until you fly through the gap between them    */
+/* straight into the Contact section.                                  */
+/* ------------------------------------------------------------------ */
+const ZOOM_WORDS = ["LET'S", 'TALK']; // you fly through the gap between these two words
+const ZOOM_SCROLL = '+=130%'; // how long the zoom lasts (bigger = slower)
+
+function ZoomThrough({ t }) {
+  const wrapRef = useRef(null);
+  const bgRef = useRef(null);
+  const textRef = useRef(null);
+  const capRef = useRef(null);
+  const gapRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return undefined;
+
+    // zoom towards the centre of the gap between the two words
+    const setOrigin = () => {
+      const text = textRef.current;
+      const gap = gapRef.current;
+      if (!text || !gap) return;
+      // offsets ignore the current scale, so this is safe mid-zoom
+      const ox = gap.offsetLeft + gap.offsetWidth / 2;
+      const oy = gap.offsetTop + gap.offsetHeight * 0.55;
+      text.style.transformOrigin = `${ox}px ${oy}px`;
+    };
+
+    const ctx = gsap.context(() => {
+      // keep the text as crisp vector text while it grows (no cached bitmap = no clipped letters)
+      gsap.set(textRef.current, { force3D: false });
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: wrapRef.current,
+          start: 'top top',
+          end: ZOOM_SCROLL,
+          pin: true,
+          scrub: 0.5,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          onRefresh: setOrigin,
+        },
+      });
+      tl.to(capRef.current, { opacity: 0, y: -20, duration: 0.15, ease: 'none' }, 0)
+        .fromTo(textRef.current, { scale: 1 }, { scale: 32, duration: 1, ease: 'power3.in', force3D: false }, 0)
+        .to(textRef.current, { opacity: 0, duration: 0.14, ease: 'none' }, 0.8)
+        // the zoom screen fades away, revealing Contact already waiting underneath
+        .to(bgRef.current, { opacity: 0, duration: 0.12, ease: 'none' }, 0.88);
+    }, wrapRef);
+
+    setOrigin();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    // the outer background also covers GSAP's spacer, so no grey gaps appear
+    <div style={{ backgroundColor: t.bg }}>
+      <div
+        ref={wrapRef}
+        aria-hidden="true"
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          height: '100vh',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+      >
+        <div ref={bgRef} style={{ position: 'absolute', inset: 0, backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }} />
+
+        <div ref={capRef} className="mono" style={{ position: 'absolute', top: 'clamp(96px, 13vh, 130px)', left: 'var(--gutter, 6vw)', right: 'var(--gutter, 6vw)', display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', letterSpacing: '0.16em', color: t.muted }}>
+          <span>06 / CONTACT</span>
+          <span>SCROLL ↓</span>
+        </div>
+
+        <div
+          ref={textRef}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: 'clamp(4.5rem, 15vw, 15rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.05em',
+            lineHeight: 0.9,
+            color: t.accent,
+            whiteSpace: 'nowrap',
+            userSelect: 'none',
+          }}
+        >
+          <span>{ZOOM_WORDS[0]}</span>
+          <span ref={gapRef} style={{ display: 'inline-block', width: '0.32em', height: '0.8em' }} />
+          <span style={{ color: 'transparent', WebkitTextStroke: `2px ${t.stroke}` }}>{ZOOM_WORDS[1]}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Contact() {
   const sectionRef = useRef(null);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const isDark = useIsDark();
   const t = getTheme(isDark);
   const { time, diffText, working } = useLocalTime();
@@ -257,10 +383,13 @@ const submit = async (e) => {
   const headline = { fontSize: 'clamp(2.8rem, 5.2vw, 5rem)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1 };
 
   return (
+    // Stable wrapper: GSAP wraps the pinned zoom intro in a pin-spacer
+    <div style={{ display: 'contents' }}>
+    <ZoomThrough t={t} />
     <section
       id="contact"
       ref={sectionRef}
-      style={{ position: 'relative', padding: '9vw 6vw 8vw', backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}
+      style={{ position: 'relative', zIndex: 1, marginTop: '-100vh', padding: 'max(9vw, 100px) var(--gutter, 6vw) 8vw', backgroundColor: t.bg }}
     >
       <SectionLabel
         index="06"
@@ -282,7 +411,7 @@ const submit = async (e) => {
         }
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '6vw', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1.1fr', gap: isTablet ? '3rem' : '6vw', alignItems: 'start' }}>
         {/* ── Left: headline, live info, direct actions ── */}
         <div ref={headRef}>
           <Reveal inView={headIn} delay={0.05} style={{ ...headline, color: t.accent }}>
@@ -331,14 +460,14 @@ const submit = async (e) => {
             <ActionRow href={waHref} icon={<MessageCircle size={19} />} label="WHATSAPP · FASTEST" value="Message me directly" t={t} delay={0.55} inView={headIn} primary />
             <ActionRow
               href={`mailto:${EMAIL}`}
-              icon={<Mail size={19} />}
+              icon={<GmailIcon size={19} />} light
               label="EMAIL"
               value={EMAIL}
               t={t}
               delay={0.62}
               inView={headIn}
             />
-            <ActionRow href={`tel:+${PHONE_RAW}`} icon={<Phone size={19} />} label="CALL" value={PHONE_DISPLAY} t={t} delay={0.69} inView={headIn} />
+            <ActionRow href={`tel:+${PHONE_RAW}`} icon={<Phone size={19} />} blue label="CALL"value={PHONE_DISPLAY} t={t} delay={0.69} inView={headIn} />
           </div>
 
           <motion.button
@@ -378,7 +507,7 @@ const submit = async (e) => {
             position: 'relative',
             borderRadius: 28,
             backgroundColor: PANEL,
-            padding: '2.75rem 2.75rem 2.5rem',
+            padding: isTablet ? '2rem 1.75rem 1.75rem' : '2.75rem 2.75rem 2.5rem',
             boxShadow: '0 40px 80px rgba(0,0,0,0.3)',
             overflow: 'hidden',
           }}
@@ -508,5 +637,6 @@ const submit = async (e) => {
         </motion.div>
       </div>
     </section>
+    </div>
   );
 }

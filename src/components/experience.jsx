@@ -1,9 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, cubicBezier } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import MobileExperience from './MobileExperience';
-import { useIsMobile, useIsDark, SectionLabel } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, useIsShort, SectionLabel } from '../lib/ui';
+import bbdoBg from '../assets/images/bbdo-bg.jpeg';
+import bbdoLogo from '../assets/images/bbdo.png';
+import duofankaarBg from '../assets/images/df-bg.jpg';
+import duofankaarLogo from '../assets/images/duofankaar.png';
+import sybrosBg from '../assets/images/sb-bg.jpg';
+import sybrosLogo from '../assets/images/sybros.png';
+import samsungBg from '../assets/images/ss-bg.jpg';
+import samsungLogo from '../assets/images/samsung.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,6 +22,12 @@ const experiences = [
   {
     role: 'Software Developer',
     company: 'IMPACT BBDO',
+    image: bbdoBg,
+    image2: bbdoLogo,
+    logoDarkBg: true,
+    logoClip: '3% 3% 8% 3%',
+    pos: 'center 40%',
+    pos2: 'center',
     navLabel: 'BBDO', // short name shown in the floating company bar
     location: 'Dubai, UAE',
     type: 'On-Site · Full Time',
@@ -33,6 +47,10 @@ const experiences = [
   {
     role: 'Software Engineer',
     company: 'DUOFANKAAR',
+    image: duofankaarBg,
+    image2: duofankaarLogo,
+    pos: 'center 40%',
+    pos2: 'center',
     location: 'Dubai, UAE',
     type: 'Hybrid · Full Time',
     period: 'Apr 2025 – Mar 2026',
@@ -51,6 +69,10 @@ const experiences = [
   {
     role: 'RPA Developer',
     company: 'Sybros Tech',
+    image: sybrosBg,
+    image2: sybrosLogo,
+    pos: 'center 40%',
+    pos2: 'center',
     location: 'Lahore, Pakistan',
     type: 'On-Site · Full Time',
     period: 'Mar 2024 – Apr 2025',
@@ -69,6 +91,12 @@ const experiences = [
   {
     role: 'Artificial Intelligence Trainee',
     company: 'SAMSUNG INNOVATION',
+    image: samsungBg,
+    image2: samsungLogo,
+    logoDarkBg: true,
+    logoSize: 'clamp(130px, 13vw, 190px)',
+    pos: 'center 40%',
+    pos2: 'center',
     location: 'Lahore, Pakistan',
     type: 'On-Site · Part Time',
     period: 'Dec 2023 – Mar 2024',
@@ -115,9 +143,13 @@ function getTheme(isDark) {
         shadow: '0 -10px 30px rgba(0,0,0,0.12)',
       };
 }
-
 function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRef }) {
-  const t = getTheme(useIsDark());
+  const isDark = useIsDark();
+  const isTablet = useIsTablet();
+  const isShort = useIsShort();
+  // On short screens trim long text so the card always fits inside its frame
+  const clamp = (lines) => (isShort && !isMobile ? { display: '-webkit-box', WebkitLineClamp: lines, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {});
+  const t = getTheme(isDark);
 
   const { scrollYProgress } = useScroll({
     target: cardRef,
@@ -197,7 +229,8 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
         backgroundColor: t.bg,
         zIndex: index + 1,
         marginBottom: isMobile ? '1.25rem' : 0,
-        padding: isMobile ? 0 : '0 4vw',
+        // caps the card width on ultra-wide screens
+        padding: isMobile ? 0 : '0 max(4vw, calc((100vw - 1760px) / 2))',
       }}
     >
       <motion.div
@@ -206,17 +239,19 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
           position: 'relative',
           overflow: 'hidden',
           width: '100%',
-          minHeight: isMobile ? 'auto' : '72vh',
-          maxHeight: isMobile ? 'none' : '80vh',
+          minHeight: isMobile ? 'auto' : isShort ? '76vh' : '72vh',
+          maxHeight: isMobile ? 'none' : isShort ? '82vh' : '80vh',
           scale: isMobile ? 1 : scale,
           opacity: isMobile ? 1 : opacity,
           borderRadius: isMobile ? 24 : 32,
-          backgroundColor: t.card,
+          background: exp.image
+            ? `linear-gradient(90deg, rgba(38,35,58,0.97) 0%, rgba(38,35,58,0.9) 50%, rgba(38,35,58,0.85) 100%), url(${exp.image}) ${exp.pos || 'center'} / ${exp.size || '75%'} no-repeat ${t.card}`
+            : t.card,
           boxShadow: t.shadow,
-          padding: isMobile ? '2.25rem 1.5rem' : 'clamp(1.75rem, 4vh, 3rem) clamp(2rem, 4vw, 3.75rem)',
+          padding: isMobile ? '2.25rem 1.5rem' : isTablet ? 'clamp(1.25rem, 3vh, 2rem) clamp(1.25rem, 3vw, 2rem)' : 'clamp(1.75rem, 4vh, 3rem) clamp(2rem, 4vw, 3.75rem)',
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr',
-          gap: isMobile ? '1.75rem' : '3rem',
+          gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1.1fr 0.9fr',
+          gap: isMobile ? '1.75rem' : isTablet ? '1.5rem' : '3rem',
           alignItems: 'stretch',
           willChange: isMobile ? 'auto' : 'transform, opacity',
         }}
@@ -278,7 +313,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
 
           <h3
             style={{
-              fontSize: 'clamp(2rem, min(4.2vw, 6.5vh), 3.6rem)',
+              fontSize: isTablet ? 'clamp(1.6rem, min(4vw, 6vh), 2.4rem)' : 'clamp(2rem, min(4.2vw, 6.5vh), 3.6rem)',
               fontWeight: 700,
               letterSpacing: '-0.03em',
               color: t.cardText,
@@ -293,7 +328,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
             {exp.location} · {exp.type}
           </span>
 
-          <p style={{ fontSize: '1rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.88)', maxWidth: '48ch', marginBottom: 'clamp(1rem, 2.6vh, 1.5rem)' }}>
+          <p style={{ fontSize: isTablet ? '0.9rem' : '1rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.88)', maxWidth: '48ch', marginBottom: 'clamp(1rem, 2.6vh, 1.5rem)', ...clamp(3) }}>
             {exp.description}
           </p>
 
@@ -347,12 +382,36 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
             zIndex: 1,
             backgroundColor: t.panel,
             borderRadius: isMobile ? 20 : 24,
-            padding: isMobile ? '1.75rem' : 'clamp(1.5rem, 3.5vh, 2.25rem) clamp(1.5rem, 2.5vw, 2.25rem)',
+            padding: isMobile ? '1.75rem' : isTablet ? 'clamp(1rem, 2.5vh, 1.5rem) clamp(1rem, 2vw, 1.5rem)' : 'clamp(1.5rem, 3.5vh, 2.25rem) clamp(1.5rem, 2.5vw, 2.25rem)',
+            minWidth: 0,
+            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
           }}
         >
+          {exp.image2 && (
+            <img
+              src={exp.image2}
+              alt=""
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                right: 'clamp(1rem, 2vw, 1.75rem)',
+                bottom: 'clamp(1rem, 2vw, 1.75rem)',
+                width: exp.logoSize || 'clamp(90px, 9vw, 130px)',
+                height: 'auto',
+                objectFit: 'contain',
+                filter: (exp.logoDarkBg ? 'grayscale(1) contrast(2.5)' : 'grayscale(1) invert(1) contrast(1.2)') + (isDark ? '' : ' invert(1)'),
+                clipPath: exp.logoClip ? `inset(${exp.logoClip})` : 'none',
+                mixBlendMode: isDark ? 'screen' : 'multiply',
+                opacity: 0.35,
+                pointerEvents: 'none',
+                userSelect: 'none',
+                zIndex: -1,
+              }}
+            />
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
             <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: t.accent }}>
               KEY CONTRIBUTIONS
@@ -368,7 +427,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
                 ref={(el) => (highlightsRef.current[j] = el)}
                 style={{
                   color: t.panelText,
-                  fontSize: '0.92rem',
+                  fontSize: isTablet || isShort ? '0.84rem' : '0.92rem',
                   lineHeight: 1.55,
                   padding: 'clamp(9px, 1.6vh, 14px) 0',
                   borderTop: `1px solid ${t.panelText}26`,
@@ -380,7 +439,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
                 <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: t.accent }}>
                   {String(j + 1).padStart(2, '0')}
                 </span>
-                <span>{h}</span>
+                <span style={clamp(2)}>{h}</span>
               </li>
             ))}
           </ul>
@@ -417,8 +476,14 @@ function smoothScrollTo(top, duration, done) {
 function RoleNavigator({ experiences, cardRefs, wrapRef, endRef }) {
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [segs, setSegs] = useState([]); // { left, width } of each button inside the bar
+  const [drag, setDrag] = useState(null); // { left, width, idx } while dragging
   const lockRef = useRef(false); // true while a click-jump is animating
   const cancelRef = useRef(null);
+  const navRef = useRef(null);
+  const btnRefs = useRef([]);
+  const dragRef = useRef(null);
+  const suppressClickUntil = useRef(0);
 
   useEffect(() => {
     let raf = 0;
@@ -429,7 +494,7 @@ function RoleNavigator({ experiences, cardRefs, wrapRef, endRef }) {
       const end = endRef.current;
       if (!wrap || !end) return;
       setVisible(wrap.getBoundingClientRect().top < vh * 0.55 && end.getBoundingClientRect().top > vh * 0.6);
-      if (lockRef.current) return; // keep the pill on the clicked role during the jump
+      if (lockRef.current || dragRef.current?.moved) return; // keep the pill where the user put it
       let idx = 0;
       cardRefs.current.forEach((r, i) => {
         const el = r.current;
@@ -451,6 +516,17 @@ function RoleNavigator({ experiences, cardRefs, wrapRef, endRef }) {
     };
   }, [cardRefs, wrapRef, endRef]);
 
+  // Measure each segment so the pill knows where to sit
+  useLayoutEffect(() => {
+    if (!visible) return;
+    const measure = () =>
+      setSegs(btnRefs.current.map((b) => (b ? { left: b.offsetLeft, width: b.offsetWidth } : { left: 0, width: 0 })));
+    measure();
+    document.fonts?.ready?.then(measure);
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [visible, experiences.length]);
+
   const jumpTo = (i) => {
     const wrap = wrapRef.current;
     if (!wrap) return;
@@ -470,19 +546,83 @@ function RoleNavigator({ experiences, cardRefs, wrapRef, endRef }) {
     }, duration + 200);
   };
 
+  /* ---- Drag the gold pill (iPhone segmented-control style) ---- */
+  const localX = (e) => {
+    const n = navRef.current;
+    return e.clientX - n.getBoundingClientRect().left - n.clientLeft;
+  };
+  const indexAt = (x) => {
+    let best = 0;
+    let bestD = Infinity;
+    segs.forEach((s, i) => {
+      const d = Math.abs(s.left + s.width / 2 - x);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    return best;
+  };
+
+  const onPointerDown = (e) => {
+    if (e.button !== 0 || !segs.length) return;
+    const x = localX(e);
+    const s = segs[active];
+    if (!s || x < s.left || x > s.left + s.width) return; // only the gold pill is draggable
+    dragRef.current = { id: e.pointerId, startX: x, offset: x - s.left, w0: s.width, moved: false, idx: active };
+  };
+
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    const x = localX(e);
+    if (!d.moved) {
+      if (Math.abs(x - d.startX) < 4) return; // small movement = tap, not drag
+      d.moved = true;
+      navRef.current.setPointerCapture(e.pointerId);
+    }
+    const center = x - d.offset + d.w0 / 2;
+    const idx = indexAt(center);
+    const w = segs[idx].width;
+    const first = segs[0];
+    const last = segs[segs.length - 1];
+    const left = Math.max(first.left, Math.min(last.left + last.width - w, center - w / 2));
+    d.idx = idx;
+    setDrag({ left, width: w, idx });
+  };
+
+  const onPointerUp = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    dragRef.current = null;
+    if (!d.moved) return; // plain tap: the button's onClick handles it
+    suppressClickUntil.current = performance.now() + 300;
+    setDrag(null);
+    if (d.idx !== active) jumpTo(d.idx);
+  };
+
+  const pill = drag || segs[active];
+  const shown = drag ? drag.idx : active;
+
   return (
     <AnimatePresence>
       {visible && (
         <motion.nav
+          ref={navRef}
           aria-label="Jump to role"
           initial={{ opacity: 0, y: 24, x: '-50%' }}
           animate={{ opacity: 1, y: 0, x: '-50%' }}
           exit={{ opacity: 0, y: 24, x: '-50%' }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           style={{
             position: 'fixed',
             left: '50%',
-            bottom: 28,
+            bottom: 'max(24px, env(safe-area-inset-bottom))',
+            maxWidth: 'calc(100vw - 32px)',
             zIndex: 50,
             display: 'flex',
             gap: 4,
@@ -493,38 +633,67 @@ function RoleNavigator({ experiences, cardRefs, wrapRef, endRef }) {
             border: '1px solid rgba(215,196,158,0.22)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
             transform: 'translateZ(0)',
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
           }}
         >
+          {/* Gold pill: follows the pointer while dragging, springs into place otherwise */}
+          {pill && (
+            <motion.span
+              aria-hidden="true"
+              initial={false}
+              animate={{ x: pill.left, width: pill.width, scale: drag ? 1.06 : 1 }}
+              transition={
+                drag
+                  ? {
+                      x: { type: 'spring', stiffness: 1400, damping: 70 },
+                      width: { type: 'spring', stiffness: 700, damping: 45 },
+                      scale: { duration: 0.2 },
+                    }
+                  : { type: 'spring', stiffness: 500, damping: 42, mass: 0.8 }
+              }
+              style={{
+                position: 'absolute',
+                top: 5,
+                bottom: 5,
+                left: 0,
+                borderRadius: 999,
+                backgroundColor: '#D7C49E',
+                boxShadow: 'none',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+          )}
+
           {experiences.map((exp, i) => {
-            const on = i === active;
+            const on = i === shown;
             return (
               <button
                 key={exp.company}
+                ref={(el) => (btnRefs.current[i] = el)}
                 type="button"
-                onClick={() => jumpTo(i)}
+                onClick={() => {
+                  if (performance.now() < suppressClickUntil.current) return;
+                  jumpTo(i);
+                }}
                 className="mono"
                 style={{
                   position: 'relative',
                   border: 'none',
                   background: 'transparent',
-                  cursor: 'pointer',
+                  cursor: i === active ? (drag ? 'grabbing' : 'grab') : 'pointer',
                   padding: '9px 16px',
                   borderRadius: 999,
                   fontSize: '0.66rem',
                   letterSpacing: '0.12em',
                   fontWeight: 700,
                   color: on ? '#121018' : 'rgba(244,241,234,0.7)',
-                  transition: 'color 0.25s',
+                  transition: 'color 0.2s',
                   whiteSpace: 'nowrap',
                 }}
               >
-                {on && (
-                  <motion.span
-                    layoutId="role-nav-pill"
-                    transition={{ type: 'spring', stiffness: 500, damping: 42, mass: 0.8 }}
-                    style={{ position: 'absolute', inset: 0, borderRadius: 999, backgroundColor: '#D7C49E', zIndex: 0 }}
-                  />
-                )}
                 <span style={{ position: 'relative', zIndex: 1 }}>
                   {(exp.navLabel || exp.company.split(' ')[0]).toUpperCase()}
                 </span>
@@ -598,7 +767,7 @@ export default function Experience() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          padding: isMobile ? '4rem 5vw 2rem' : '0 6vw 5rem',
+          padding: isMobile ? '4rem 5vw 2rem' : '0 var(--gutter, 6vw) clamp(2.5rem, 8vh, 5rem)',
           zIndex: 0,
         }}
       >

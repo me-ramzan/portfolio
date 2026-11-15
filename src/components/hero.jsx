@@ -7,7 +7,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import MobileHero from './MobileHero';
 import { INTRO_DELAY } from './preloader';
-import { useIsMobile, useIsDark, EASE } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, useIsTouch, EASE } from '../lib/ui';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -101,6 +101,8 @@ export default function Hero() {
   const nameRef = useRef(null);
   const videoRef = useRef(null);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isTouch = useIsTouch();
   const isDark = useIsDark();
   const t = isDark
     ? { bg: '#121018', text: '#F4F1EA', strong: '#F4F1EA', stroke: '#F4F1EA', fill: '#F4F1EA', line: '#D7C49E', chipBorder: 'rgba(244,241,234,0.35)', chipHover: '#D7C49E', profileBg: '#D7C49E', btnBg: '#D7C49E', btnText: '#121018', btnHover: '#F4F1EA', muted: 'rgba(244,241,234,0.6)', hair: 'rgba(244,241,234,0.14)' }
@@ -213,8 +215,8 @@ export default function Hero() {
         <section
           id="top"
           ref={heroRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          onMouseMove={isTouch ? undefined : handleMouseMove}
+          onMouseLeave={isTouch ? undefined : handleMouseLeave}
           style={{
             position: 'relative',
             zIndex: 1,
@@ -225,7 +227,7 @@ export default function Hero() {
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            padding: 'clamp(84px, 11vh, 104px) 6vw clamp(18px, 3.5vh, 36px)',
+            padding: 'clamp(84px, 11vh, 104px) var(--gutter, 6vw) clamp(18px, 3.5vh, 36px)',
             boxSizing: 'border-box',
           }}
         >
@@ -266,7 +268,7 @@ export default function Hero() {
             <motion.div
               {...fadeUp(D - 0.3)}
               className="mono"
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', letterSpacing: '0.15em', color: t.strong }}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', fontSize: isTablet ? '0.66rem' : '0.78rem', letterSpacing: isTablet ? '0.12em' : '0.15em', color: t.strong }}
             >
               <span>{ROLE.toUpperCase()}</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 18 }}>
@@ -300,7 +302,7 @@ export default function Hero() {
             />
 
             {/* ── Main ── */}
-            <div style={{ flex: '1 0 auto', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '4vw', padding: '2.5vh 0 2vh' }}>
+            <div style={{ flex: '1 0 auto', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: isTablet ? '3vw' : '4vw', padding: '2.5vh 0 2vh' }}>
               <div style={{ minWidth: 0 }}>
                 {/* Name with mouse spotlight */}
                 <div ref={nameRef} style={{ position: 'relative', marginBottom: 'clamp(0.9rem, 2.6vh, 1.75rem)' }}>
@@ -450,7 +452,7 @@ export default function Hero() {
                     transition={{ delay: D + 0.15, duration: 1.1, ease: EASE }}
                     style={{
                       position: 'relative',
-                      width: 'clamp(200px, min(22vw, 40vh), 340px)',
+                      width: isTablet ? 'clamp(180px, min(24vw, 38vh), 260px)' : 'clamp(200px, min(22vw, 40vh), 340px)',
                       aspectRatio: '3 / 4',
                       borderRadius: 28,
                       overflow: 'hidden',
@@ -504,11 +506,11 @@ export default function Hero() {
                 initial="hidden"
                 animate="show"
                 variants={{ show: { transition: { staggerChildren: 0.1, delayChildren: D + 1 } } }}
-                style={{ display: 'flex', gap: '3.5rem' }}
+                style={{ display: 'flex', gap: isTablet ? '1.75rem' : '3.5rem', minWidth: 0 }}
               >
                 {STATS.map((s) => (
                   <motion.div key={s.label} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } } }}>
-                    <span style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.03em', color: t.strong }}>
+                    <span style={{ fontSize: isTablet ? '1.3rem' : '1.6rem', fontWeight: 700, letterSpacing: '-0.03em', color: t.strong, whiteSpace: 'nowrap' }}>
                       {s.value}
                       {s.unit && <span style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 3, color: t.muted }}>{s.unit}</span>}
                     </span>

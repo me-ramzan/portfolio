@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { Mail, Phone, MessageCircle, Copy, Check, ArrowRight, Clock, MapPin } from 'lucide-react';
+import { Phone, MessageCircle, Copy, Check, ArrowRight, Clock, MapPin } from 'lucide-react';
 import emailjs from '@emailjs/browser';
-import { haptic } from '../lib/ui';
+import { haptic, useIsTiny } from '../lib/ui';
 
 const EASE = [0.16, 1, 0.3, 1];
 const GOLD = '#D7C49E';
@@ -21,6 +21,21 @@ const RESPONSE_TIME = 'Replies within 24 hours';
 const OPEN_TO = ['Full-time', 'Freelance', 'Remote'];
 const TOPICS = ['Full-time role', 'Freelance project', 'Collaboration', 'Just saying hi'];
 const WHATSAPP_TEXT = 'Hi! I came across your portfolio and would like to connect.';
+
+const GmailIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="gmailGradMobile" gradientUnits="userSpaceOnUse" x1="2" y1="12" x2="22" y2="12">
+        <stop offset="0" stopColor="#EA4335" />
+        <stop offset="0.35" stopColor="#FBBC04" />
+        <stop offset="0.65" stopColor="#34A853" />
+        <stop offset="1" stopColor="#4285F4" />
+      </linearGradient>
+    </defs>
+    <rect x="2" y="4" width="20" height="16" rx="2" stroke="url(#gmailGradMobile)" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="url(#gmailGradMobile)" />
+  </svg>
+);
 
 function getColors(isDark) {
   return isDark
@@ -65,11 +80,10 @@ function useLocalTime() {
 /* ------------------------------------------------------------------ */
 /* Quick action tile                                                   */
 /* ------------------------------------------------------------------ */
-function ActionTile({ href, icon, label, sub, primary, delay, inView, onClick, isDark }) {
-  // Light theme has a gold page background, so the primary tile goes dark with gold text there
-  const bg = primary ? (isDark ? GOLD : '#121018') : isDark ? PANEL : '#343148';
-  const fg = primary ? (isDark ? '#1d1a28' : GOLD) : PANEL_TEXT;
-  const edge = primary ? GOLD : 'rgba(244,241,234,0.08)';
+function ActionTile({ href, icon, label, sub, primary, light, blue, delay, inView, onClick, isDark, wide }) {
+  const bg = primary ? '#25D366' : blue ? '#4285F4' : light ? '#FFFFFF' : isDark ? PANEL : '#343148';
+  const fg = primary ? '#FFFFFF' : blue ? '#FFFFFF' : light ? '#111111' : PANEL_TEXT;
+  const edge = primary ? '#25D366' : blue ? '#4285F4' : light ? '#FFFFFF' : 'rgba(244,241,234,0.08)';
   return (
     <motion.a
       href={href}
@@ -93,6 +107,8 @@ function ActionTile({ href, icon, label, sub, primary, delay, inView, onClick, i
         border: `1px solid ${edge}`,
         boxShadow: isDark ? 'none' : '0 10px 24px rgba(0,0,0,0.18)',
         minHeight: 96,
+        minWidth: 0,
+        gridColumn: wide ? '1 / -1' : undefined,
         WebkitTapHighlightColor: 'transparent',
       }}
     >
@@ -102,7 +118,7 @@ function ActionTile({ href, icon, label, sub, primary, delay, inView, onClick, i
       </div>
       <div>
         <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>{label}</div>
-        <div className="mono" style={{ fontSize: '0.52rem', letterSpacing: '0.08em', opacity: 0.65, marginTop: 2 }}>{sub}</div>
+        <div className="mono" style={{ fontSize: '0.52rem', letterSpacing: '0.04em', whiteSpace: 'nowrap', opacity: primary ? 1 : 0.65,color: primary ? '#075E54' : 'inherit', marginTop: 2 }}>{sub}</div>
       </div>
     </motion.a>
   );
@@ -179,6 +195,7 @@ function Field({ label, value, onChange, type = 'text', multiline, error, autoCo
 /* ------------------------------------------------------------------ */
 export default function MobileContact({ isDark, sectionRef, emailConfig }) {
   const c = getColors(isDark);
+  const isTiny = useIsTiny();
   const { time, diffText, working } = useLocalTime();
 
   const headRef = useRef(null);
@@ -248,7 +265,7 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
     <section
       id="contact"
       ref={sectionRef}
-      style={{ position: 'relative', padding: '4.5rem 6vw 4rem', backgroundColor: c.bg, borderTop: `1px solid ${c.line}`, overflow: 'hidden' }}
+      style={{ position: 'relative', padding: '4.5rem max(6vw, calc((100vw - 640px) / 2)) max(4rem, env(safe-area-inset-bottom))', backgroundColor: c.bg, borderTop: `1px solid ${c.line}`, overflow: 'hidden' }}
     >
       {/* Header */}
       <div ref={headRef}>
@@ -318,10 +335,11 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
       </motion.div>
 
       {/* Quick actions */}
-      <div ref={actionsRef} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: '1.5rem' }}>
+      {/* Very small phones: 2 columns, the Call tile gets its own full row so the number fits */}
+      <div ref={actionsRef} style={{ display: 'grid', gridTemplateColumns: isTiny ? '1fr 1fr' : 'repeat(3, 1fr)', gridAutoFlow: 'dense', gap: 8, marginTop: '1.5rem' }}>
         <ActionTile href={waHref} icon={<MessageCircle size={20} />} label="WhatsApp" sub="FASTEST" primary delay={0} inView={actionsIn} isDark={isDark} />
-        <ActionTile href={`tel:+${PHONE_RAW}`} icon={<Phone size={20} />} label="Call" sub={PHONE_DISPLAY.slice(-8)} delay={0.08} inView={actionsIn} isDark={isDark} />
-        <ActionTile href={`mailto:${EMAIL}`} icon={<Mail size={20} />} label="Email" sub="DIRECT" delay={0.16} inView={actionsIn} isDark={isDark} />
+        <ActionTile href={`tel:+${PHONE_RAW}`} icon={<Phone size={20} />} blue label="Call" sub={PHONE_DISPLAY} delay={0.08} inView={actionsIn} isDark={isDark} wide={isTiny} />
+        <ActionTile href={`mailto:${EMAIL}`} icon={<GmailIcon size={20} />} light label="Email" sub="DIRECT" delay={0.16} inView={actionsIn} isDark={isDark} />
       </div>
 
       {/* Copy email */}
@@ -431,7 +449,8 @@ export default function MobileContact({ isDark, sectionRef, emailConfig }) {
                         fontSize: '0.78rem',
                         fontWeight: 600,
                         textAlign: 'center',
-                        whiteSpace: 'nowrap',
+                        lineHeight: 1.2,
+                        whiteSpace: isTiny ? 'normal' : 'nowrap',
                         cursor: 'pointer',
                         WebkitTapHighlightColor: 'transparent',
                         transition: 'background-color 0.25s, color 0.25s, border-color 0.25s',

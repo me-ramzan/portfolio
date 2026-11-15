@@ -57,7 +57,8 @@ export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, 
   const nameStyle = {
     fontFamily: "'Space Grotesk', sans-serif",
     fontWeight: 800,
-    fontSize: '20vw',
+    // capped so big phones, small tablets and landscape don't blow the name up
+    fontSize: 'min(20vw, 128px)',
     lineHeight: 0.82,
     letterSpacing: '-0.05em',
     color: nameColor,
@@ -72,7 +73,8 @@ export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, 
       style={{
         position: 'relative',
         minHeight: '100svh',
-        padding: '88px 5vw 2rem',
+        // content stays phone-width (max 640px) and centred on wider screens
+        padding: 'max(88px, calc(env(safe-area-inset-top) + 76px)) max(5vw, calc((100vw - 640px) / 2)) max(2rem, env(safe-area-inset-bottom))',
         backgroundColor: t.bg,
         display: 'flex',
         flexDirection: 'column',
@@ -133,7 +135,7 @@ export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, 
           style={{
             position: 'relative',
             height: 'min(62svh, 520px)',
-            minHeight: 400,
+            minHeight: 'min(400px, 82svh)',
             borderRadius: 28,
             overflow: 'hidden',
             backgroundColor: cardBg,
@@ -147,7 +149,7 @@ export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, 
                 initial={{ y: '100%' }}
                 animate={{ y: '0%' }}
                 transition={{ delay: D + 0.15, duration: 1, ease: EASE }}
-                style={{ ...nameStyle, x: line1X, fontSize: '16vw' }}
+                style={{ ...nameStyle, x: line1X, fontSize: 'min(16vw, 102px)' }}
               >
                 {FIRST.toUpperCase()}
               </motion.div>

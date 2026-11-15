@@ -10,6 +10,7 @@ import {
 
 const GAP = 12;          // px between cards
 const CARD_VW = 0.84;    // card width as a fraction of the scroller width
+const CARD_MAX = 460;    // never wider than this (big phones, landscape, small tablets)
 
 const pad2 = (n) => String(n).padStart(2, '0');
 
@@ -32,9 +33,12 @@ function DeckCard({ exp, index, total, step, scrollX, t, onOpen, cardWidth }) {
         flex: `0 0 ${cardWidth}px`,
         scrollSnapAlign: 'center',
         scrollSnapStop: 'always',
-        backgroundColor: t.card,
+        background: exp.image
+          ? `linear-gradient(180deg, rgba(38,35,58,0.95) 0%, rgba(38,35,58,0.88) 100%), url(${exp.image}) ${exp.pos || 'center'} / cover no-repeat ${t.card}`
+          : t.card,
         color: t.cardText,
         borderRadius: 24,
+        overflow: 'hidden',
         padding: '1.75rem 1.4rem 1.4rem',
         boxShadow: t.shadow,
         display: 'flex',
@@ -228,7 +232,9 @@ function HighlightsSheet({ exp, index, total, t, onClose }) {
           left: 0,
           right: 0,
           bottom: 0,
-          maxHeight: '86vh',
+          maxWidth: 640,
+          margin: '0 auto',
+          maxHeight: '86svh',
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: t.panel,
@@ -239,6 +245,30 @@ function HighlightsSheet({ exp, index, total, t, onClose }) {
           zIndex: 1000,
         }}
       >
+        {/* Company logo, bottom-right corner, behind the text */}
+        {exp.image2 && (
+          <img
+            src={exp.image2}
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              right: 20,
+              bottom: 'calc(20px + env(safe-area-inset-bottom))',
+              width: exp.logoSize ? 120 : 90,
+              height: 'auto',
+              filter:
+                (exp.logoDarkBg ? 'grayscale(1) contrast(2.5)' : 'grayscale(1) invert(1) contrast(1.2)') +
+                (t.panel === '#121018' ? '' : ' invert(1)'),
+              clipPath: exp.logoClip ? `inset(${exp.logoClip})` : 'none',
+              mixBlendMode: t.panel === '#121018' ? 'screen' : 'multiply',
+              opacity: 0.3,
+              pointerEvents: 'none',
+              userSelect: 'none',
+              zIndex: -1,
+            }}
+          />
+        )}
         {/* Drag handle + header (drag starts here so the list can scroll) */}
         <div
           onPointerDown={(e) => dragControls.start(e)}
@@ -410,8 +440,9 @@ export default function MobileExperience({ experiences, theme: t, sectionRef }) 
   const scrollerRef = useRef(null);
 
   const initialWidth = typeof window !== 'undefined' ? window.innerWidth : 375;
-  const [cardWidth, setCardWidth] = useState(Math.round(initialWidth * CARD_VW));
-  const [sidePad, setSidePad] = useState(Math.round((initialWidth - initialWidth * CARD_VW) / 2));
+  const initialCard = Math.min(CARD_MAX, Math.round(initialWidth * CARD_VW));
+  const [cardWidth, setCardWidth] = useState(initialCard);
+  const [sidePad, setSidePad] = useState(Math.round((initialWidth - initialCard) / 2));
   const step = cardWidth + GAP;
 
   const [active, setActive] = useState(0);
@@ -422,7 +453,7 @@ export default function MobileExperience({ experiences, theme: t, sectionRef }) 
   useEffect(() => {
     const measure = () => {
       const w = scrollerRef.current?.clientWidth ?? window.innerWidth;
-      const cw = Math.round(w * CARD_VW);
+      const cw = Math.min(CARD_MAX, Math.round(w * CARD_VW));
       setCardWidth(cw);
       setSidePad(Math.round((w - cw) / 2));
     };
@@ -464,7 +495,7 @@ export default function MobileExperience({ experiences, theme: t, sectionRef }) 
       <style>{`.mx-scroller::-webkit-scrollbar{display:none}`}</style>
 
       {/* Heading */}
-      <div style={{ padding: '0 5vw', marginBottom: '2rem' }}>
+      <div style={{ padding: '0 max(5vw, calc((100vw - 640px) / 2))', marginBottom: '2rem' }}>
         <motion.span
           className="mono"
           initial={{ opacity: 0, y: 12 }}
@@ -500,7 +531,7 @@ export default function MobileExperience({ experiences, theme: t, sectionRef }) 
       </div>
 
       {/* Counter + swipe hint */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '0 5vw', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '0 max(5vw, calc((100vw - 640px) / 2))', marginBottom: '1rem' }}>
         <div className="mono" style={{ color: t.heading, display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ position: 'relative', display: 'inline-block', height: '1.6rem', overflow: 'hidden', minWidth: '1.6em' }}>
             <AnimatePresence mode="popLayout" initial={false}>
@@ -571,7 +602,7 @@ export default function MobileExperience({ experiences, theme: t, sectionRef }) 
       </div>
 
       {/* Progress bar + dots */}
-      <div style={{ padding: '0 5vw' }}>
+      <div style={{ padding: '0 max(5vw, calc((100vw - 640px) / 2))' }}>
         <div style={{ height: 2, backgroundColor: `${t.heading}33`, borderRadius: 2, overflow: 'hidden' }}>
           <motion.div style={{ height: '100%', backgroundColor: t.heading, scaleX: progress, transformOrigin: 'left' }} />
         </div>

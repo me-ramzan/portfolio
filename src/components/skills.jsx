@@ -1,7 +1,11 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
-import { motion, useInView } from 'framer-motion';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import MobileSkills from './MobileSkillsPhysics';
-import { useIsMobile, useIsDark, SectionLabel, EASE } from '../lib/ui';
+import { useIsMobile, useIsDark, useIsTablet, useIsShort, SectionLabel, EASE } from '../lib/ui';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Used by the mobile physics version — keep this shape
 const skillGroups = [
@@ -45,13 +49,6 @@ const STAGES = [
   },
 ];
 
-// Vertical offsets give the wires a gentle wave
-const OFFSETS = [0, 46, -26, 34];
-
-const TOTAL_TOOLS = STAGES.reduce((n, s) => n + s.tools.length, 0);
-const NODE_COUNT = STAGES.length + 2; // start + stages + end
-const STEP_MS = 520;
-
 const LANGUAGES = [
   { lang: 'English', level: 'Fluent' },
   { lang: 'Hindi', level: 'Fluent' },
@@ -61,6 +58,27 @@ const LANGUAGES = [
 const GOLD = '#D7C49E';
 const NAVY = '#343148';
 const GREEN = '#5FD38A';
+
+// How long the section stays locked (in screen heights) while the workflow runs
+const LOCK_SCREENS = 2.4;
+
+/* ---- Workflow canvas geometry (percent of the canvas) ---- */
+const NODE_W = 20; // % of canvas width
+const NODE_H = 18; // % of canvas height
+const NODE_X = [2, 26, 50, 74]; // left edge of each node
+const NODE_Y = [8, 30, 52, 74]; // top edge of each node
+const VB_W = 1000;
+const VB_H = 562.5; // 16:9
+
+// Bezier wire from node i's output (right side) to node i+1's input (left side)
+const wirePath = (i) => {
+  const x1 = (NODE_X[i] + NODE_W) * (VB_W / 100);
+  const y1 = (NODE_Y[i] + NODE_H / 2) * (VB_H / 100);
+  const x2 = NODE_X[i + 1] * (VB_W / 100);
+  const y2 = (NODE_Y[i + 1] + NODE_H / 2) * (VB_H / 100);
+  const dx = 70;
+  return { d: `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`, x1, y1, x2, y2 };
+};
 
 function getTheme(isDark) {
   return isDark
@@ -76,8 +94,12 @@ function getTheme(isDark) {
         dots: 'rgba(244,241,234,0.07)',
         wire: 'rgba(244,241,234,0.12)',
         wireOn: GOLD,
+        flow: '#121018',
         node: NAVY,
-        terminal: '#232032',
+        nodeOff: 'rgba(244,241,234,0.04)',
+        nodeOffText: 'rgba(244,241,234,0.4)',
+        nodeOffBorder: 'rgba(244,241,234,0.1)',
+        toolbar: 'rgba(244,241,234,0.45)',
         // kept for MobileSkillsPhysics
         hoverBorder: GOLD,
         cardBg: '#121018',
@@ -99,8 +121,12 @@ function getTheme(isDark) {
         dots: 'rgba(52,49,72,0.16)',
         wire: 'rgba(52,49,72,0.2)',
         wireOn: NAVY,
+        flow: GOLD,
         node: NAVY,
-        terminal: '#F4F1EA',
+        nodeOff: 'rgba(255,255,255,0.3)',
+        nodeOffText: 'rgba(18,16,24,0.45)',
+        nodeOffBorder: 'rgba(52,49,72,0.18)',
+        toolbar: 'rgba(18,16,24,0.55)',
         hoverBorder: NAVY,
         cardBg: '#D7C49E',
         pillBg: NAVY,
@@ -111,368 +137,451 @@ function getTheme(isDark) {
       };
 }
 
-/* Small round start / end nodes */
-function Terminal({ label, sub, done, nodeRef, t, isDark }) {
+const TOTAL_TOOLS = STAGES.reduce((n, s) => n + s.tools.length, 0);
+const LAST = STAGES.length - 1;
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+/* One wire: faint track, a solid line that draws itself with scroll,
+   and a moving "data flow" dash once the wire is complete */
+function Wire({ i, prog, t }) {
+  const { d, x1, y1, x2, y2 } = wirePath(i);
+  const offset = useTransform(prog, (p) => 1 - clamp01(p * LAST - i));
+  const flowOpacity = useTransform(prog, (p) => (p * LAST >= i + 0.98 ? 1 : 0));
+  const endOpacity = useTransform(prog, (p) => (p * LAST >= i + 0.98 ? 1 : 0.35));
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-      <motion.div
-        ref={nodeRef}
-        animate={{ opacity: done ? 1 : 0.55 }}
-        transition={{ duration: 0.5, ease: EASE }}
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: t.terminal,
-          border: `1.5px solid ${done ? t.wireOn : t.wire}`,
-          color: isDark ? GOLD : NAVY,
-          fontSize: '1.3rem',
-          boxShadow: done ? `0 0 0 6px ${isDark ? 'rgba(215,196,158,0.12)' : 'rgba(52,49,72,0.12)'}` : 'none',
-          transition: 'border-color 0.4s, box-shadow 0.4s',
-        }}
-      >
-        {label}
-      </motion.div>
-      <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.14em', color: t.muted, textAlign: 'center', whiteSpace: 'nowrap' }}>
-        {sub}
-      </span>
-    </div>
+    <g>
+      <path d={d} fill="none" stroke={t.wire} strokeWidth="3" strokeLinecap="round" />
+      <motion.path
+        d={d}
+        fill="none"
+        stroke={t.wireOn}
+        strokeWidth="3"
+        strokeLinecap="round"
+        pathLength={1}
+        strokeDasharray="1 1"
+        style={{ strokeDashoffset: offset }}
+      />
+      <motion.path
+        className="sk-flow"
+        d={d}
+        fill="none"
+        stroke={t.flow}
+        strokeWidth="3"
+        strokeLinecap="round"
+        pathLength={1}
+        strokeDasharray="0.012 0.033"
+        style={{ opacity: flowOpacity }}
+      />
+      {/* ports */}
+      <circle cx={x1} cy={y1} r="6" fill={t.wireOn} />
+      <motion.circle cx={x2} cy={y2} r="6" fill={t.wireOn} style={{ opacity: endOpacity }} />
+    </g>
   );
 }
 
-function StageNode({ stage, index, done, running, dim, dimOpacity, onEnter, onLeave, nodeRef }) {
-  return (
-    <motion.div
-      ref={nodeRef}
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      animate={{ opacity: dim ? dimOpacity : done ? 1 : dimOpacity }}
-      transition={{ duration: 0.4, ease: EASE }}
-      style={{
-        position: 'relative',
-        top: OFFSETS[index] || 0,
-        backgroundColor: NAVY,
-        color: '#F4F1EA',
-        borderRadius: 18,
-        border: `1.5px solid ${running || done ? GOLD : 'rgba(244,241,234,0.12)'}`,
-        boxShadow: running ? '0 0 0 6px rgba(215,196,158,0.18), 0 24px 50px rgba(0,0,0,0.35)' : '0 18px 40px rgba(0,0,0,0.25)',
-        transition: 'border-color 0.4s, box-shadow 0.4s',
-        overflow: 'hidden',
-        cursor: 'default',
-      }}
-    >
-      {/* Node header, like a workflow editor */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0.8rem 1rem',
-          borderBottom: '1px solid rgba(244,241,234,0.1)',
-          backgroundColor: 'rgba(0,0,0,0.12)',
-        }}
-      >
-        <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.6rem', letterSpacing: '0.1em', color: GOLD, whiteSpace: 'nowrap' }}>
-          <span
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: 6,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(215,196,158,0.14)',
-              fontSize: '0.7rem',
-              letterSpacing: 0,
-            }}
-          >
-            {stage.glyph}
-          </span>
-          {String(index + 1).padStart(2, '0')} · {stage.step.toUpperCase()}
-        </span>
-        <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.54rem', letterSpacing: '0.1em', whiteSpace: 'nowrap', color: done ? '#9BE3B0' : 'rgba(244,241,234,0.45)' }}>
-          <motion.span
-            animate={running ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
-            transition={running ? { duration: 0.6, repeat: Infinity } : { duration: 0.2 }}
-            style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: done ? GREEN : running ? GOLD : 'rgba(244,241,234,0.3)' }}
-          />
-          {done ? 'DONE' : running ? 'RUNNING' : 'IDLE'}
-        </span>
-      </div>
-
-      {/* Node body */}
-      <div style={{ padding: '1.1rem 1rem 1.15rem' }}>
-        <div style={{ fontSize: 'clamp(1.05rem, 1.35vw, 1.3rem)', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-          {stage.title}
-        </div>
-        <p style={{ margin: '0.5rem 0 1rem', fontSize: '0.8rem', lineHeight: 1.5, color: 'rgba(244,241,234,0.72)' }}>
-          {stage.outcome}
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-          {stage.tools.map((tool, j) => (
-            <span
-              key={tool}
-              className="mono"
-              style={{
-                fontSize: '0.58rem',
-                padding: '4px 8px',
-                borderRadius: 6,
-                letterSpacing: '0.02em',
-                backgroundColor: j === 0 ? GOLD : 'rgba(244,241,234,0.08)',
-                color: j === 0 ? '#121018' : 'rgba(244,241,234,0.88)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {tool}
-            </span>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
+/* ------------------------------------------------------------------ */
+/* Desktop: the section locks and a workflow runs as you scroll.       */
+/* Each stage is a node; the wire draws itself to the next one.        */
+/* ------------------------------------------------------------------ */
 export default function Skills() {
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isShort = useIsShort();
   const isDark = useIsDark();
   const t = getTheme(isDark);
   const sectionRef = useRef(null);
-  const canvasRef = useRef(null);
-  const nodeRefs = useRef([]);
-  const [paths, setPaths] = useState([]);
-  const [step, setStep] = useState(0); // how many nodes have executed
-  const [hovered, setHovered] = useState(null);
-  const [runId, setRunId] = useState(0);
-  const inView = useInView(canvasRef, { once: true, amount: 0.45 });
+  const stageRef = useRef(null);
+  const triggerRef = useRef(null);
+  const activeRef = useRef(0);
+  const prog = useMotionValue(0);
+  const [active, setActive] = useState(0);
 
-  // Measure node positions and draw a wire between each neighbour
-  const measure = useCallback(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const cr = c.getBoundingClientRect();
-    const next = [];
-    for (let i = 0; i < NODE_COUNT - 1; i++) {
-      const a = nodeRefs.current[i];
-      const b = nodeRefs.current[i + 1];
-      if (!a || !b) continue;
-      const ar = a.getBoundingClientRect();
-      const br = b.getBoundingClientRect();
-      const x1 = ar.right - cr.left;
-      const y1 = ar.top + ar.height / 2 - cr.top;
-      const x2 = br.left - cr.left;
-      const y2 = br.top + br.height / 2 - cr.top;
-      const dx = Math.max(24, (x2 - x1) * 0.55);
-      next.push(`M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
-    }
-    setPaths(next);
-  }, []);
-
+  // Lock the section and turn scroll into workflow progress
   useLayoutEffect(() => {
-    if (isMobile) return;
-    measure();
-    const ro = new ResizeObserver(() => measure());
-    if (canvasRef.current) ro.observe(canvasRef.current);
-    nodeRefs.current.forEach((n) => n && ro.observe(n));
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
-    return () => ro.disconnect();
-  }, [isMobile, measure]);
-
-  // "Run" the workflow: execute one node at a time
-  useEffect(() => {
-    if (isMobile || !inView) return;
-    setStep(0);
-    let i = 0;
-    const id = setInterval(() => {
-      i += 1;
-      setStep(i);
-      if (i >= NODE_COUNT) clearInterval(id);
-    }, STEP_MS);
-    return () => clearInterval(id);
-  }, [isMobile, inView, runId]);
+    if (isMobile) return undefined;
+    const ctx = gsap.context(() => {
+      triggerRef.current = ScrollTrigger.create({
+        trigger: stageRef.current,
+        start: 'top top',
+        end: () => `+=${window.innerHeight * LOCK_SCREENS}`,
+        pin: true,
+        scrub: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          prog.set(self.progress);
+          const idx = Math.min(LAST, Math.round(self.progress * LAST));
+          if (idx !== activeRef.current) {
+            activeRef.current = idx;
+            setActive(idx);
+          }
+        },
+      });
+    }, sectionRef);
+    const refresh = () => ScrollTrigger.refresh();
+    const late = setTimeout(refresh, 800);
+    window.addEventListener('load', refresh);
+    return () => {
+      clearTimeout(late);
+      window.removeEventListener('load', refresh);
+      ctx.revert();
+      triggerRef.current = null;
+    };
+  }, [isMobile, prog]);
 
   // Mobile: physics playground
   if (isMobile) {
     return <MobileSkills skillGroups={skillGroups} theme={t} sectionRef={sectionRef} />;
   }
 
-  const finished = step >= NODE_COUNT;
-  // node index in the full chain: 0 = start, 1..4 = stages, 5 = end
-  const isDone = (n) => step > n;
-  const isRunning = (n) => step === n && !finished && inView;
-  const wireLit = (w) => step > w + 1 || finished;
-  const wireHot = (w) => hovered !== null && (w === hovered || w === hovered + 1);
+  // Click a stage or node: scroll to the point where that node is running
+  const goTo = (i) => {
+    const st = triggerRef.current;
+    if (!st) return;
+    const top = st.start + (st.end - st.start) * (i / LAST) + 2;
+    if (window.lenis?.scrollTo) window.lenis.scrollTo(top, { duration: 1.1 });
+    else window.scrollTo({ top, behavior: 'smooth' });
+  };
 
-  const stats = [
-    { v: String(STAGES.length).padStart(2, '0'), l: 'Stages' },
-    { v: String(TOTAL_TOOLS), l: 'Tools' },
-  ];
+  const progress = (active + 1) / STAGES.length;
+  const panelBg = isDark ? NAVY : 'rgba(52,49,72,0.96)';
+  const cur = STAGES[active];
 
   return (
-    <section
-      id="skills"
-      ref={sectionRef}
-      style={{ position: 'relative', padding: '9vw 6vw 8vw', backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}
-    >
-      <SectionLabel index="04" title="Skills" color={t.text} accent={t.accent} />
-
-      {/* Heading + stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '2rem', flexWrap: 'wrap', marginBottom: '3rem' }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
-          <motion.h2
-            variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
-            transition={{ duration: 1, ease: EASE }}
-            style={{ fontSize: 'clamp(3.2rem, 7.5vw, 7rem)', fontWeight: 700, letterSpacing: '-0.045em', lineHeight: 0.95, color: t.text, margin: 0, paddingTop: '0.04em', paddingBottom: '0.26em', marginBottom: '-0.16em' }}
+    // Stable wrappers: GSAP wraps the pinned stage in a pin-spacer
+    <div style={{ display: 'contents' }}>
+      <style>{`
+        @keyframes skFlow { to { stroke-dashoffset: -0.09; } }
+        .sk-flow { animation: skFlow 1.1s linear infinite; }
+        @media (prefers-reduced-motion: reduce) { .sk-flow { animation: none; } }
+      `}</style>
+      <section id="skills" ref={sectionRef} style={{ position: 'relative', backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}>
+        <div>
+          <div
+            ref={stageRef}
+            style={{
+              position: 'relative',
+              height: '100vh',
+              minHeight: 560,
+              boxSizing: 'border-box',
+              padding: 'clamp(84px, 12vh, 112px) var(--gutter, 6vw) clamp(24px, 5vh, 48px)',
+              backgroundColor: t.bg,
+              display: 'grid',
+              gridTemplateColumns: isTablet ? 'minmax(210px, 0.75fr) 1.25fr' : 'minmax(280px, 0.85fr) 1.15fr',
+              gap: isTablet ? '4vw' : '5vw',
+              alignItems: 'center',
+            }}
           >
-            How I build<span style={{ color: t.accent }}>.</span>
-          </motion.h2>
-        </motion.div>
+            {/* ── Left: heading + stages ── */}
+            <div style={{ minWidth: 0 }}>
+              <SectionLabel index="04" title="Skills" color={t.text} accent={t.accent} style={{ marginBottom: isShort ? '1.5rem' : '2.5rem' }} />
+              <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} style={{ overflow: 'hidden' }}>
+                <motion.h2
+                  variants={{ hidden: { y: '105%' }, show: { y: '0%' } }}
+                  transition={{ duration: 1, ease: EASE }}
+                  style={{
+                    fontSize: isShort ? 'clamp(2.2rem, min(4.6vw, 8vh), 4rem)' : isTablet ? 'clamp(2.2rem, 5vw, 3.6rem)' : 'clamp(2.8rem, 5vw, 5rem)',
+                    fontWeight: 700,
+                    letterSpacing: '-0.045em',
+                    lineHeight: 0.95,
+                    color: t.text,
+                    margin: 0,
+                    paddingTop: '0.04em',
+                    paddingBottom: '0.26em',
+                    marginBottom: '-0.16em',
+                  }}
+                >
+                  How I build<span style={{ color: t.accent }}>.</span>
+                </motion.h2>
+              </motion.div>
 
-        <div style={{ display: 'flex', gap: '3rem', paddingBottom: '0.8rem' }}>
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.l}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.8 }}
-              transition={{ duration: 0.7, delay: 0.1 + i * 0.08, ease: EASE }}
-            >
-              <div style={{ fontSize: 'clamp(1.8rem, 2.8vw, 2.6rem)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: t.text }}>
-                {s.v}
+              {/* Stage list */}
+              <div style={{ marginTop: 'clamp(1rem, 3.5vh, 2.5rem)', position: 'relative', paddingLeft: 22 }}>
+                <div style={{ position: 'absolute', left: 0, top: 6, bottom: 6, width: 2, backgroundColor: t.line, borderRadius: 2 }}>
+                  <motion.div
+                    animate={{ scaleY: progress }}
+                    transition={{ duration: 0.6, ease: EASE }}
+                    style={{ width: '100%', height: '100%', backgroundColor: t.accent, transformOrigin: 'top', borderRadius: 2 }}
+                  />
+                </div>
+                {STAGES.map((s, i) => {
+                  const on = i === active;
+                  return (
+                    <button
+                      key={s.title}
+                      type="button"
+                      onClick={() => goTo(i)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: 14,
+                        width: '100%',
+                        padding: 'clamp(4px, 1vh, 10px) 0',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        font: 'inherit',
+                      }}
+                    >
+                      <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.12em', color: on ? t.accent : t.muted, minWidth: 22 }}>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <motion.span
+                        animate={{ opacity: on ? 1 : 0.38, x: on ? 6 : 0 }}
+                        transition={{ duration: 0.45, ease: EASE }}
+                        style={{
+                          fontSize: on
+                            ? isTablet ? 'clamp(1.2rem, 2.4vw, 1.6rem)' : 'clamp(1.4rem, 2.1vw, 2.1rem)'
+                            : isTablet ? 'clamp(0.95rem, 1.8vw, 1.15rem)' : 'clamp(1.05rem, 1.45vw, 1.4rem)',
+                          fontWeight: 700,
+                          letterSpacing: '-0.025em',
+                          lineHeight: 1.15,
+                          color: on ? t.accent : t.text,
+                          transition: 'font-size 0.45s cubic-bezier(0.16,1,0.3,1)',
+                        }}
+                      >
+                        {s.title}
+                      </motion.span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="mono" style={{ marginTop: 8, fontSize: '0.62rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: t.muted }}>
-                {s.l}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
 
-      {/* Workflow canvas */}
-      <div
-        ref={canvasRef}
-        style={{
-          position: 'relative',
-          borderRadius: 28,
-          border: `1px solid ${t.canvasBorder}`,
-          backgroundColor: t.canvas,
-          backgroundImage: `radial-gradient(${t.dots} 1.2px, transparent 1.2px)`,
-          backgroundSize: '22px 22px',
-          padding: '1.25rem 2.25rem 4.5rem',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Toolbar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3.75rem' }}>
-          <span className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: t.muted, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ display: 'inline-flex', gap: 5 }}>
-              {[0, 1, 2].map((d) => (
-                <span key={d} style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: t.wire }} />
-              ))}
-            </span>
-            toolkit.workflow
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '0.12em', color: finished ? (isDark ? '#9BE3B0' : '#2E7D4F') : t.muted }}>
-              {finished ? '✓ EXECUTED SUCCESSFULLY' : inView ? `EXECUTING ${Math.min(step + 1, NODE_COUNT)} / ${NODE_COUNT}` : 'READY'}
-            </span>
-            <button
-              type="button"
-              onClick={() => setRunId((r) => r + 1)}
-              disabled={!finished}
-              className="mono"
+              {/* Stats */}
+              <div style={{ display: 'flex', gap: isTablet ? '1.5rem' : '2.5rem', marginTop: 'clamp(1rem, 3.5vh, 2.25rem)' }}>
+                {[
+                  { v: String(STAGES.length).padStart(2, '0'), l: 'Stages' },
+                  { v: String(TOTAL_TOOLS), l: 'Tools' },
+                  { v: String(LANGUAGES.length).padStart(2, '0'), l: 'Languages' },
+                ].map((st) => (
+                  <div key={st.l}>
+                    <div style={{ fontSize: 'clamp(1.3rem, 2vw, 1.9rem)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: t.text }}>{st.v}</div>
+                    <div className="mono" style={{ marginTop: 6, fontSize: '0.58rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: t.muted }}>{st.l}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Languages */}
+              {!isShort && (
+                <div style={{ marginTop: 'clamp(1rem, 3vh, 1.75rem)', paddingTop: 'clamp(0.75rem, 2vh, 1.25rem)', borderTop: `1px solid ${t.line}`, display: 'flex', gap: isTablet ? '1rem' : '1.75rem', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                  {LANGUAGES.map((l) => (
+                    <div key={l.lang} style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em', color: t.text }}>{l.lang}</span>
+                      <span className="mono" style={{ fontSize: '0.56rem', letterSpacing: '0.12em', color: t.muted, textTransform: 'uppercase' }}>{l.level}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── Right: workflow canvas + node details ── */}
+            <div
               style={{
-                fontSize: '0.62rem',
-                letterSpacing: '0.12em',
-                padding: '8px 14px',
-                borderRadius: 999,
-                border: 'none',
-                cursor: finished ? 'pointer' : 'default',
-                backgroundColor: t.accent,
-                color: isDark ? '#121018' : '#F4F1EA',
-                opacity: finished ? 1 : 0.4,
-                transition: 'opacity 0.3s',
+                justifySelf: 'end',
+                // the canvas also shrinks with screen height, so everything fits on short laptops
+                width: 'min(100%, calc((100vh - 360px) * 16 / 9 + 2px))',
+                minWidth: 'min(100%, 420px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'clamp(10px, 1.6vh, 16px)',
               }}
             >
-              ▶ RUN AGAIN
-            </button>
+              {/* Canvas */}
+              <div
+                style={{
+                  borderRadius: 22,
+                  border: `1px solid ${t.canvasBorder}`,
+                  backgroundColor: t.canvas,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* toolbar */}
+                <div
+                  className="mono"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 16px',
+                    borderBottom: `1px solid ${t.canvasBorder}`,
+                    fontSize: '0.6rem',
+                    letterSpacing: '0.14em',
+                    color: t.toolbar,
+                  }}
+                >
+                  <span>HOW-I-BUILD · WORKFLOW</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <span>
+                      RUN {String(active + 1).padStart(2, '0')} / {String(STAGES.length).padStart(2, '0')}
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: isDark ? GREEN : '#1f7a4a' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: isDark ? GREEN : '#1f7a4a' }} />
+                      ACTIVE
+                    </span>
+                  </span>
+                </div>
+
+                {/* dotted canvas */}
+                <div
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '16 / 9',
+                    backgroundImage: `radial-gradient(${t.dots} 1.2px, transparent 1.2px)`,
+                    backgroundSize: '18px 18px',
+                  }}
+                >
+                  <svg viewBox={`0 0 ${VB_W} ${VB_H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
+                    {STAGES.slice(0, -1).map((_, i) => (
+                      <Wire key={i} i={i} prog={prog} t={t} />
+                    ))}
+                  </svg>
+
+                  {STAGES.map((s, i) => {
+                    const reached = i <= active;
+                    const on = i === active;
+                    return (
+                      <motion.button
+                        key={s.step}
+                        type="button"
+                        onClick={() => goTo(i)}
+                        aria-label={`${s.step}: ${s.title}`}
+                        data-magnetic="off"
+                        initial={false}
+                        animate={{ scale: on ? 1.06 : 1 }}
+                        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                        style={{
+                          position: 'absolute',
+                          left: `${NODE_X[i]}%`,
+                          top: `${NODE_Y[i]}%`,
+                          width: `${NODE_W}%`,
+                          height: `${NODE_H}%`,
+                          boxSizing: 'border-box',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'clamp(6px, 0.8vw, 10px)',
+                          padding: '0 clamp(6px, 0.8vw, 12px)',
+                          borderRadius: 14,
+                          border: `1.5px solid ${on ? GOLD : reached ? 'transparent' : t.nodeOffBorder}`,
+                          backgroundColor: reached ? t.node : t.nodeOff,
+                          color: reached ? '#F4F1EA' : t.nodeOffText,
+                          boxShadow: on ? '0 14px 30px rgba(0,0,0,0.28)' : 'none',
+                          cursor: 'pointer',
+                          font: 'inherit',
+                          textAlign: 'left',
+                          transition: 'background-color 0.35s, color 0.35s, border-color 0.35s',
+                          zIndex: on ? 2 : 1,
+                        }}
+                      >
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            width: 'clamp(22px, 2.2vw, 30px)',
+                            height: 'clamp(22px, 2.2vw, 30px)',
+                            borderRadius: 8,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 'clamp(0.65rem, 0.8vw, 0.85rem)',
+                            backgroundColor: reached ? 'rgba(215,196,158,0.16)' : 'transparent',
+                            color: reached ? GOLD : 'inherit',
+                            border: reached ? 'none' : `1px solid ${t.nodeOffBorder}`,
+                          }}
+                        >
+                          {s.glyph}
+                        </span>
+                        <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 'clamp(0.68rem, 0.95vw, 0.95rem)', fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                            {s.step}
+                          </span>
+                          <span className="mono" style={{ fontSize: 'clamp(0.48rem, 0.55vw, 0.58rem)', letterSpacing: '0.1em', opacity: 0.6, whiteSpace: 'nowrap' }}>
+                            {String(i + 1).padStart(2, '0')} · {s.tools.length} TOOLS
+                          </span>
+                        </span>
+                        {/* status dot */}
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: 7,
+                            right: 7,
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            backgroundColor: reached ? GREEN : t.nodeOffBorder,
+                            transition: 'background-color 0.35s',
+                          }}
+                        />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Node details (like the panel that opens when you click a node) */}
+              <div
+                style={{
+                  position: 'relative',
+                  borderRadius: 22,
+                  backgroundColor: panelBg,
+                  color: '#F4F1EA',
+                  padding: isShort ? '1rem 1.25rem' : 'clamp(1.1rem, 2.2vh, 1.5rem) clamp(1.25rem, 2vw, 1.75rem)',
+                  boxShadow: '0 30px 60px rgba(0,0,0,0.22)',
+                  overflow: 'hidden',
+                  minHeight: isShort ? 128 : 'clamp(140px, 20vh, 170px)',
+                }}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={active}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.28, ease: EASE }}
+                  >
+                    <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: '0.6rem', letterSpacing: '0.14em', color: GOLD }}>
+                      <span>
+                        STEP {String(active + 1).padStart(2, '0')} · {cur.step.toUpperCase()}
+                      </span>
+                      <span style={{ color: 'rgba(244,241,234,0.5)' }}>OUTPUT ✓</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.9rem', flexWrap: 'wrap', margin: '0.55rem 0 0.8rem' }}>
+                      <h3 style={{ fontSize: isTablet ? 'clamp(1.2rem, 2.4vw, 1.6rem)' : 'clamp(1.35rem, 1.9vw, 1.9rem)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05, margin: 0 }}>
+                        {cur.title}
+                      </h3>
+                      {!isShort && (
+                        <span style={{ fontSize: '0.9rem', color: 'rgba(244,241,234,0.65)' }}>{cur.outcome}</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {cur.tools.map((tool, j) => (
+                        <motion.span
+                          key={tool}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.05 + j * 0.03, ease: EASE }}
+                          className="mono"
+                          style={{
+                            fontSize: '0.66rem',
+                            padding: '6px 11px',
+                            borderRadius: 999,
+                            letterSpacing: '0.02em',
+                            backgroundColor: j === 0 ? GOLD : 'rgba(244,241,234,0.08)',
+                            color: j === 0 ? '#121018' : 'rgba(244,241,234,0.9)',
+                            border: j === 0 ? 'none' : '1px solid rgba(244,241,234,0.12)',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {tool}
+                        </motion.span>
+                      ))}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Wires */}
-        <svg
-          aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}
-        >
-          {paths.map((d, w) => (
-            <g key={`${w}-${runId}`}>
-              <path d={d} fill="none" stroke={t.wire} strokeWidth={2} strokeDasharray="4 6" />
-              <motion.path
-                d={d}
-                fill="none"
-                stroke={t.wireOn}
-                strokeWidth={wireHot(w) ? 3 : 2}
-                strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: wireLit(w) ? 1 : 0, opacity: hovered !== null && !wireHot(w) ? 0.35 : 1 }}
-                transition={{ pathLength: { duration: STEP_MS / 1000, ease: 'easeInOut' }, opacity: { duration: 0.3 } }}
-              />
-              {finished && (
-                <circle r={wireHot(w) ? 4.5 : 3.5} fill={t.wireOn}>
-                  <animateMotion dur={`${1.6 + (w % 2) * 0.3}s`} repeatCount="indefinite" path={d} begin={`${w * 0.25}s`} />
-                </circle>
-              )}
-            </g>
-          ))}
-        </svg>
-
-        {/* Nodes */}
-        <div
-          style={{
-            position: 'relative',
-            display: 'grid',
-            gridTemplateColumns: '64px repeat(4, minmax(0, 1fr)) 64px',
-            columnGap: 'clamp(22px, 2.6vw, 56px)',
-            alignItems: 'center',
-          }}
-        >
-          <Terminal label="✦" sub="YOUR IDEA" done={isDone(0) || step >= 1} nodeRef={(el) => (nodeRefs.current[0] = el)} t={t} isDark={isDark} />
-          {STAGES.map((s, i) => (
-            <StageNode
-              key={s.title}
-              stage={s}
-              index={i}
-              done={isDone(i + 1)}
-              running={isRunning(i + 1)}
-              dim={hovered !== null && hovered !== i}
-              dimOpacity={isDark ? 0.45 : 0.72}
-              onEnter={() => setHovered(i)}
-              onLeave={() => setHovered(null)}
-              nodeRef={(el) => (nodeRefs.current[i + 1] = el)}
-            />
-          ))}
-          <Terminal label="✓" sub="IN PRODUCTION" done={finished} nodeRef={(el) => (nodeRefs.current[NODE_COUNT - 1] = el)} t={t} isDark={isDark} />
-        </div>
-      </div>
-
-      {/* Languages */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-10% 0px' }}
-        transition={{ duration: 0.8, ease: EASE }}
-        style={{ marginTop: '3.5rem', display: 'flex', gap: '3rem', alignItems: 'center', flexWrap: 'wrap' }}
-      >
-        <span className="mono" style={{ color: t.muted, fontSize: '0.7rem', letterSpacing: '0.15em' }}>LANGUAGES</span>
-        {LANGUAGES.map((l) => (
-          <div key={l.lang} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <span style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.01em', color: t.text }}>{l.lang}</span>
-            <span className="mono" style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: t.muted, textTransform: 'uppercase' }}>{l.level}</span>
-          </div>
-        ))}
-      </motion.div>
-    </section>
+      </section>
+    </div>
   );
 }
