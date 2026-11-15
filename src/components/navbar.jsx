@@ -49,13 +49,18 @@ function useActiveSection() {
       { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
     );
     els.forEach((el) => el && io.observe(el));
+    // Use a cached height: on mobile, innerHeight changes as the URL bar hides
+    let vh = window.innerHeight;
+    const onResize = () => { vh = window.innerHeight; };
+    window.addEventListener('resize', onResize, { passive: true });
     const onScroll = () => {
-      if (window.scrollY < window.innerHeight * 0.4) setActive(-1);
+      if (window.scrollY < vh * 0.4) setActive((a) => (a === -1 ? a : -1));
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       io.disconnect();
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
   return active;
@@ -314,7 +319,17 @@ export default function Navbar() {
 
                   {!isTiny && <span style={{ width: 1, height: 18, backgroundColor: LINE }} />}
 
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: isMobile ? 0 : 150 }}>
+                  {/* Fixed width on mobile: if the label changes the island's width, the
+                      centred island moves its left edge, so the avatar's landing
+                      spot slides away while the portrait is flying to it (= jerk) */}
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      ...(isMobile ? { width: isTiny ? 112 : 142, flexShrink: 0 } : { minWidth: 150 }),
+                    }}
+                  >
                     {!isTiny && <ProgressRing />}
                     <Roll k={current ? current.id : 'top'} style={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.005em' }}>
                       {current ? (

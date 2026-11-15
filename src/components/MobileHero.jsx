@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, MapPin } from 'lucide-react';
 
@@ -51,8 +51,24 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const line1X = useTransform(scrollYProgress, [0, 1], ['0%', '-22%']);
   const line2X = useTransform(scrollYProgress, [0, 1], ['0%', '22%']);
-  const photoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
-  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
+  // NOTE: the portrait no longer zooms and the video no longer scales on scroll.
+  // The portrait is the take-off point for the fly-to-navbar: scaling it moves
+  // its rect every frame, so the flying copy chases a moving target (= jerk).
+  // Scaling a filtered, full-screen video each frame also drops frames on phones.
+
+  /* Pause the background video once the hero is off screen (saves decode/paint while scrolling) */
+  const videoRef = useRef(null);
+  useEffect(() => {
+    const v = videoRef.current;
+    const hero = heroRef?.current;
+    if (!v || !hero) return undefined;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) v.play?.().catch(() => {});
+      else v.pause?.();
+    });
+    io.observe(hero);
+    return () => io.disconnect();
+  }, [heroRef]);
 
   const nameStyle = {
     fontFamily: "'Space Grotesk', sans-serif",
@@ -84,25 +100,27 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
       }}
     >
       {/* Background video */}
-      <motion.video
+      <video
+        ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
+        preload="metadata"
         style={{
           position: 'absolute',
           inset: 0,
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          opacity: 0.12,
-          filter: 'brightness(0.6)',
+          // brightness(0.6) at 0.12 opacity ≈ plain 0.08 opacity — no per-frame filter
+          opacity: 0.08,
           pointerEvents: 'none',
-          scale: videoScale,
+          transform: 'translateZ(0)',
         }}
       >
         <source src={bgVideo} type="video/mp4" />
-      </motion.video>
+      </video>
 
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* Status row */}
@@ -150,7 +168,7 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
                 initial={{ y: '100%' }}
                 animate={{ y: '0%' }}
                 transition={{ delay: D + 0.15, duration: 1, ease: EASE }}
-                style={{ ...nameStyle, x: line1X, fontSize: 'min(16vw, 102px)' }}
+                style={{ ...nameStyle, x: line1X, fontSize: 'min(16vw, 102px)', willChange: 'transform' }}
               >
                 {FIRST.toUpperCase()}
               </motion.div>
@@ -160,7 +178,7 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
                 initial={{ y: '100%' }}
                 animate={{ y: '0%' }}
                 transition={{ delay: D + 0.25, duration: 1, ease: EASE }}
-                style={{ ...nameStyle, x: line2X }}
+                style={{ ...nameStyle, x: line2X, willChange: 'transform' }}
               >
                 {LAST.toUpperCase()}
               </motion.div>
@@ -185,9 +203,10 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
               maxWidth: '110%',
               objectFit: 'contain',
               objectPosition: 'bottom',
-              scale: photoScale,
               transformOrigin: 'bottom center',
+              // static now, so the shadow is drawn once and cached on its own layer
               filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.35))',
+              willChange: 'transform',
             }}
           />
 
