@@ -189,6 +189,8 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
           <motion.img
             ref={photoRef}
             src={profileImg}
+            fetchPriority="high"
+            loading="eager"
             alt={`${FIRST} ${LAST}`}
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}

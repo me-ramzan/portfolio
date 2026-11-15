@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { MapPin, Mail, Phone, ArrowRight, ArrowUpRight, ArrowDown } from 'lucide-react';
-import profileImg from '../assets/images/ramzan.png';
+import profileImg from '../assets/images/ramzan.webp';
 import bgVideo from '../assets/videos/bg-video.mp4';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -192,11 +192,34 @@ export default function Hero() {
     cloneBg.style.opacity = isMobile ? '0' : '1';
     clone.style.boxShadow = isMobile ? 'none' : '0 20px 50px rgba(0,0,0,0.3)';
 
+    // Mobile: measure once per flight instead of every frame (stops the jerk)
+    let m = null;
+    const measure = () => {
+      const slotEl = document.querySelector('[data-nav-avatar]');
+      if (!slotEl) return null;
+      const r = card.getBoundingClientRect();
+      const y = window.scrollY;
+      let fadeStart = 0;
+      if (cover) {
+        const cr = cover.getBoundingClientRect();
+        fadeStart = clamp01((cr.bottom - cr.height * 0.32 - r.top) / r.height) * 100;
+      }
+      return { left: r.left, pageTop: r.top + y, width: r.width, height: r.height, fadeStart, slot: slotEl.getBoundingClientRect() };
+    };
+    let shadowOn = null;
+    const setShadow = (on) => {
+      if (on === shadowOn) return;
+      shadowOn = on;
+      cloneImg.style.filter = on ? 'drop-shadow(0 20px 30px rgba(0,0,0,0.35))' : 'none';
+      clone.style.boxShadow = on ? 'none' : '0 6px 16px rgba(0,0,0,0.28)';
+    };
+
     const render = (q) => {
       if (q <= 0.002) {
         wrap.style.visibility = '';
         clone.style.opacity = '0';
         setDock(false);
+        m = null;
         return;
       }
       const slot = document.querySelector('[data-nav-avatar]');
@@ -207,8 +230,17 @@ export default function Hero() {
         return;
       }
       setDock(false);
-      const a = card.getBoundingClientRect();
-      const b = slot.getBoundingClientRect();
+      let a;
+      let b;
+      if (isMobile) {
+        if (!m) m = measure();
+        if (!m) return;
+        a = { left: m.left, top: m.pageTop - window.scrollY, width: m.width, height: m.height };
+        b = m.slot;
+      } else {
+        a = card.getBoundingClientRect();
+        b = slot.getBoundingClientRect();
+      }
       const e = reduce ? 1 : flyEase(q);
       const lerp = (x, y) => x + (y - x) * e;
       const s = clone.style;
@@ -222,15 +254,13 @@ export default function Hero() {
         // Cut-out photo: start transparent (card shows through), grow a disc
         // behind it, and match the card's bottom fade so the first frame is identical
         cloneBg.style.opacity = String(Math.min(1, e * 1.6));
-        const cr = cover.getBoundingClientRect();
-        const start = clamp01((cr.bottom - cr.height * 0.32 - a.top) / a.height) * 100;
         const endA = 1 - 0.9 * Math.max(0, 1 - e * 2.5);
-        const mask = endA >= 0.999 ? 'none' : `linear-gradient(to bottom, #000 ${start.toFixed(1)}%, rgba(0,0,0,${endA.toFixed(3)}) 100%)`;
-        s.webkitMaskImage = mask;
-        s.maskImage = mask;
-        const sh = 1 - e;
-        cloneImg.style.filter = sh > 0.05 ? `drop-shadow(0 ${20 * sh}px ${30 * sh}px rgba(0,0,0,${0.35 * sh}))` : 'none';
-        s.boxShadow = e > 0.05 ? `0 ${10 * e}px ${24 * e}px rgba(0,0,0,${0.28 * e})` : 'none';
+        const mask = endA >= 0.999 ? 'none' : `linear-gradient(to bottom, #000 ${m.fadeStart.toFixed(1)}%, rgba(0,0,0,${endA.toFixed(3)}) 100%)`;
+        if (s.maskImage !== mask) {
+          s.webkitMaskImage = mask;
+          s.maskImage = mask;
+        }
+        setShadow(e < 0.3);
       }
       s.opacity = '1';
     };
@@ -261,10 +291,14 @@ export default function Hero() {
     };
     const onResize = () => {
       vh = root.clientHeight || window.innerHeight;
+      m = null;
       kick();
     };
     // the menu opening/closing moves the slot — re-measure afterwards
-    const onMenu = () => kick();
+    const onMenu = () => {
+      m = null;
+      kick();
+    };
 
     kick();
     window.addEventListener('scroll', kick, { passive: true });
@@ -352,6 +386,8 @@ export default function Hero() {
           ref={cloneImgRef}
           src={profileImg}
           alt=""
+          loading="eager"
+          decoding="sync"
           draggable={false}
           style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
         />
@@ -652,6 +688,8 @@ export default function Hero() {
                     <motion.img
                       src={profileImg}
                       alt="Muhammad Ramzan"
+                      fetchPriority="high"
+                      loading="eager"
                       initial={{ scale: 1.2 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: D + 0.15, duration: 1.4, ease: EASE }}

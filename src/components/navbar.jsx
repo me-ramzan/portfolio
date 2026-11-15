@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
-import profileImg from '../assets/images/ramzan.png';
+import profileImg from '../assets/images/ramzan.webp';
 import { INTRO_DELAY } from './preloader';
 import { useIsMobile, useIsTiny, useIsTouch, useIsDark, EASE } from '../lib/ui';
 
