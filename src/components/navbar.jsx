@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
+import profileImg from '../assets/images/ramzan.png';
 import { INTRO_DELAY } from './preloader';
 import { useIsMobile, useIsTiny, useIsTouch, EASE } from '../lib/ui';
 
@@ -116,15 +117,32 @@ export default function Navbar() {
   const isTouch = useIsTouch();
   const active = useActiveSection();
   const [open, setOpen] = useState(false);
+
+  // The hero portrait flies up and lands here as an avatar (desktop)
+  const [docked, setDocked] = useState(() => (typeof window !== 'undefined' ? !!window.__heroDocked : false));
+  useEffect(() => {
+    const onDock = (e) => setDocked(!!e.detail);
+    window.addEventListener('hero-dock', onDock);
+    return () => window.removeEventListener('hero-dock', onDock);
+  }, []);
   const [copied, setCopied] = useState(false);
+
+  // Keep the scrollbar's space reserved at all times, so freezing the page
+  // never changes its width (a width change re-lays out the whole site and
+  // makes GSAP recalculate every locked section mid-animation = jerk)
+  useEffect(() => {
+    document.documentElement.style.scrollbarGutter = 'stable';
+  }, []);
 
   // Freeze the page + Escape to close while open
   useEffect(() => {
     if (!open) return undefined;
     const html = document.documentElement;
     const prev = html.style.overflow;
-    html.style.overflow = 'hidden';
-    window.lenis?.stop?.();
+    // With smooth scrolling, pausing Lenis is enough to freeze the page;
+    // only fall back to hiding overflow when Lenis isn't there (e.g. touch)
+    if (window.lenis?.stop) window.lenis.stop();
+    else html.style.overflow = 'hidden';
     const onKey = (e) => e.key === 'Escape' && setOpen(false);
     window.addEventListener('keydown', onKey);
     return () => {
@@ -197,6 +215,7 @@ export default function Navbar() {
             aria-label="Site"
             transition={SPRING}
             style={{
+              position: 'relative',
               pointerEvents: 'auto',
               backgroundColor: INK,
               color: TEXT,
@@ -208,6 +227,39 @@ export default function Navbar() {
               transform: 'translateZ(0)',
             }}
           >
+            {/* Landing spot for the hero portrait (desktop only).
+                Always mounted (never re-created), so opening/closing the menu
+                doesn't re-decode the image mid-animation. Sits over "Mr.". */}
+            {!isMobile && (
+              <span
+                data-nav-avatar
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: 16,
+                  top: 10,
+                  width: 30,
+                  height: 30,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  backgroundColor: GOLD,
+                  boxShadow: '0 0 0 1px rgba(215,196,158,0.5)',
+                  zIndex: 2,
+                  pointerEvents: 'none',
+                  opacity: docked && !open ? 1 : 0,
+                  // fade back in only after the menu has finished closing
+                  transition: `opacity ${docked && !open ? '0.25s ease 0.32s' : '0.12s ease 0s'}`,
+                }}
+              >
+                <img
+                  src={profileImg}
+                  alt=""
+                  decoding="async"
+                  draggable={false}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+                />
+              </span>
+            )}
             <AnimatePresence mode="popLayout" initial={false}>
               {!open ? (
                 /* ---------- Collapsed pill ---------- */
@@ -224,9 +276,9 @@ export default function Navbar() {
                     onClick={() => jump(null)}
                     className="mono"
                     aria-label="Back to top"
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: GOLD, fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.06em' }}
+                    style={{ position: 'relative', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: GOLD, fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.06em' }}
                   >
-                    Mr.
+                    <span style={{ opacity: docked && !isMobile ? 0 : 1, transition: 'opacity 0.25s' }}>Mr.</span>
                   </button>
 
                   {!isTiny && <span style={{ width: 1, height: 18, backgroundColor: LINE }} />}

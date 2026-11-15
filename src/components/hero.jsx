@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { MapPin, Mail, Phone, ArrowRight, ArrowUpRight, ArrowDown } from 'lucide-react';
 import profileImg from '../assets/images/ramzan.png';
@@ -14,6 +15,11 @@ gsap.registerPlugin(ScrollTrigger);
 /* Everything below starts exactly as the preloader curtain lifts
    (shorter on repeat visits — the preloader decides and exports it) */
 const D = INTRO_DELAY;
+
+/* Portrait → navbar: how far you scroll (in screen heights) while the portrait
+   flies up and docks in the navbar as a small avatar */
+const FLY_SCREENS = 0.6;
+const flyEase = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
 const TAGLINES = [
   'Building intelligent systems at the intersection of AI Automation, and full-stack engineering.',
@@ -137,6 +143,72 @@ export default function Hero() {
     tiltX.set(0);
     tiltY.set(0);
   };
+
+  /* Portrait → navbar flight (desktop).
+     A fixed copy of the portrait travels from the card to the navbar slot
+     ([data-nav-avatar]); once it lands, the navbar shows its own avatar. */
+  const portraitWrapRef = useRef(null);
+  const portraitCardRef = useRef(null);
+  const cloneRef = useRef(null);
+  useEffect(() => {
+    if (isMobile) return undefined;
+    const clone = cloneRef.current;
+    const wrap = portraitWrapRef.current;
+    const card = portraitCardRef.current;
+    if (!clone || !wrap || !card) return undefined;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let raf = 0;
+    let docked = null;
+    const setDock = (v) => {
+      if (v === docked) return;
+      docked = v;
+      window.__heroDocked = v;
+      window.dispatchEvent(new CustomEvent('hero-dock', { detail: v }));
+    };
+    const update = () => {
+      raf = 0;
+      const p = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * FLY_SCREENS)));
+      const slot = document.querySelector('[data-nav-avatar]');
+      if (p <= 0.002) {
+        wrap.style.opacity = '';
+        clone.style.opacity = '0';
+        setDock(false);
+        return;
+      }
+      wrap.style.opacity = '0';
+      // landed (or the menu is open and the slot is gone): navbar shows its own avatar
+      if (p >= 1 || !slot) {
+        clone.style.opacity = '0';
+        setDock(p >= 1);
+        return;
+      }
+      setDock(false);
+      const a = card.getBoundingClientRect();
+      const b = slot.getBoundingClientRect();
+      const e = reduce ? 1 : flyEase(p);
+      const lerp = (x, y) => x + (y - x) * e;
+      clone.style.left = `${lerp(a.left, b.left)}px`;
+      clone.style.top = `${lerp(a.top, b.top)}px`;
+      clone.style.width = `${lerp(a.width, b.width)}px`;
+      clone.style.height = `${lerp(a.height, b.height)}px`;
+      clone.style.borderRadius = `${lerp(28, b.width / 2)}px`;
+      clone.style.opacity = '1';
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      wrap.style.opacity = '';
+      clone.style.opacity = '0';
+      setDock(false);
+    };
+  }, [isMobile]);
 
   /* Live Dubai time */
   const fmtTime = () =>
@@ -436,7 +508,7 @@ export default function Hero() {
               </div>
 
               {/* Portrait card */}
-              <motion.div style={{ y: portraitY, perspective: 900 }}>
+              <motion.div ref={portraitWrapRef} style={{ y: portraitY, perspective: 900 }}>
                 <motion.div style={{ rotateX, rotateY, transformStyle: 'preserve-3d', position: 'relative' }}>
                   {/* Offset gold frame */}
                   <motion.div
@@ -447,6 +519,7 @@ export default function Hero() {
                     style={{ position: 'absolute', inset: 0, borderRadius: 28, border: `1px solid ${t.line}` }}
                   />
                   <motion.div
+                    ref={portraitCardRef}
                     initial={{ clipPath: 'inset(100% 0% 0% 0% round 28px)' }}
                     animate={{ clipPath: 'inset(0% 0% 0% 0% round 28px)' }}
                     transition={{ delay: D + 0.15, duration: 1.1, ease: EASE }}
@@ -583,6 +656,31 @@ export default function Hero() {
           `}</style>
         </section>
       </div>
+
+      {/* Flying portrait (portal so no transformed parent can break position: fixed) */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={cloneRef}
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              left: 0,
+              top: 0,
+              width: 0,
+              height: 0,
+              zIndex: 1001,
+              overflow: 'hidden',
+              opacity: 0,
+              pointerEvents: 'none',
+              backgroundColor: t.profileBg,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            }}
+          >
+            <img src={profileImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
