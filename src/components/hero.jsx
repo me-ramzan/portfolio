@@ -19,6 +19,7 @@ const D = INTRO_DELAY;
 /* Portrait → navbar: how far you scroll (in screen heights) while the portrait
    flies up and docks in the navbar as a small avatar */
 const FLY_SCREENS = 0.6;
+const FLY_SCREENS_MOBILE = 0.5;
 const flyEase = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
 const TAGLINES = [
@@ -144,67 +145,137 @@ export default function Hero() {
     tiltY.set(0);
   };
 
-  /* Portrait → navbar flight (desktop).
-     A fixed copy of the portrait travels from the card to the navbar slot
-     ([data-nav-avatar]); once it lands, the navbar shows its own avatar. */
+  /* Portrait → navbar flight (desktop + mobile).
+     A fixed copy of the portrait travels from the photo to the navbar slot
+     ([data-nav-avatar]); once it lands, the navbar shows its own avatar.
+     The hand-off is done with a <html data-hero-docked> attribute set in the
+     same frame the clone hides, so there is never a blank / doubled frame. */
   const portraitWrapRef = useRef(null);
   const portraitCardRef = useRef(null);
+  const mPhotoRef = useRef(null); // mobile: the cut-out portrait
+  const mCoverRef = useRef(null); // mobile: the cover card (for its bottom fade)
   const cloneRef = useRef(null);
+  const cloneBgRef = useRef(null);
+  const cloneImgRef = useRef(null);
   useEffect(() => {
-    if (isMobile) return undefined;
     const clone = cloneRef.current;
-    const wrap = portraitWrapRef.current;
-    const card = portraitCardRef.current;
-    if (!clone || !wrap || !card) return undefined;
+    const cloneBg = cloneBgRef.current;
+    const cloneImg = cloneImgRef.current;
+    const wrap = isMobile ? mPhotoRef.current : portraitWrapRef.current;
+    const card = isMobile ? mPhotoRef.current : portraitCardRef.current;
+    const cover = isMobile ? mCoverRef.current : null;
+    if (!clone || !cloneBg || !cloneImg || !wrap || !card) return undefined;
+
+    const root = document.documentElement;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const screens = isMobile ? FLY_SCREENS_MOBILE : FLY_SCREENS;
+    // clientHeight doesn't change when the mobile URL bar shows/hides,
+    // so progress never jumps mid-scroll
+    let vh = root.clientHeight || window.innerHeight;
     let raf = 0;
+    let sp = null; // smoothed progress
+    let lastT = 0;
+    let lastY = -1;
+    let idle = 0;
     let docked = null;
+
     const setDock = (v) => {
       if (v === docked) return;
       docked = v;
       window.__heroDocked = v;
+      root.toggleAttribute('data-hero-docked', v);
       window.dispatchEvent(new CustomEvent('hero-dock', { detail: v }));
     };
-    const update = () => {
-      raf = 0;
-      const p = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * FLY_SCREENS)));
-      const slot = document.querySelector('[data-nav-avatar]');
-      if (p <= 0.002) {
-        wrap.style.opacity = '';
+    const clamp01 = (x) => Math.min(1, Math.max(0, x));
+
+    // Static per-mode styles
+    cloneBg.style.opacity = isMobile ? '0' : '1';
+    clone.style.boxShadow = isMobile ? 'none' : '0 20px 50px rgba(0,0,0,0.3)';
+
+    const render = (q) => {
+      if (q <= 0.002) {
+        wrap.style.visibility = '';
         clone.style.opacity = '0';
         setDock(false);
         return;
       }
-      wrap.style.opacity = '0';
-      // landed (or the menu is open and the slot is gone): navbar shows its own avatar
-      if (p >= 1 || !slot) {
+      const slot = document.querySelector('[data-nav-avatar]');
+      wrap.style.visibility = 'hidden';
+      if (q >= 1 || !slot) {
         clone.style.opacity = '0';
-        setDock(p >= 1);
+        setDock(q >= 1);
         return;
       }
       setDock(false);
       const a = card.getBoundingClientRect();
       const b = slot.getBoundingClientRect();
-      const e = reduce ? 1 : flyEase(p);
+      const e = reduce ? 1 : flyEase(q);
       const lerp = (x, y) => x + (y - x) * e;
-      clone.style.left = `${lerp(a.left, b.left)}px`;
-      clone.style.top = `${lerp(a.top, b.top)}px`;
-      clone.style.width = `${lerp(a.width, b.width)}px`;
-      clone.style.height = `${lerp(a.height, b.height)}px`;
-      clone.style.borderRadius = `${lerp(28, b.width / 2)}px`;
-      clone.style.opacity = '1';
+      const s = clone.style;
+      s.left = `${lerp(a.left, b.left)}px`;
+      s.top = `${lerp(a.top, b.top)}px`;
+      s.width = `${lerp(a.width, b.width)}px`;
+      s.height = `${lerp(a.height, b.height)}px`;
+      s.borderRadius = `${lerp(isMobile ? 0 : 28, b.width / 2)}px`;
+
+      if (isMobile && cover) {
+        // Cut-out photo: start transparent (card shows through), grow a disc
+        // behind it, and match the card's bottom fade so the first frame is identical
+        cloneBg.style.opacity = String(Math.min(1, e * 1.6));
+        const cr = cover.getBoundingClientRect();
+        const start = clamp01((cr.bottom - cr.height * 0.32 - a.top) / a.height) * 100;
+        const endA = 1 - 0.9 * Math.max(0, 1 - e * 2.5);
+        const mask = endA >= 0.999 ? 'none' : `linear-gradient(to bottom, #000 ${start.toFixed(1)}%, rgba(0,0,0,${endA.toFixed(3)}) 100%)`;
+        s.webkitMaskImage = mask;
+        s.maskImage = mask;
+        const sh = 1 - e;
+        cloneImg.style.filter = sh > 0.05 ? `drop-shadow(0 ${20 * sh}px ${30 * sh}px rgba(0,0,0,${0.35 * sh}))` : 'none';
+        s.boxShadow = e > 0.05 ? `0 ${10 * e}px ${24 * e}px rgba(0,0,0,${0.28 * e})` : 'none';
+      }
+      s.opacity = '1';
     };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
+
+    // rAF loop that runs while scrolling (and while the smoothing settles),
+    // then sleeps. Smoother than raw scroll events on touch devices.
+    const frame = (now) => {
+      raf = 0;
+      const target = clamp01(window.scrollY / (vh * screens));
+      const dt = lastT ? Math.min(64, now - lastT) : 16.7;
+      lastT = now;
+      if (sp === null || !isMobile || reduce) sp = target;
+      else {
+        const k = 1 - Math.pow(1 - 0.24, dt / 16.7);
+        sp += (target - sp) * k;
+        if (Math.abs(target - sp) < 0.0008) sp = target;
+      }
+      render(sp);
+      const y = window.scrollY;
+      idle = sp !== target || y !== lastY ? 0 : idle + 1;
+      lastY = y;
+      if (idle < 10) raf = requestAnimationFrame(frame);
+      else lastT = 0;
     };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    const kick = () => {
+      idle = 0;
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+    const onResize = () => {
+      vh = root.clientHeight || window.innerHeight;
+      kick();
+    };
+    // the menu opening/closing moves the slot — re-measure afterwards
+    const onMenu = () => kick();
+
+    kick();
+    window.addEventListener('scroll', kick, { passive: true });
+    window.addEventListener('resize', onResize);
+    window.addEventListener('nav-menu', onMenu);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      wrap.style.opacity = '';
+      window.removeEventListener('scroll', kick);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('nav-menu', onMenu);
+      wrap.style.visibility = '';
       clone.style.opacity = '0';
       setDock(false);
     };
@@ -253,14 +324,59 @@ export default function Hero() {
     return () => trigger.kill(true);
   }, [isMobile]);
 
+  /* Flying portrait (portal so no transformed parent can break position: fixed) */
+  const flyingClone =
+    typeof document !== 'undefined' &&
+    createPortal(
+      <div
+        ref={cloneRef}
+        className="hero-fly-clone"
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          zIndex: 1001,
+          overflow: 'hidden',
+          opacity: 0,
+          pointerEvents: 'none',
+          willChange: 'left, top, width, height',
+          contain: 'layout paint',
+          transform: 'translateZ(0)',
+        }}
+      >
+        <div ref={cloneBgRef} style={{ position: 'absolute', inset: 0, backgroundColor: t.profileBg }} />
+        <img
+          ref={cloneImgRef}
+          src={profileImg}
+          alt=""
+          draggable={false}
+          style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+        />
+      </div>,
+      document.body
+    );
+
   // Stable outer wrapper + keyed inner wrapper: lets React swap desktop <-> mobile
   // safely even though GSAP wraps the pinned desktop section in a pin-spacer.
   if (isMobile) {
     return (
       <div style={{ display: 'contents' }}>
         <div key="hero-mobile" style={{ display: 'contents' }}>
-          <MobileHero t={t} heroRef={heroRef} profileImg={profileImg} bgVideo={bgVideo} taglines={TAGLINES} startDelay={D} />
+          <MobileHero
+            t={t}
+            heroRef={heroRef}
+            photoRef={mPhotoRef}
+            coverRef={mCoverRef}
+            profileImg={profileImg}
+            bgVideo={bgVideo}
+            taglines={TAGLINES}
+            startDelay={D}
+          />
         </div>
+        {flyingClone}
       </div>
     );
   }
@@ -657,30 +773,7 @@ export default function Hero() {
         </section>
       </div>
 
-      {/* Flying portrait (portal so no transformed parent can break position: fixed) */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <div
-            ref={cloneRef}
-            aria-hidden="true"
-            style={{
-              position: 'fixed',
-              left: 0,
-              top: 0,
-              width: 0,
-              height: 0,
-              zIndex: 1001,
-              overflow: 'hidden',
-              opacity: 0,
-              pointerEvents: 'none',
-              backgroundColor: t.profileBg,
-              boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-            }}
-          >
-            <img src={profileImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
-          </div>,
-          document.body
-        )}
+      {flyingClone}
     </div>
   );
 }

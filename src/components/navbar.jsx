@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import profileImg from '../assets/images/ramzan.png';
 import { INTRO_DELAY } from './preloader';
-import { useIsMobile, useIsTiny, useIsTouch, EASE } from '../lib/ui';
+import { useIsMobile, useIsTiny, useIsTouch, useIsDark, EASE } from '../lib/ui';
 
 /* ---- Edit here ---- */
 const SECTIONS = [
@@ -115,16 +115,35 @@ export default function Navbar() {
   const isMobile = useIsMobile();
   const isTiny = useIsTiny(); // 320–360px phones: drop the progress ring to save room
   const isTouch = useIsTouch();
+  const isDark = useIsDark();
+  const avatarBg = isDark ? GOLD : '#343148'; // same as the hero photo background
   const active = useActiveSection();
   const [open, setOpen] = useState(false);
+  // true for a moment after closing, so the avatar waits for the island to settle
+  const [closing, setClosing] = useState(false);
+  const closingTimer = useRef(0);
+  const closeMenu = () => {
+    clearTimeout(closingTimer.current);
+    setClosing(true);
+    setOpen(false);
+    closingTimer.current = setTimeout(() => setClosing(false), 650);
+  };
+  const openMenu = () => {
+    clearTimeout(closingTimer.current);
+    setClosing(false);
+    setOpen(true);
+  };
+  useEffect(() => () => clearTimeout(closingTimer.current), []);
 
-  // The hero portrait flies up and lands here as an avatar (desktop)
-  const [docked, setDocked] = useState(() => (typeof window !== 'undefined' ? !!window.__heroDocked : false));
-  useEffect(() => {
-    const onDock = (e) => setDocked(!!e.detail);
-    window.addEventListener('hero-dock', onDock);
-    return () => window.removeEventListener('hero-dock', onDock);
-  }, []);
+  // The hero portrait flies up and lands here as an avatar.
+  // Docking is read from <html data-hero-docked> in CSS (set by the Hero in the
+  // same frame its flying copy hides), so the swap never skips or doubles a frame.
+  // While the menu is busy (open or settling) the flying copy is hidden.
+  const busy = open || closing;
+  useLayoutEffect(() => {
+    document.documentElement.toggleAttribute('data-nav-busy', busy);
+    window.dispatchEvent(new CustomEvent('nav-menu', { detail: busy }));
+  }, [busy]);
   const [copied, setCopied] = useState(false);
 
   // Keep the scrollbar's space reserved at all times, so freezing the page
@@ -137,24 +156,33 @@ export default function Navbar() {
   // Freeze the page + Escape to close while open
   useEffect(() => {
     if (!open) return undefined;
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    // With smooth scrolling, pausing Lenis is enough to freeze the page;
-    // only fall back to hiding overflow when Lenis isn't there (e.g. touch)
-    if (window.lenis?.stop) window.lenis.stop();
-    else html.style.overflow = 'hidden';
-    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    // With smooth scrolling, pausing Lenis is enough to freeze the page.
+    // Without it (touch), block scroll gestures outside the menu instead of
+    // setting overflow:hidden — that resizes the mobile viewport / URL bar and
+    // makes every ScrollTrigger re-measure = the jerk on open/close.
+    const hasLenis = !!window.lenis?.stop;
+    if (hasLenis) window.lenis.stop();
+    const block = (e) => {
+      if (e.target.closest && e.target.closest('[data-lenis-prevent]')) return;
+      e.preventDefault();
+    };
+    if (!hasLenis) {
+      document.addEventListener('touchmove', block, { passive: false });
+      document.addEventListener('wheel', block, { passive: false });
+    }
+    const onKey = (e) => e.key === 'Escape' && closeMenu();
     window.addEventListener('keydown', onKey);
     return () => {
-      html.style.overflow = prev;
-      window.lenis?.start?.();
+      if (hasLenis) window.lenis.start?.();
+      document.removeEventListener('touchmove', block);
+      document.removeEventListener('wheel', block);
       window.removeEventListener('keydown', onKey);
     };
   }, [open]);
 
   const jump = (id) => {
     if (open) {
-      setOpen(false);
+      closeMenu();
       setTimeout(() => goTo(id), 420);
     } else goTo(id);
   };
@@ -180,7 +208,7 @@ export default function Navbar() {
         {open && (
           <motion.div
             key="scrim"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -212,6 +240,9 @@ export default function Navbar() {
         <LayoutGroup>
           <motion.nav
             layout
+            className="nav-island"
+            data-open={open ? '' : undefined}
+            data-closing={closing && !open ? '' : undefined}
             aria-label="Site"
             transition={SPRING}
             style={{
@@ -227,39 +258,39 @@ export default function Navbar() {
               transform: 'translateZ(0)',
             }}
           >
-            {/* Landing spot for the hero portrait (desktop only).
+            {/* Landing spot for the hero portrait (desktop + mobile).
                 Always mounted (never re-created), so opening/closing the menu
-                doesn't re-decode the image mid-animation. Sits over "Mr.". */}
-            {!isMobile && (
-              <span
-                data-nav-avatar
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  left: 16,
-                  top: 10,
-                  width: 30,
-                  height: 30,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  backgroundColor: GOLD,
-                  boxShadow: '0 0 0 1px rgba(215,196,158,0.5)',
-                  zIndex: 2,
-                  pointerEvents: 'none',
-                  opacity: docked && !open ? 1 : 0,
-                  // fade back in only after the menu has finished closing
-                  transition: `opacity ${docked && !open ? '0.25s ease 0.32s' : '0.12s ease 0s'}`,
-                }}
-              >
-                <img
-                  src={profileImg}
-                  alt=""
-                  decoding="async"
-                  draggable={false}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
-                />
-              </span>
-            )}
+                doesn't re-decode the image mid-animation. Sits over "Mr.".
+                It's a layout-aware motion element, so it isn't stretched while
+                the island resizes. Visibility is handled by CSS below. */}
+            <motion.span
+              layout
+              transition={SPRING}
+              data-nav-avatar
+              className="nav-avatar"
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: isTiny ? 12 : 16,
+                top: 10,
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                backgroundColor: avatarBg,
+                boxShadow: '0 0 0 1px rgba(215,196,158,0.5)',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }}
+            >
+              <img
+                src={profileImg}
+                alt=""
+                decoding="async"
+                draggable={false}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+              />
+            </motion.span>
             <AnimatePresence mode="popLayout" initial={false}>
               {!open ? (
                 /* ---------- Collapsed pill ---------- */
@@ -278,7 +309,7 @@ export default function Navbar() {
                     aria-label="Back to top"
                     style={{ position: 'relative', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: GOLD, fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.06em' }}
                   >
-                    <span style={{ opacity: docked && !isMobile ? 0 : 1, transition: 'opacity 0.25s' }}>Mr.</span>
+                    <span className="nav-mr">Mr.</span>
                   </button>
 
                   {!isTiny && <span style={{ width: 1, height: 18, backgroundColor: LINE }} />}
@@ -326,7 +357,7 @@ export default function Navbar() {
 
                   <button
                     type="button"
-                    onClick={() => setOpen(true)}
+                    onClick={openMenu}
                     aria-label="Open menu"
                     aria-expanded={false}
                     style={{
@@ -387,7 +418,7 @@ export default function Navbar() {
                     )}
                     <motion.button
                       type="button"
-                      onClick={() => setOpen(false)}
+                      onClick={closeMenu}
                       aria-label="Close menu"
                       autoFocus
                       whileHover={!isTouch ? { rotate: 90 } : undefined}
@@ -514,6 +545,19 @@ export default function Navbar() {
         </LayoutGroup>
 
       </motion.header>
+
+      <style>{`
+        /* Avatar ⇄ "Mr." hand-off, driven by <html data-hero-docked> */
+        .nav-avatar { opacity: 0; transition: opacity 0.12s ease; }
+        .nav-mr { transition: opacity 0.25s ease; }
+        /* landing: appear in the same frame the flying copy disappears */
+        html[data-hero-docked] .nav-island:not([data-open]) .nav-avatar { opacity: 1; transition: none; }
+        /* after closing the menu: wait for the island to shrink back first */
+        html[data-hero-docked] .nav-island[data-closing]:not([data-open]) .nav-avatar { transition: opacity 0.25s ease 0.22s; }
+        html[data-hero-docked] .nav-mr { opacity: 0; }
+        /* never let the flying copy hover over the menu while it opens/closes */
+        html[data-nav-busy] .hero-fly-clone { opacity: 0 !important; }
+      `}</style>
     </>
   );
 }

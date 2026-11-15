@@ -22,7 +22,7 @@ function useDubaiTime() {
   return time;
 }
 
-export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, startDelay = 3.1 }) {
+export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg, bgVideo, taglines, startDelay = 3.1 }) {
   const time = useDubaiTime();
   const D = startDelay;
   const isLight = t.text === '#080808';
@@ -129,6 +129,7 @@ export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, 
 
         {/* Cover card */}
         <motion.div
+          ref={coverRef}
           initial={{ opacity: 0, y: 40, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: D - 0.1, duration: 1, ease: EASE }}
@@ -166,8 +167,9 @@ export default function MobileHero({ t, heroRef, profileImg, bgVideo, taglines, 
             </div>
           </div>
 
-          {/* Portrait — in front of the name */}
+          {/* Portrait — in front of the name (also the take-off point for the fly-to-navbar) */}
           <motion.img
+            ref={photoRef}
             src={profileImg}
             alt={`${FIRST} ${LAST}`}
             initial={{ opacity: 0, y: 60 }}
