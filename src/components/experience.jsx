@@ -17,6 +17,44 @@ gsap.registerPlugin(ScrollTrigger);
 
 const ease = cubicBezier(0.75, 0, 0.25, 1);
 const MAX_MONTHS = 13; // longest tenure, used to scale the tenure bars
+const GOLD_HEX = '#D7C49E';
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const hasFinePointer = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+
+/* Decode effect: scrambles a text node and resolves it left to right.
+   Writes to the existing text node (nodeValue) so React keeps ownership of it. */
+const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*';
+const LOWER = 'abcdefghijklmnopqrstuvwxyz';
+function scrambleText(el, finalText, duration = 800, delay = 0) {
+  const node = el && el.firstChild;
+  if (!node || node.nodeType !== 3) return () => {};
+  let raf = 0;
+  let t0 = 0;
+  const tick = (now) => {
+    if (!t0) t0 = now + delay;
+    const p = Math.max(0, Math.min(1, (now - t0) / duration));
+    const revealed = Math.floor(finalText.length * p);
+    let out = '';
+    for (let i = 0; i < finalText.length; i++) {
+      const c = finalText[i];
+      if (i < revealed || c === ' ' || /[^A-Za-z0-9]/.test(c)) out += c;
+      else {
+        const set = c === c.toLowerCase() && /[a-z]/.test(c) ? LOWER : UPPER;
+        out += set[(Math.random() * set.length) | 0];
+      }
+    }
+    node.nodeValue = out;
+    if (p < 1) raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+  return () => {
+    cancelAnimationFrame(raf);
+    node.nodeValue = finalText;
+  };
+}
 
 const experiences = [
   {
@@ -173,6 +211,170 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
   const numberRef = useRef(null);
   const tagsRef = useRef([]);
   const highlightsRef = useRef([]);
+  const surfaceRef = useRef(null); // the visible card (motion.div)
+  const companyRef = useRef(null);
+  const roleRef = useRef(null);
+  const listRef = useRef(null);
+  const barRef = useRef(null);
+  const counterRef = useRef(null);
+  const magRefs = useRef([]); // wrappers around each tag that drift toward the cursor
+  const logoRef = useRef(null);
+
+  /* ---- Decode: company + role scramble into place when the card arrives ---- */
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    let stops = [];
+    const run = () => {
+      stops.forEach((s) => s());
+      stops = [
+        scrambleText(companyRef.current, exp.company.toUpperCase(), 700),
+        scrambleText(roleRef.current, exp.role, 900, 150),
+      ];
+    };
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({ trigger: cardRef.current, start: 'top 70%', onEnter: run });
+    }, cardRef);
+    return () => {
+      stops.forEach((s) => s());
+      ctx.revert();
+    };
+  }, [cardRef, exp.company, exp.role]);
+
+  /* ---- Contribution spotlight: points light up one at a time while this card is on top ---- */
+  useEffect(() => {
+    const list = listRef.current;
+    const items = highlightsRef.current.filter(Boolean);
+    if (!list || !items.length || prefersReducedMotion()) return;
+    const n = items.length;
+    const pad = (x) => String(x).padStart(2, '0');
+    let k = 0;
+    let timer = 0;
+    let startDelay = 0;
+    let hovering = false;
+
+    const show = (i) => {
+      items.forEach((li, j) => {
+        const on = i < 0 || j === i;
+        li.querySelectorAll('[data-dim]').forEach((el) => (el.style.opacity = on ? 1 : 0.35));
+        const txt = li.querySelector('[data-text]');
+        if (txt) txt.style.transform = i >= 0 && j === i ? 'translateX(6px)' : 'none';
+      });
+      const bar = barRef.current;
+      if (bar) {
+        if (i < 0) bar.style.opacity = 0;
+        else {
+          bar.style.opacity = 1;
+          bar.style.transform = `translateY(${items[i].offsetTop}px)`;
+          bar.style.height = `${items[i].offsetHeight}px`;
+        }
+      }
+      const c = counterRef.current?.firstChild;
+      if (c) c.nodeValue = i < 0 ? pad(n) : `${pad(i + 1)} / ${pad(n)}`;
+    };
+
+    const start = () => {
+      clearTimeout(startDelay);
+      clearInterval(timer);
+      // wait for the slide-in of the list to finish first
+      startDelay = setTimeout(() => {
+        k = 0;
+        show(k);
+        timer = setInterval(() => {
+          if (hovering) return;
+          k = (k + 1) % n;
+          show(k);
+        }, 1400); // time each contribution stays lit
+      }, 500); // short wait for the list to slide in first
+    };
+    const stop = () => {
+      clearTimeout(startDelay);
+      clearInterval(timer);
+      show(-1);
+    };
+
+    // hovering a point spotlights it and pauses the cycle
+    const enters = items.map((li, j) => {
+      const fn = () => {
+        hovering = true;
+        k = j;
+        show(j);
+      };
+      li.addEventListener('mouseenter', fn);
+      return fn;
+    });
+    const onLeave = () => (hovering = false);
+    list.addEventListener('mouseleave', onLeave);
+
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: cardRef.current,
+        start: 'top 40%',
+        endTrigger: nextRef?.current || cardRef.current,
+        end: nextRef?.current ? 'top 40%' : 'bottom top',
+        onToggle: (self) => (self.isActive ? start() : stop()),
+      });
+    }, cardRef);
+
+    return () => {
+      stop();
+      items.forEach((li, j) => li.removeEventListener('mouseenter', enters[j]));
+      list.removeEventListener('mouseleave', onLeave);
+      ctx.revert();
+    };
+  }, [cardRef, nextRef, exp.highlights.length]);
+
+  /* ---- Magnetic details: tags and logo drift toward the cursor ---- */
+  useEffect(() => {
+    const card = surfaceRef.current;
+    if (!card || isMobile || !hasFinePointer() || prefersReducedMotion()) return;
+    let raf = 0;
+    let mx = 0;
+    let my = 0;
+
+    const targets = () => [
+      ...magRefs.current.filter(Boolean).map((el) => ({ el, radius: 150, strength: 0.35, max: 12, tag: true })),
+      ...(logoRef.current ? [{ el: logoRef.current, radius: 280, strength: 0.18, max: 22 }] : []),
+    ];
+
+    const apply = () => {
+      raf = 0;
+      targets().forEach(({ el, radius, strength, max, tag }) => {
+        const [cx, cy] = el._mag || [0, 0]; // remove our own offset so it doesn't feed back
+        const r = el.getBoundingClientRect();
+        const dx = mx - (r.left + r.width / 2 - cx);
+        const dy = my - (r.top + r.height / 2 - cy);
+        const f = Math.max(0, 1 - Math.hypot(dx, dy) / radius) * strength;
+        const tx = Math.max(-max, Math.min(max, dx * f));
+        const ty = Math.max(-max, Math.min(max, dy * f));
+        el._mag = [tx, ty];
+        el.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+        if (tag && el.firstElementChild) el.firstElementChild.style.borderColor = f > 0.08 ? GOLD_HEX : '';
+      });
+    };
+    const onMove = (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      mx = e.clientX;
+      my = e.clientY;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    const onLeave = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      targets().forEach(({ el, tag }) => {
+        el._mag = [0, 0];
+        el.style.transform = 'translate3d(0,0,0)';
+        if (tag && el.firstElementChild) el.firstElementChild.style.borderColor = '';
+      });
+    };
+
+    card.addEventListener('pointermove', onMove);
+    card.addEventListener('pointerleave', onLeave);
+    return () => {
+      card.removeEventListener('pointermove', onMove);
+      card.removeEventListener('pointerleave', onLeave);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -226,7 +428,11 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
         top: 0,
         display: 'flex',
         alignItems: 'flex-end',
-        backgroundColor: t.bg,
+        // Only the first card's wrapper is filled: it stays stuck behind the whole
+        // stack and hides the WORK HISTORY heading. The others are transparent, so
+        // the empty strip above each rising card no longer shows as a dark box
+        // over the card underneath.
+        backgroundColor: index === 0 ? t.bg : 'transparent',
         zIndex: index + 1,
         marginBottom: isMobile ? '1.25rem' : 0,
         // caps the card width on ultra-wide screens
@@ -234,7 +440,10 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
       }}
     >
       <motion.div
-        ref={innerRef}
+        ref={(el) => {
+          surfaceRef.current = el;
+          if (innerRef && typeof innerRef === 'object') innerRef.current = el;
+        }}
         style={{
           position: 'relative',
           overflow: 'hidden',
@@ -305,6 +514,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
           </div>
 
           <span
+            ref={companyRef}
             className="mono"
             style={{ marginTop: 'clamp(1rem, 3vh, 1.75rem)', fontSize: '0.9rem', fontWeight: 700, letterSpacing: '0.18em', color: GOLD }}
           >
@@ -312,6 +522,7 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
           </span>
 
           <h3
+            ref={roleRef}
             style={{
               fontSize: isTablet ? 'clamp(1.6rem, min(4vw, 6vh), 2.4rem)' : 'clamp(2rem, min(4.2vw, 6.5vh), 3.6rem)',
               fontWeight: 700,
@@ -334,21 +545,28 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 'clamp(1.25rem, 3vh, 2rem)' }}>
             {exp.tags.map((tag, j) => (
+              // outer span = magnetic drift, inner span = GSAP pop-in (kept separate so they don't fight)
               <span
                 key={j}
-                ref={(el) => (tagsRef.current[j] = el)}
-                className="mono"
-                style={{
-                  fontSize: '0.68rem',
-                  padding: '7px 14px',
-                  border: '1px solid rgba(255,255,255,0.22)',
-                  borderRadius: '999px',
-                  color: t.cardText,
-                  letterSpacing: '0.03em',
-                  display: 'inline-block',
-                }}
+                ref={(el) => (magRefs.current[j] = el)}
+                style={{ display: 'inline-block', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', willChange: 'transform' }}
               >
-                {tag}
+                <span
+                  ref={(el) => (tagsRef.current[j] = el)}
+                  className="mono"
+                  style={{
+                    fontSize: '0.68rem',
+                    padding: '7px 14px',
+                    border: '1px solid rgba(255,255,255,0.22)',
+                    borderRadius: '999px',
+                    color: t.cardText,
+                    letterSpacing: '0.03em',
+                    display: 'inline-block',
+                    transition: 'border-color 0.25s',
+                  }}
+                >
+                  {tag}
+                </span>
               </span>
             ))}
           </div>
@@ -392,10 +610,12 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
         >
           {exp.image2 && (
             <img
+              ref={logoRef}
               src={exp.image2}
               alt=""
               aria-hidden="true"
               style={{
+                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 position: 'absolute',
                 right: 'clamp(1rem, 2vw, 1.75rem)',
                 bottom: 'clamp(1rem, 2vw, 1.75rem)',
@@ -416,11 +636,29 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
             <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: t.accent }}>
               KEY CONTRIBUTIONS
             </span>
-            <span className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: `${t.panelText}80` }}>
+            <span ref={counterRef} className="mono" style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: `${t.panelText}80` }}>
               {String(exp.highlights.length).padStart(2, '0')}
             </span>
           </div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul ref={listRef} style={{ listStyle: 'none', padding: 0, margin: 0, position: 'relative' }}>
+            {/* spotlight bar that slides to the active point */}
+            <li
+              ref={barRef}
+              aria-hidden="true"
+              role="presentation"
+              style={{
+                position: 'absolute',
+                left: -10,
+                top: 0,
+                width: 2,
+                height: 0,
+                borderRadius: 2,
+                backgroundColor: t.accent,
+                opacity: 0,
+                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s',
+                pointerEvents: 'none',
+              }}
+            />
             {exp.highlights.map((h, j) => (
               <li
                 key={j}
@@ -436,10 +674,16 @@ function ExperienceCard({ exp, index, total, isMobile, cardRef, nextRef, innerRe
                   alignItems: 'baseline',
                 }}
               >
-                <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: t.accent }}>
+                <span data-dim className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: t.accent, transition: 'opacity 0.3s ease' }}>
                   {String(j + 1).padStart(2, '0')}
                 </span>
-                <span style={clamp(2)}>{h}</span>
+                <span
+                  data-dim
+                  data-text
+                  style={{ ...clamp(2), transition: 'opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                >
+                  {h}
+                </span>
               </li>
             ))}
           </ul>

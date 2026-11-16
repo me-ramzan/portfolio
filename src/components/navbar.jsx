@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import profileImg from '../assets/images/ramzan.webp';
@@ -26,14 +27,206 @@ const TEXT = '#F4F1EA';
 const MUTED = 'rgba(244,241,234,0.5)';
 const LINE = 'rgba(244,241,234,0.1)';
 const GOLD = '#D7C49E';
-const OFFSET = 84; // space left above a section when jumping to it
+const OFFSET = 0; // space left above a section when jumping to it (0 = section starts exactly at the top of the screen)
 const SPRING = { type: 'spring', stiffness: 380, damping: 34, mass: 0.9 };
 
+/* Where a section starts on the page.
+   GSAP-pinned sections are wrapped in a .pin-spacer; once you've scrolled past
+   one, the section itself reports where its pin ENDED, so we measure the spacer
+   instead and land exactly where the pin begins. */
+function sectionTop(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const spacer = el.closest('.pin-spacer');
+  if (spacer) return Math.max(0, spacer.getBoundingClientRect().top + window.scrollY);
+  return Math.max(0, el.getBoundingClientRect().top + window.scrollY - OFFSET);
+}
+
 function goTo(id) {
-  const top = id ? document.getElementById(id)?.getBoundingClientRect().top + window.scrollY - OFFSET : 0;
+  const top = id ? sectionTop(id) : 0;
   if (top == null || Number.isNaN(top)) return;
-  if (window.lenis?.scrollTo) window.lenis.scrollTo(Math.max(0, top), { duration: 1.3 });
-  else window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  if (window.lenis?.scrollTo) window.lenis.scrollTo(top, { duration: 1.3 });
+  else window.scrollTo({ top, behavior: 'smooth' });
+}
+
+/* ---- Depth of field, for section jumps ----
+   The page pulls back and loses focus, the section name rises with a gold
+   progress line, the page jumps unseen, then the new section pulls into focus. */
+const DOF_BLUR = 'blur(14px) brightness(0.38)';
+const DOF_CLEAR = 'blur(0px) brightness(1)';
+const DOF_SCALE_OUT = 0.93; // page eases back while losing focus
+const DOF_SCALE_IN = 1.07; // new section starts slightly close and settles
+const DOF_BG = '#0b0a10';
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const nextFrames = (n = 2) =>
+  new Promise((r) => {
+    const step = (k) => (k <= 0 ? r() : requestAnimationFrame(() => step(k - 1)));
+    step(n);
+  });
+const prefersReducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const easeOutQuart = (x) => 1 - Math.pow(1 - x, 4);
+
+function tween(duration, ease, onUpdate) {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      onUpdate(ease(p));
+      if (p < 1) requestAnimationFrame(step);
+      else resolve();
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// The element that eases back. Best: put data-zoom-root on the wrapper that holds
+// your sections (not the Navbar). Falls back to <main>, then #root.
+function getZoomRoot() {
+  return document.querySelector('[data-zoom-root]') || document.querySelector('main') || document.getElementById('root');
+}
+
+function setScroll(y) {
+  if (window.lenis?.scrollTo) window.lenis.scrollTo(y, { immediate: true, force: true });
+  else window.scrollTo(0, y);
+}
+
+// Blocks wheel / touch / key scrolling while the transition plays
+function lockScroll() {
+  const hasLenis = !!window.lenis?.stop;
+  if (hasLenis) window.lenis.stop();
+  const block = (e) => e.preventDefault();
+  const keys = (e) => ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key) && e.preventDefault();
+  document.addEventListener('wheel', block, { passive: false });
+  document.addEventListener('touchmove', block, { passive: false });
+  window.addEventListener('keydown', keys);
+  return () => {
+    if (hasLenis) window.lenis.start?.();
+    document.removeEventListener('wheel', block);
+    document.removeEventListener('touchmove', block);
+    window.removeEventListener('keydown', keys);
+  };
+}
+
+/* Runs the whole sequence. onPhase('out' | 'hold' | 'in') drives the overlay. */
+async function focusJump(id, onPhase = () => {}) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const root = getZoomRoot();
+  const html = document.documentElement;
+  const body = document.body;
+  const vh = window.innerHeight;
+  const startY = window.scrollY;
+  const maxY = html.scrollHeight - vh;
+  const targetY = Math.max(0, Math.min(maxY, sectionTop(id) ?? 0));
+  const rootTop = root ? root.getBoundingClientRect().top + startY : 0;
+
+  const saved = root && {
+    htmlBg: html.style.backgroundColor,
+    bodyBg: body.style.backgroundColor,
+    transform: root.style.transform,
+    origin: root.style.transformOrigin,
+    willChange: root.style.willChange,
+  };
+  const setOrigin = (y) => root && (root.style.transformOrigin = `50% ${y + vh / 2 - rootTop}px`);
+  const setScale = (s) => root && (root.style.transform = `scale(${s})`);
+
+  if (root) {
+    html.style.backgroundColor = DOF_BG;
+    body.style.backgroundColor = DOF_BG;
+    root.style.willChange = 'transform';
+    setOrigin(startY);
+  }
+
+  try {
+    // 1. pull back + lose focus (the blur itself is on the overlay)
+    onPhase('out');
+    await tween(700, easeInOutCubic, (e) => setScale(1 - (1 - DOF_SCALE_OUT) * e));
+
+    // 2. title + progress line
+    onPhase('hold');
+    await wait(850);
+
+    // 3. jump while out of focus, start slightly close
+    setScroll(targetY);
+    setOrigin(targetY);
+    setScale(DOF_SCALE_IN);
+    await nextFrames(2); // let sticky sections / ScrollTriggers settle
+
+    // Re-measure and correct: pins, sticky blocks and late images can shift the
+    // layout right after the jump. Measured with the scale removed for a moment
+    // (same frame, never painted) so the transform doesn't skew the numbers.
+    for (let pass = 0; pass < 3; pass++) {
+      const prev = root ? root.style.transform : '';
+      if (root) root.style.transform = 'none';
+      const fixedMax = html.scrollHeight - vh;
+      const exact = Math.max(0, Math.min(fixedMax, sectionTop(id) ?? targetY));
+      if (root) root.style.transform = prev;
+      if (Math.abs(exact - window.scrollY) <= 1) break;
+      setScroll(exact);
+      setOrigin(exact);
+      await nextFrames(2);
+    }
+
+    // 4. pull into focus
+    onPhase('in');
+    await tween(950, easeOutQuart, (e) => setScale(DOF_SCALE_IN + (1 - DOF_SCALE_IN) * e));
+  } finally {
+    if (root) {
+      root.style.transform = saved.transform;
+      root.style.transformOrigin = saved.origin;
+      root.style.willChange = saved.willChange;
+      html.style.backgroundColor = saved.htmlBg;
+      body.style.backgroundColor = saved.bodyBg;
+    }
+  }
+}
+
+/* Blur layer + rising title + gold progress line.
+   Rendered into <body> so it never eases back with the page. */
+function FocusOverlay({ focus }) {
+  if (!focus || typeof document === 'undefined') return null;
+  const { phase, index } = focus;
+  const blurred = phase !== 'in';
+  const titled = phase === 'hold';
+  const s = SECTIONS[index];
+  const rise = (delay) => ({
+    initial: { y: '105%' },
+    animate: titled ? { y: '0%', transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay } } : { y: '-105%', transition: { duration: 0.35, ease: EASE } },
+  });
+  return createPortal(
+    <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 1001, pointerEvents: 'auto' }}>
+      <motion.div
+        initial={{ backdropFilter: DOF_CLEAR, WebkitBackdropFilter: DOF_CLEAR }}
+        animate={blurred ? { backdropFilter: DOF_BLUR, WebkitBackdropFilter: DOF_BLUR } : { backdropFilter: DOF_CLEAR, WebkitBackdropFilter: DOF_CLEAR }}
+        transition={blurred ? { duration: 0.7, ease: [0.76, 0, 0.24, 1] } : { duration: 0.85, ease: 'easeOut' }}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: TEXT, padding: '0 24px' }}>
+        <span style={{ display: 'block', overflow: 'hidden' }}>
+          <motion.span {...rise(0)} className="mono" style={{ display: 'block', color: GOLD, fontSize: '0.7rem', letterSpacing: '0.2em' }}>
+            {String(index + 1).padStart(2, '0')} — {s.note.toUpperCase()}
+          </motion.span>
+        </span>
+        <span style={{ display: 'block', overflow: 'hidden', marginTop: 10, paddingBottom: '0.08em' }}>
+          <motion.span
+            {...rise(0.09)}
+            style={{ display: 'block', fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(2.6rem, 7vw, 5.5rem)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1 }}
+          >
+            {s.label}
+          </motion.span>
+        </span>
+        <span style={{ display: 'block', width: 'min(240px, 40vw)', height: 1, marginTop: 28, backgroundColor: 'rgba(215,196,158,0.2)', overflow: 'hidden' }}>
+          <motion.span
+            initial={{ scaleX: 0 }}
+            animate={titled ? { scaleX: 1, transition: { duration: 0.85, ease: [0.76, 0, 0.24, 1] } } : { scaleX: phase === 'in' ? 1 : 0, opacity: phase === 'in' ? 0 : 1, transition: { duration: 0.3 } }}
+            style={{ display: 'block', height: '100%', backgroundColor: GOLD, transformOrigin: 'left center' }}
+          />
+        </span>
+      </div>
+    </div>,
+    document.body
+  );
 }
 
 function useActiveSection() {
@@ -185,11 +378,47 @@ export default function Navbar() {
     };
   }, [open]);
 
+  // Depth of field transition
+  const [focus, setFocus] = useState(null); // { index, phase }
+  const focusing = useRef(false);
+  const mounted = useRef(true);
+  // Reset on every mount (React StrictMode mounts twice in dev)
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const playFocus = async (id) => {
+    if (focusing.current) return;
+    const index = SECTIONS.findIndex((s) => s.id === id);
+    focusing.current = true;
+    setFocus({ index, phase: 'out' });
+    // let the menu close and its scroll-unlock run before we lock again
+    await nextFrames(2);
+    const unlock = lockScroll();
+    try {
+      await focusJump(id, (phase) => mounted.current && setFocus({ index, phase }));
+    } finally {
+      unlock();
+      focusing.current = false;
+      if (mounted.current) setFocus(null);
+    }
+  };
+
   const jump = (id) => {
-    if (open) {
-      closeMenu();
-      setTimeout(() => goTo(id), 420);
-    } else goTo(id);
+    const index = SECTIONS.findIndex((s) => s.id === id);
+    // Back to top, already-here, or reduced motion: keep the plain smooth scroll
+    if (!id || index < 0 || index === active || prefersReducedMotion()) {
+      if (open) {
+        closeMenu();
+        setTimeout(() => goTo(id), 420);
+      } else goTo(id);
+      return;
+    }
+    if (open) closeMenu();
+    playFocus(id);
   };
 
   const copyEmail = async () => {
@@ -240,6 +469,8 @@ export default function Navbar() {
           justifyContent: 'center',
           alignItems: 'flex-start',
           pointerEvents: 'none',
+          // hidden during the transition so it doesn't ease back with the page
+          visibility: focus ? 'hidden' : 'visible',
         }}
       >
         <LayoutGroup>
@@ -560,6 +791,8 @@ export default function Navbar() {
         </LayoutGroup>
 
       </motion.header>
+
+      <FocusOverlay focus={focus} />
 
       <style>{`
         /* Avatar ⇄ "Mr." hand-off, driven by <html data-hero-docked> */
