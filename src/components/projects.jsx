@@ -148,7 +148,7 @@ const projectData = [
   {
     id: 'pulse',
     title: 'Pulse - Fitness App',
-    stack: ['React Native, Expo, TypeScript, Supabase'],
+    stack: ['React Native', 'Expo', 'TypeScript', 'Supabase'],
     description: 'Designed and developed a cross-platform fitness app that combines workout tracking, guided training plans, step counting and nutrition logging in a single codebase for iOS and Android.',
     tag: 'Mobile App · iOS & Android',
     image: pulse,
@@ -180,7 +180,7 @@ const FILTERS = [
   { key: 'FRONTEND', label: 'Web' },
 ];
 const categoryOf = (p) => p.tag.split('/')[0].trim();
-const isMetric = (w) => /\d/.test(w);
+const isMetric = (w) => /^\d/.test(w);
 
 function getTheme(isDark) {
   return isDark
@@ -308,7 +308,7 @@ function FilterSwitch({ value, onChange, countFor, t }) {
         borderRadius: 999,
         backgroundColor: t.chip,
         border: `1px solid ${t.line}`,
-        touchAction: 'none',
+        touchAction: 'pan-y',
         userSelect: 'none',
         WebkitUserSelect: 'none',
       }}
@@ -405,7 +405,7 @@ function ProjectCard({ project, total, t, index, isTablet, isShort }) {
       }}
     >
       {/* Image */}
-      <div style={{ position: 'relative', flex: '0 0 52%', overflow: 'hidden', backgroundColor: project.bgColor || '#000' }}>
+      <div style={{ position: 'relative', flex: '0 0 46%', overflow: 'hidden', backgroundColor: project.bgColor || '#000' }}>
         <motion.img
           src={project.image}
           alt={project.title}
@@ -478,7 +478,8 @@ function ProjectCard({ project, total, t, index, isTablet, isShort }) {
             color: t.muted,
             margin: 0,
             display: '-webkit-box',
-            WebkitLineClamp: isShort ? 2 : 3,
+            WebkitLineClamp: isShort ? 3 : 4,
+            flexShrink: 0,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
           }}
@@ -540,6 +541,7 @@ export default function Projects() {
   const trackRef = useRef(null);
   const barRef = useRef(null);
   const countRef = useRef(null);
+  const stRef = useRef(null);
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isShort = useIsShort();
@@ -549,6 +551,14 @@ export default function Projects() {
   const [filter, setFilter] = useState('ALL');
   const visible = filter === 'ALL' ? projects : projects.filter((p) => categoryOf(p) === filter);
   const countFor = (key) => (key === 'ALL' ? projects.length : projects.filter((p) => categoryOf(p) === key).length);
+
+  const handleFilter = (key) => {
+    const start = stRef.current?.start;
+    if (start != null && window.scrollY > start) {
+      window.scrollTo({ top: start, behavior: 'instant' });
+    }
+    setFilter(key);
+  };
 
   // Preload images so cards never flash empty
   useEffect(() => {
@@ -566,7 +576,7 @@ export default function Projects() {
     const distance = () => Math.max(0, track.scrollWidth - track.clientWidth);
 
     const ctx = gsap.context(() => {
-      gsap.to(track, {
+      const tween = gsap.to(track, {
         x: () => -distance(),
         ease: 'none',
         scrollTrigger: {
@@ -576,6 +586,7 @@ export default function Projects() {
           pin: true,
           scrub: 0.6,
           invalidateOnRefresh: true,
+          refreshPriority: 1,
           onUpdate: (self) => {
             if (barRef.current) barRef.current.style.transform = `scaleX(${self.progress})`;
             if (countRef.current) {
@@ -585,7 +596,10 @@ export default function Projects() {
           },
         },
       });
+      stRef.current = tween.scrollTrigger;
     }, pinRef);
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh();
 
     // re-measure once images and fonts have loaded
     const refresh = () => ScrollTrigger.refresh();
@@ -638,7 +652,7 @@ export default function Projects() {
                 Selected work<span style={{ color: t.accent }}>.</span>
               </motion.h2>
             </motion.div>
-            <FilterSwitch value={filter} onChange={setFilter} countFor={countFor} t={t} />
+            <FilterSwitch value={filter} onChange={handleFilter} countFor={countFor} t={t} />
           </div>
         </div>
 
