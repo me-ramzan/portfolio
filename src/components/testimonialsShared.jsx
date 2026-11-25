@@ -16,7 +16,7 @@ export const TESTIMONIALS = [
     name: 'Abhishek Negi',
     role: 'Project Manager',
     company: 'Impact BBDO',
-    linkedin: '',
+    linkedin: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/details/recommendations/?detailScreenTabIndex=0',
     photo: null,
     quote:
       'I had the pleasure of working with Muhammad Ramzan and he consistently impressed me with his skills as a developer. He has a sharp eye for detail and approaches every challenge with a solution-focused mindset, often finding practical ways to solve complex problems. Muhammad is proactive and doesnt wait to be told what needs doing. Hes also a collaborative team player who works well with both technical and non-technical colleagues. Id recommend him to any team looking for a dependable and talented engineer',
@@ -36,19 +36,19 @@ export const TESTIMONIALS = [
     name: 'Ravi Teja',
     role: 'Senior Project Manager',
     company: 'Impact BBDO',
-    linkedin: '',
+    linkedin: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/details/recommendations/?detailScreenTabIndex=0',
     photo: null,
     quote:
-      "One of the fastest learners I've mentored. He picks up new tools remarkably quickly, owns problems end to end instead of settling for a quick fix, and is always generous with his time helping the rest of the team.",
+      "I've had the pleasure of working with Muhammad Ramzan, and I truly appreciate his dedication, commitment, and technical expertise. He consistently demonstrates a strong willingness to learn, takes ownership of his responsibilities, and approaches challenges with a positive, solution-oriented mindset. His ability to understand requirements, deliver quality work, and collaborate effectively with the team makes him a valuable team player. Beyond his technical skills, his professionalism, proactive attitude, and willingness to support others are truly commendable. Wishing him continued success in his career and all the very best for his future endeavours!",
   },
   {
     name: 'Ateeb Shahid',
     role: 'Team Lead',
     company: 'Sybros Tech',
-    linkedin: '',
+    linkedin: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/details/recommendations/?detailScreenTabIndex=0',
     photo: null,
     quote:
-      'He joined at a difficult stage, with a tight deadline and unclear requirements. He organised the work, asked the right questions and delivered ahead of schedule. His updates were concise and honest, which made my job far easier.',
+      "I had the pleasure of working closely with Ramzan during his time as an RPA Developer at Sybros Tech, where he was part of the automation team I led and mentored. Throughout his time on the team, Ramzan consistently demonstrated a strong aptitude for learning and an impressive ability to quickly grasp the concepts of Robotic Process Automation (RPA) and workflow automation. He developed hands-on expertise with tools such as UiPath, Power Automate and n8n, while also strengthening his programming and scripting skills in Python, Google Apps Script and other coding technologies. Having witnessed his professional growth firsthand, I can confidently say that Ramzan has the technical potential, work ethic and attitude needed to excel in his career. It was a pleasure having him on my team and I would gladly recommend him to any organization looking for a skilled, motivated and dependable professional.",
   },
 ];
 
