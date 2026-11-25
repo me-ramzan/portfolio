@@ -5,6 +5,7 @@ import Hero from './components/hero'
 import About from './components/about'
 import Experience from './components/experience'
 import Projects from './components/projects'
+import TestimonialDial from './components/TestimonialDial'
 import Skills from './components/skills'
 import Education from './components/education'
 import Contact from './components/contact'
@@ -81,11 +82,15 @@ function App() {
         <About />
         <Experience />
         <Projects />
+        {/* Testimonials section removed: they now live in the floating dial below */}
         <Skills />
         <Education />
         <Contact />
         <Footer />
       </div>
+
+      {/* Floating testimonials dial (renders into <body>, appears after the preloader) */}
+      <TestimonialDial show={!isLoading} />
     </div>
   )
 }

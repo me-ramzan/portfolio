@@ -11,11 +11,15 @@ const SECTIONS = [
   { id: 'about', label: 'About', note: 'Who I am' },
   { id: 'experience', label: 'Experience', note: '4 roles · ~3 yrs' },
   { id: 'projects', label: 'Projects', note: 'Selected work' },
+  // No section on the page: this one opens the floating testimonials dial
+  { id: 'testimonials', label: 'Testimonials', note: 'Opens panel ↗', action: 'testimonials:open' },
   { id: 'skills', label: 'Skills', note: '28 tools' },
   { id: 'education', label: 'Education', note: 'BSCS · Honors' },
   { id: 'contact', label: 'Contact', note: "Let's talk" },
 ];
 const EMAIL = 'me.ramzan.zulfiqar@gmail.com';
+const RESUME_URL = `${import.meta.env.BASE_URL}resume.pdf`;
+const RESUME_FILENAME = 'Muhammad-Ramzan-Resume.pdf';
 const SOCIALS = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/muhammad-ramzan-111576246/' },
   { label: 'GitHub', href: 'https://github.com/me-ramzan' },
@@ -29,6 +33,10 @@ const LINE = 'rgba(244,241,234,0.1)';
 const GOLD = '#D7C49E';
 const OFFSET = 0; // space left above a section when jumping to it (0 = section starts exactly at the top of the screen)
 const SPRING = { type: 'spring', stiffness: 380, damping: 34, mass: 0.9 };
+
+/* Menu footer link pills */
+const linkDesktop = { height: 40, padding: '0 14px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: '0.62rem', letterSpacing: '0.12em', textDecoration: 'none' };
+const linkMobile = { height: 40, padding: '0 6px', borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', letterSpacing: '0.1em', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', minWidth: 0 };
 
 /* Where a section starts on the page.
    GSAP-pinned sections are wrapped in a .pin-spacer; once you've scrolled past
@@ -409,6 +417,13 @@ export default function Navbar() {
 
   const jump = (id) => {
     const index = SECTIONS.findIndex((s) => s.id === id);
+    // Items with an action open something instead of scrolling (e.g. the testimonials dial)
+    const action = index >= 0 ? SECTIONS[index].action : null;
+    if (action) {
+      if (open) closeMenu();
+      setTimeout(() => window.dispatchEvent(new Event(action)), open ? 420 : 0);
+      return;
+    }
     // Back to top, already-here, or reduced motion: keep the plain smooth scroll
     if (!id || index < 0 || index === active || prefersReducedMotion()) {
       if (open) {
@@ -735,48 +750,109 @@ export default function Navbar() {
                     })}
                   </ul>
 
-                  {/* Footer: copy email + links */}
+                  {/* Footer: copy email + links.
+                      Mobile: full-width cream "Copy email" with the links in an even row below.
+                      Desktop: everything on one line. */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1, transition: { delay: 0.45, duration: 0.4 } }}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', paddingTop: 14 }}
+                    style={
+                      isMobile
+                        ? { display: 'grid', gridTemplateColumns: '1fr', gap: 6, paddingTop: 12 }
+                        : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', paddingTop: 14 }
+                    }
                   >
                     <motion.button
                       type="button"
                       onClick={copyEmail}
-                      whileTap={{ scale: 0.96 }}
+                      whileTap={{ scale: 0.97 }}
                       className="mono"
                       style={{
-                        height: 40,
+                        height: isMobile ? 44 : 40,
+                        width: isMobile ? '100%' : 'auto',
                         padding: '0 16px',
                         borderRadius: 999,
                         border: 'none',
                         cursor: 'pointer',
-                        backgroundColor: GOLD,
+                        backgroundColor: isMobile ? TEXT : GOLD,
                         color: INK,
-                        fontSize: '0.64rem',
+                        fontSize: isMobile ? '0.66rem' : '0.64rem',
                         fontWeight: 700,
-                        letterSpacing: '0.12em',
+                        letterSpacing: isMobile ? '0.14em' : '0.12em',
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 8,
                       }}
                     >
                       <Roll k={copied ? 'yes' : 'no'}>{copied ? '✓ EMAIL COPIED' : 'COPY EMAIL'}</Roll>
                     </motion.button>
-                    <span style={{ display: 'inline-flex', gap: 6 }}>
+                    <span
+                      style={
+                        isMobile
+                          ? { display: 'grid', gridTemplateColumns: `repeat(${SOCIALS.length + 1}, minmax(0, 1fr))`, gap: 6 }
+                          : { display: 'inline-flex', gap: 6, flexWrap: 'wrap' }
+                      }
+                    >
+                      <motion.a
+                        href={RESUME_URL}
+                        download={RESUME_FILENAME}
+                        aria-label="Download resume (PDF)"
+                        whileHover={!isTouch ? { backgroundColor: 'rgba(215,196,158,0.1)' } : undefined}
+                        className="mono"
+                        style={{
+                          ...(isMobile ? linkMobile : linkDesktop),
+                          position: 'relative',
+                          color: GOLD,
+                          backgroundColor: 'rgba(215,196,158,0)',
+                        }}
+                      >
+                        {/* Dashed outline drawn as SVG: CSS dashed borders on fully-rounded
+                            pills render unevenly (faded/smudged top edge). This stays crisp. */}
+                        <svg
+                          aria-hidden="true"
+                          width="100%"
+                          height="100%"
+                          style={{ position: 'absolute', inset: 0, overflow: 'visible', pointerEvents: 'none' }}
+                        >
+                          <rect
+                            x="0.5"
+                            y="0.5"
+                            style={{ width: 'calc(100% - 1px)', height: 'calc(100% - 1px)' }}
+                            rx={(isMobile ? linkMobile.height : linkDesktop.height) / 2 - 0.5}
+                            ry={(isMobile ? linkMobile.height : linkDesktop.height) / 2 - 0.5}
+                            fill="none"
+                            stroke={GOLD}
+                            strokeOpacity="0.85"
+                            strokeWidth="1"
+                            strokeDasharray="4 4"
+                            shapeRendering="geometricPrecision"
+                          />
+                        </svg>
+                        RESUME
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: 8, flexShrink: 0 }}>
+                          <line x1="12" y1="5" x2="12" y2="17" />
+                          <polyline points="6,11 12,17 18,11" />
+                          <line x1="5" y1="21" x2="19" y2="21" />
+                        </svg>
+                      </motion.a>
                       {SOCIALS.map((s) => (
                         <motion.a
                           key={s.label}
                           href={s.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          whileHover={{ backgroundColor: 'rgba(244,241,234,0.14)' }}
+                          whileHover={!isTouch ? { backgroundColor: 'rgba(244,241,234,0.14)' } : undefined}
+                          whileTap={{ scale: 0.97 }}
                           className="mono"
-                          style={{ height: 40, padding: '0 14px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: '0.62rem', letterSpacing: '0.12em', color: TEXT, textDecoration: 'none', backgroundColor: 'rgba(244,241,234,0.06)' }}
+                          style={{
+                            ...(isMobile ? linkMobile : linkDesktop),
+                            color: TEXT,
+                            backgroundColor: 'rgba(244,241,234,0.06)',
+                          }}
                         >
                           {s.label.toUpperCase()}
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: 8 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: 8, flexShrink: 0 }}>
                             <line x1="7" y1="17" x2="17" y2="7" />
                             <polyline points="8,7 17,7 17,16" />
                           </svg>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { MapPin, Mail, Phone, ArrowRight, ArrowUpRight, ArrowDown } from 'lucide-react';
+import { MapPin, Mail, Phone, ArrowRight, ArrowUpRight, ArrowDown, Download } from 'lucide-react';
 import profileImg from '../assets/images/ramzan.webp';
 import bgVideo from '../assets/videos/bg-video.mp4';
 import gsap from 'gsap';
@@ -29,6 +29,9 @@ const TAGLINES = [
 
 /* ---- Your details (edit here) ---- */
 const ROLE = 'AI Automation & Software Engineer';
+/* Put your CV at /public/resume.pdf (Vite serves /public at the site root) */
+const RESUME_URL = `${import.meta.env.BASE_URL}resume.pdf`;
+const RESUME_FILENAME = 'Muhammad-Ramzan-Resume.pdf';
 const FIRST = 'MUHAMMAD';
 const LAST = 'RAMZAN';
 const STATS = [
@@ -743,6 +746,36 @@ export default function Hero() {
                     }}
                   >
                     Get in touch <ArrowUpRight size={17} />
+                  </motion.a>
+                  <motion.a
+                    href={RESUME_URL}
+                    download={RESUME_FILENAME}
+                    aria-label="Download resume (PDF)"
+                    whileHover="hover"
+                    whileTap={{ scale: 0.97 }}
+                    className="mono"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 9,
+                      height: 'clamp(46px, 6vh, 54px)',
+                      padding: '0 22px',
+                      borderRadius: 999,
+                      border: `1.5px dashed ${t.chipBorder}`,
+                      color: t.text,
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <motion.span
+                      variants={{ hover: { y: [0, 3, 0], transition: { duration: 0.6, ease: EASE } } }}
+                      style={{ display: 'inline-flex' }}
+                    >
+                      <Download size={15} />
+                    </motion.span>
+                    RESUME
                   </motion.a>
                 </motion.div>
 

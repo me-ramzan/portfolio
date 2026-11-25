@@ -254,8 +254,13 @@ function ZoomThrough({ t }) {
   }, []);
 
   return (
-    // the outer background also covers GSAP's spacer, so no grey gaps appear
-    <div style={{ backgroundColor: t.bg }}>
+    // the outer background also covers GSAP's spacer, so no grey gaps appear.
+    // pointerEvents none HERE (not only on the pinned div): GSAP wraps the pinned
+    // div in a .pin-spacer and copies its z-index: 2 onto it. That spacer overlaps
+    // the Contact section (marginTop -100vh) and would swallow every click, so the
+    // form could not be focused or typed in. pointer-events is inherited, so this
+    // makes the spacer click-through too.
+    <div style={{ backgroundColor: t.bg, pointerEvents: 'none' }}>
       <div
         ref={wrapRef}
         aria-hidden="true"

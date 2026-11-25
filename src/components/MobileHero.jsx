@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, MapPin, Download } from 'lucide-react';
 
 const EASE = [0.16, 1, 0.3, 1];
 
@@ -10,6 +10,8 @@ const FIRST = 'Muhammad';
 const LAST = 'Ramzan';
 const CITY = 'Dubai, UAE';
 const TIMEZONE = 'Asia/Dubai';
+const RESUME_URL = '/resume.pdf';
+const RESUME_FILENAME = 'Muhammad-Ramzan-Resume.pdf';
 
 function useDubaiTime() {
   const fmt = () =>
@@ -357,6 +359,30 @@ export default function MobileHero({ t, heroRef, photoRef, coverRef, profileImg,
             }}
           >
             Get in touch
+          </motion.a>
+          <motion.a
+            href={RESUME_URL}
+            download={RESUME_FILENAME}
+            aria-label="Download resume (PDF)"
+            whileTap={{ scale: 0.97 }}
+            className="mono"
+            style={{
+              gridColumn: '1 / -1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              height: 46,
+              borderRadius: 999,
+              border: `1.5px dashed ${t.chipBorder}`,
+              color: t.text,
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textDecoration: 'none',
+            }}
+          >
+            <Download size={15} /> DOWNLOAD RESUME
           </motion.a>
         </motion.div>
       </div>
