@@ -160,6 +160,7 @@ export default function Hero() {
   const cloneRef = useRef(null);
   const cloneBgRef = useRef(null);
   const cloneImgRef = useRef(null);
+  const cloneDiscRef = useRef(null);
   useEffect(() => {
     const clone = cloneRef.current;
     const cloneBg = cloneBgRef.current;
@@ -213,7 +214,8 @@ export default function Hero() {
 
       const fly = (to) => {
         const slot = document.querySelector('[data-nav-avatar]');
-        if (!slot) return;
+        const disc = cloneDiscRef.current;
+        if (!slot || !disc) return;
         const r = card.getBoundingClientRect();
         const b = slot.getBoundingClientRect();
         let fade = 100;
@@ -227,20 +229,21 @@ export default function Hero() {
         const k = b.width / m;
         const ix = (w - m) / 2;
         const ib = h - m;
-        const atPhoto = { transform: `translate3d(${r.left}px, ${r.top}px, 0) scale(1)`, clipPath: 'inset(0px 0px 0px 0px round 0px)' };
-        const atNav = { transform: `translate3d(${b.left - ix * k}px, ${b.top}px, 0) scale(${k})`, clipPath: `inset(0px ${ix}px ${ib}px ${ix}px round ${m / 2}px)` };
+        const atPhoto = { transform: `translate3d(${r.left}px, ${r.top}px, 0) scale(1)` };
+        const atNav = { transform: `translate3d(${b.left - ix * k}px, ${b.top}px, 0) scale(${k})` };
 
         // If it is already mid-flight, continue from exactly where it is now
         let from = to === 'nav' ? atPhoto : atNav;
-        let bgFrom = to === 'nav' ? 0 : 1;
+        let rectFrom = to === 'nav' ? 1 : 0;
+        let discFrom = to === 'nav' ? 0 : 1;
         if (anims.length) {
-          const cs = getComputedStyle(clone);
-          from = { transform: cs.transform, clipPath: cs.clipPath };
-          bgFrom = Number(getComputedStyle(cloneBg).opacity);
+          from = { transform: getComputedStyle(clone).transform };
+          rectFrom = Number(getComputedStyle(cloneImg).opacity);
+          discFrom = Number(getComputedStyle(disc).opacity);
         }
         stop();
 
-        // Size is set once per flight; after this only transform/clip change
+        // Static setup: after this, ONLY transform and opacity animate
         s.left = '0px';
         s.top = '0px';
         s.width = `${w}px`;
@@ -248,19 +251,32 @@ export default function Hero() {
         s.borderRadius = '0px';
         s.boxShadow = 'none';
         s.transformOrigin = '0 0';
+        s.willChange = 'transform';
+        cloneBg.style.display = 'none';
         const mask = `linear-gradient(to bottom, #000 ${fade.toFixed(1)}%, rgba(0,0,0,0.1) 100%)`;
-        s.webkitMaskImage = mask;
-        s.maskImage = mask;
-        cloneImg.style.filter = 'drop-shadow(0 20px 30px rgba(0,0,0,0.35))';
-        cloneImg.style.willChange = 'transform';
+        cloneImg.style.webkitMaskImage = mask;
+        cloneImg.style.maskImage = mask;
+        cloneImg.style.filter = 'none';
+        const circle = `inset(0px ${ix}px ${ib}px ${ix}px round ${m / 2}px)`;
+        disc.style.clipPath = circle;
+        disc.style.webkitClipPath = circle;
 
         wrap.style.visibility = 'hidden';
         setDock(false);
         s.opacity = '1';
         const opts = { duration: DURATION, easing: EASING, fill: 'forwards' };
         const a1 = clone.animate([from, to === 'nav' ? atNav : atPhoto], opts);
-        const a2 = cloneBg.animate([{ opacity: bgFrom }, { opacity: to === 'nav' ? 1 : 0 }], opts);
-        anims = [a1, a2];
+        // The layer that is appearing reaches full opacity by the halfway point,
+        // so the card never shows through in the middle of the crossfade
+        const rectKF = to === 'nav'
+          ? [{ opacity: rectFrom }, { opacity: 0 }]
+          : [{ opacity: rectFrom }, { opacity: 1, offset: 0.5 }, { opacity: 1 }];
+        const discKF = to === 'nav'
+          ? [{ opacity: discFrom }, { opacity: 1, offset: 0.5 }, { opacity: 1 }]
+          : [{ opacity: discFrom }, { opacity: 0 }];
+        const a2 = cloneImg.animate(rectKF, opts);
+        const a3 = disc.animate(discKF, opts);
+        anims = [a1, a2, a3];
         state = to === 'nav' ? 'toNav' : 'toHome';
         a1.onfinish = () => {
           if (anims[0] !== a1) return;
@@ -309,6 +325,10 @@ export default function Hero() {
         s.transformOrigin = '';
         cloneImg.style.filter = '';
         cloneImg.style.willChange = '';
+        cloneImg.style.webkitMaskImage = '';
+        cloneImg.style.maskImage = '';
+        cloneBg.style.display = '';
+        s.willChange = '';
         setDock(false);
       };
     }
@@ -516,6 +536,17 @@ export default function Hero() {
           draggable={false}
           style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
         />
+        {/* mobile only: fixed circle avatar that fades in during the flight */}
+        <div ref={cloneDiscRef} style={{ position: 'absolute', inset: 0, opacity: 0 }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: t.profileBg }} />
+          <img
+            src={profileImg}
+            alt=""
+            decoding="sync"
+            draggable={false}
+            style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          />
+        </div>
       </div>,
       document.body
     );
