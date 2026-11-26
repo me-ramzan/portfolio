@@ -82,6 +82,7 @@ const projectData = [
   },
   {
     id: 'hybrdx',
+    imgPadding: '1rem',
     title: 'HYBRDX - Shamal Group',
     stack: ['JavaScript', 'HTML', 'CSS', 'Mailchimp'],
     description: "Contributed to the front-end of a public-facing campaign site for Dubai's hybrid fitness competition. Built responsive layouts, animations and a live event countdown, and designed the Mailchimp emailer for participant updates.",
@@ -156,7 +157,6 @@ const projectData = [
   },
   {
     id: 'edb',
-    fill: true,
     title: 'EDB Bahrain',
     stack: ['WordPress', 'QA Testing', 'Cross-Browser Testing', 'Responsive Testing'],
     description: 'Independently managed all website content on WordPress and performed QA testing across devices and browsers for the Bahrain Economic Development Board. ',
@@ -415,7 +415,7 @@ function ProjectCard({ project, total, t, index, isTablet, isShort }) {
             width: '100%',
             height: '100%',
             objectFit: project.fill ? 'cover' : 'contain',
-            padding: project.fill ? 0 : '1.75rem',
+            padding: project.fill ? 0 : (project.imgPadding || '1.75rem'),
             display: 'block',
           }}
         />
